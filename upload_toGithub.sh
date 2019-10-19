@@ -9,8 +9,7 @@ sudo git pull
 echo "adding any new files"
 sudo git add -A
 echo "uploading changes"
-sudo git commit -m message -a
-
+sudo git commit -m "$message" -a
 
 sudo git push
 
