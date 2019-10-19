@@ -8,7 +8,7 @@ echo "fetching for any changes"
 sudo git pull "https://joshuarabanal:SU0798ni@github.com/joshuarabanal/VPN.git"
 echo "adding any new files"
 sudo git add -A
-echo "uploading changes $(date)"
+echo "uploading changes $(date, '+%Y-%m-%d')"
 sudo git commit -m "$message" -a
 
 sudo git push "https://joshuarabanal:SU0798ni@github.com/joshuarabanal/VPN.git"
