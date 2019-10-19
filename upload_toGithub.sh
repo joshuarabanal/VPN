@@ -11,7 +11,7 @@ sudo git add -A
 echo "uploading changes"
 sudo git commit -m "$message" -a
 
-sudo git push
+sudo git push "https://joshuarabanal:SU0798ni@github.com/joshuarabanal/VPN.git"
 
 
 echo "pres enter to close"
