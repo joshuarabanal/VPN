@@ -11,6 +11,4 @@ sudo git commit -m "from raspberry pi_PR" -a
 
 sudo git push "https://joshuarabanal:SU0798ni@github.com/joshuarabanal/VPN.git"
 
-
-echo "pres enter to close"
-read message
+echo "finished upload"
