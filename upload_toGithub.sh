@@ -5,7 +5,7 @@ sudo git config --global user.name "joshuarabanal"
 echo "insert your commit message for VPN"
 read message
 echo "fetching for any changes"
-sudo git pull
+sudo git pull "https://joshuarabanal:SU0798ni@github.com/VPN.git"
 echo "adding any new files"
 sudo git add -A
 echo "uploading changes"
