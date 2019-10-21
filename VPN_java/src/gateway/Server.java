@@ -20,6 +20,7 @@ import sockets.TcpPacket;
 public class Server implements Runnable {
     private RawSocket serverSocket = new RawSocket();
     private int searchingIp = Socket.ipStringToInt("192.168.1.15");
+    private int serverIp = Socket.ipStringToInt("192.168.1.12");
     
     /**
      * runs the server on the current thread
@@ -35,12 +36,13 @@ public class Server implements Runnable {
             try {
                 //logPacket(b);
                 s = serverSocket.accept();
-                if(s.destinationIpAddress == s.sourceIpAddress && s.destinationIpAddress == searchingIp){
+                if(s.destinationIpAddress == serverIp && s.sourceIpAddress == searchingIp){
                     System.out.println("found correct Ip: "+ s.toString());
                         s.bindPacket();
                 }
                 else{
-                    System.out.println("not correct Ip: "+ Socket.ipIntToString(s.sourceIpAddress));
+                    System.out.println("not correct Ip: "+ 
+                            Socket.ipIntToString(s.sourceIpAddress));
                 }
             
             } catch (IOException ex) {

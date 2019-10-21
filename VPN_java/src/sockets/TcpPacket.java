@@ -102,15 +102,15 @@ public class TcpPacket {
         options = new Options(b, getOptionsStartIndex(), optionsLength);
         index+=optionsLength;
         
-        /**
+        
         int calcChecksum = checksum();
         if(calcChecksum != 0){
             System.out.println("warning checksum is wrong:"+calcChecksum);
             //System.out.println(this.toString());
             //System.out.println("raw data:"+Options.arrayToString(source.buffer, Socket.payloadStartIndex, source.buffer.length-Socket.payloadStartIndex));
-            //throw new IOException("checksum found to be:"+calcChecksum+", when it actuall is:"+checksum+" difference:"+(calcChecksum-checksum));
+            throw new IOException("checksum found to be:"+calcChecksum+", when it actuall is:"+checksum+" difference:"+(calcChecksum-checksum));
         }
-        * **/
+        
     }
     private int getOptionsStartIndex(){ return Socket.payloadStartIndex+optionsStartIndex; }
     private int getPayloadStartIndex(){ return getOptionsStartIndex()+optionsLength; }
@@ -170,8 +170,6 @@ public class TcpPacket {
         int length = (source.buffer.length- Socket.payloadStartIndex);
         sum+= length;
 
-        //sum = 0;
-        long pseudoSum = sum;
         for(int i = Socket.payloadStartIndex; i<source.buffer.length; i+=2){//since the ip header adds to FFFF it will not effect the summation since FFFF+FFFF=1FFFE
              //if(i == Socket.payloadStartIndex + 16){ continue; }//skip over the checksum value
              int s = 
@@ -179,19 +177,12 @@ public class TcpPacket {
                      +
                      (source.buffer[i+1] & 0xff)
                      ;
-             //System.out.println("\t\t\t sum["+i+"] = "+s);
              sum+= s;
          }
         
-        long dataSum = sum-pseudoSum;
-        //System.out.println("finalSum:"+sum+", sum without pseduo header:"+dataSum+" goal value:"+(-1&0xffff));
         long retu =  (sum & 0xffff);
          retu += sum>>16;
-         
-         dataSum += dataSum>>16;
-         dataSum = dataSum&0xffff;
-        //System.out.println("adjusted sum:"+retu+". [data only] adjusted:"+dataSum+" goal value:"+(-1&0xffff));
-         
+        
          
          return (int) ((~retu) & 0xffff) ;
         
@@ -214,9 +205,6 @@ public class TcpPacket {
             System.out.println("sent handshake step 1");
             source.sendPacket(p.build(), sourcePort);
         }
-        //else if(ACK && !PSH && !RST && !SYN && !FIN && !URG  ){
-            
-        //}
         
         
         else{
@@ -237,7 +225,10 @@ public class TcpPacket {
     }
     boolean packetIsResponse(byte[] b) throws IOException {
         //t //To change body of generated methods, choose Tools | Templates.
+        
         TcpPacket neu = new TcpPacket(b);
+        
+        
         if(
                 neu.destinationPort == this.sourcePort &&
                 neu.sourcePort == this.sourcePort
