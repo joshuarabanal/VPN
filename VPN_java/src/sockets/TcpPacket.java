@@ -8,7 +8,6 @@ package sockets;
 
 import java.io.IOException;
 import java.util.Arrays;
-import static sockets.Socket.payloadStartIndex;
 import sockets.tcp.Options;
 
 /**
@@ -103,13 +102,16 @@ public class TcpPacket {
         index+=optionsLength;
         
         
-        int calcChecksum = checksum();
-        if(calcChecksum != 0){
-            System.out.println("warning checksum is wrong:"+calcChecksum);
-            //System.out.println(this.toString());
-            //System.out.println("raw data:"+Options.arrayToString(source.buffer, Socket.payloadStartIndex, source.buffer.length-Socket.payloadStartIndex));
-            throw new IOException("checksum found to be:"+calcChecksum+", when it actuall is:"+checksum+" difference:"+(calcChecksum-checksum));
+        if(source != null){
+            int calcChecksum = checksum();
+            if(calcChecksum != 0){
+                System.out.println("warning checksum is wrong:"+calcChecksum);
+                //System.out.println(this.toString());
+                //System.out.println("raw data:"+Options.arrayToString(source.buffer, Socket.payloadStartIndex, source.buffer.length-Socket.payloadStartIndex));
+                throw new IOException("checksum found to be:"+calcChecksum+", when it actuall is:"+checksum+" difference:"+(calcChecksum-checksum));
+            }
         }
+        
         
     }
     private int getOptionsStartIndex(){ return Socket.payloadStartIndex+optionsStartIndex; }
@@ -150,6 +152,42 @@ public class TcpPacket {
      */
    
    
+    private int checksum(byte[] tcpPacket, int sourceIp, int destIp){
+        long sum = 0;
+        //source ip
+        sum+= (sourceIp>>16 )& 0xFFFF;
+        sum+= sourceIp& 0xffff;
+              
+        //dest ip
+        sum+= (destIp>>16)& 0xFFFF;
+        sum+= destIp & 0xffff;
+        
+        // 8 bit 0
+        
+        //protocol
+        sum+=  (Socket.TCP_protocol);
+        
+        //tcp length
+        sum+= tcpPacket.length;
+        
+        for(int i = 0; i<tcpPacket.length; i+=2){//since the ip header adds to FFFF it will not effect the summation since FFFF+FFFF=1FFFE
+             //if(i == Socket.payloadStartIndex + 16){ continue; }//skip over the checksum value
+             int s = 
+                     ((tcpPacket[i] & 0xff )<<8) 
+                     +
+                     (tcpPacket[i+1] & 0xff)
+                     ;
+             sum+= s;
+         }
+        
+        
+        long retu =  (sum & 0xffff);
+         retu += sum>>16;
+        
+         
+         return (int) ((~retu) & 0xffff) ;
+         
+    }
     private int checksum() throws IOException{
         //(32 bit source address + 32 bit destination address + 8 bit reserved + 8 bit protocol type+ 16 bit tcp length 
         long sum = 0;
@@ -184,7 +222,14 @@ public class TcpPacket {
          retu += sum>>16;
         
          
-         return (int) ((~retu) & 0xffff) ;
+         retu = ((~retu) & 0xffff) ;
+         
+         byte[] tcp = Arrays.copyOfRange(source.buffer, Socket.payloadStartIndex, source.buffer.length);
+         int check2 = checksum(tcp, source.destinationIpAddress, source.sourceIpAddress);
+         if(retu != check2){
+             throw new IndexOutOfBoundsException(retu +"!="+check2);
+         }
+         return (int) retu;
         
     }
    
@@ -202,7 +247,7 @@ public class TcpPacket {
 
             p.setSYN(true).setACK(true);
             this.sequenceNumber++;//increment the sequence number since we are replying
-            System.out.println("sent handshake step 1");
+            System.out.println("sent handshake step 1\n"+source.toString());
             source.sendPacket(p.build(), sourcePort);
         }
         
@@ -233,24 +278,15 @@ public class TcpPacket {
                 neu.destinationPort == this.sourcePort &&
                 neu.sourcePort == this.sourcePort
                 //&& this.outboundSequenceNumber == neu.outboundSequenceNumber
-                && neu.ackNumber == this.sequenceNumber
-                &&neu.sequenceNumber == this.ackNumber
+                //&& neu.ackNumber == this.sequenceNumber
+                //&&neu.sequenceNumber == this.ackNumber
         ){
             threeWayHandshake_step2(neu);
             throw new UnsupportedOperationException("Not finished yet.");
             //return true;
         }
-            System.out.println(
-                    (neu.destinationPort == this.sourcePort) +"&&"+
-                            (neu.sourcePort == this.destinationPort)
-                //&& this.outboundSequenceNumber == neu.outboundSequenceNumber
-                +"&&"+ (neu.ackNumber == this.sequenceNumber)
-                +"&&"+(neu.sequenceNumber == this.ackNumber)
-            );
-            System.out.println("neu tcp:"+neu.toString());
-            System.out.println("this tcp:"+this.toString());
-            System.out.println("this outbound sequence:"+this.outboundSequenceNumber);
-            throw new UnsupportedOperationException("Not supported yet.");
+        
+        return false;
     }
     
     /**
@@ -331,40 +367,9 @@ public class TcpPacket {
         }
          
         private void fillChecksum(byte[] tcpBuffer, int srcIp, int destIp) throws IOException{
-            long sum = 0;
-            //source ip
-            sum+= (source.sourceIpAddress>>16 )& 0xFFFF;
-            sum+= source.sourceIpAddress& 0xffff;
-
-            //dest ip
-            sum+= (source.destinationIpAddress>>16)& 0xFFFF;
-            sum+= source.destinationIpAddress& 0xffff;
-
-            // 8 bit 0
-
-            //protocol
-            sum+=  (Socket.TCP_protocol);
-
-            //tcp length
-            sum+= tcpBuffer.length;
-
-            for(int i =0; i+1<tcpBuffer.length; i++){
-                int s = 
-                         ((tcpBuffer[i] & 0xff )<<8) ;
-                    s+= 
-                         (tcpBuffer[i+1] & 0xff)
-                         ;
-                 sum+= s;
-            }
-            if(tcpBuffer.length%2 == 1){
-                throw new IOException("odd buffer:"+tcpBuffer.length);
-            }
-           while(sum > 0xffff){//remove the 1 compliment
-            sum = (sum&0xffff)+ (sum>>16);
-           }
-           sum = (~sum)&0xffff;
-           tcpBuffer[16] = (byte) ((sum>>8) & 0xff);
-           tcpBuffer[17] = (byte) (sum & 0xff);
+           int checksum = checksum(tcpBuffer, srcIp, destIp);
+           tcpBuffer[16] = (byte) ((checksum>>8) & 0xff);
+           tcpBuffer[17] = (byte) (checksum & 0xff);
        
         }
     

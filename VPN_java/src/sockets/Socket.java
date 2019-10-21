@@ -84,7 +84,9 @@ public class Socket {
         .append("frag_off:"+frag_off+"\n").append("ttl:"+ttl+"\n")
         .append("source address="+ipIntToString(sourceIpAddress)+"\n")
         .append("destination address:"+ipIntToString(destinationIpAddress)+"\n");
-
+         if(tcp!=null){
+             sb.append("tcp packet:\n").append(tcp.toString());
+         }
         //.append("sequence numeber:"+sequenceNumber+"\n")
         //.append("ackNumber:"+ackNumber+"\n")
         //.append("NS:"+NS+", ").append("CWR:"+CWR+", ").append("ECE:"+ECE+", ").append("URG:"+URG+", ").append("ACK:"+ACK+", ")
@@ -202,7 +204,7 @@ public class Socket {
       * @throws IOException 
       */
     public void bindPacket() throws IOException{
-            System.out.println("recieved buffer:\n"+Options.arrayToString(buffer, 0, buffer.length));
+            //System.out.println("recieved buffer:\n"+Options.arrayToString(buffer, 0, buffer.length));
             if(tcp == null){
                 tcp = new TcpPacket(this);
             }
