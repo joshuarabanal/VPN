@@ -18,13 +18,15 @@ import sockets.tcp.Options.Option;
 public class Options extends ArrayList<Option> {
     
     public static class Option{
-        static final String type_max_seg_size= "maximum segment size",
-                type_wind_scale = "Window scale",
-                type_selec_ack_permit = "Selective Acknowledgement permitted",
-                type_time = "timestamp";
-        String type;
+        static final int 
+                type_padding_flag = 1,
+                type_max_seg_size= 2,//"maximum segment size",
+                type_wind_scale = 3,//"Window scale",
+                type_selec_ack_permit = 4,//"Selective Acknowledgement permitted",
+                type_time = 8;//"timestamp";
+        int type;
         byte[] data;
-        public Option(String type, byte[] b , int start, int length){
+        public Option(int type, byte[] b , int start, int length){
             this.type = type;
             this.data = Arrays.copyOfRange(b, start, start+length);
         }
@@ -32,17 +34,31 @@ public class Options extends ArrayList<Option> {
             String retu = type+"=";
             switch(type){
                 case type_max_seg_size:
-                    retu+=( (data[0]<<8) + (data[1]&0xff) );
+                    retu="="+( (data[0]<<8) + (data[1]&0xff) );
                     break;
                 case type_wind_scale:
-                    retu += data[0];
+                    retu = "="+ data[0];
                     break;
                 case type_selec_ack_permit:
-                    retu +="true";
+                    retu ="="+"true";
                     break;
                 case type_time:
                     break;
                         
+            }
+            return retu;
+        }
+        public byte[] toArray(){
+            if(type == type_padding_flag){
+                byte[]retu=new byte[1];
+                retu[0] = (byte) type;
+                return retu;
+            }
+            byte[] retu = new byte[2+data.length];
+            retu[0] = (byte) type;
+            retu[1] = (byte) retu.length;
+            for(int i = 0; i<data.length; i++){
+                retu[2+i] = data[i];
             }
             return retu;
         }
@@ -70,6 +86,7 @@ public class Options extends ArrayList<Option> {
                     break;
                     
                 case 1://padding flag
+                    this.add(new Option(Option.type_padding_flag,b, 0,0));
                     offset++;
                     break;
                     
@@ -101,7 +118,7 @@ public class Options extends ArrayList<Option> {
                     
                 case 5: //Selective ACKnowledgement
                     offset+=2;
-                    this.add( new Option("Selective Acknowledgement", b,start+offset, b[start+offset-1]) );
+                    this.add( new Option(5, b,start+offset, b[start+offset-1]) );
                     offset+=  b[start+offset-1]-2;
                     break;
                     
@@ -110,7 +127,7 @@ public class Options extends ArrayList<Option> {
                         throw new IOException("malformed options list" );
                     }
                     offset+=2;
-                    this.add( new Option(Option.type_time, b,start+offset,10) );
+                    this.add( new Option(Option.type_time, b,start+offset,8) );
                     offset+=  8;
                     break;
                     
@@ -120,6 +137,22 @@ public class Options extends ArrayList<Option> {
             }
         }
     }
+    
+    public byte[] toByteArray(){
+        ArrayList<Byte> fil = new ArrayList<Byte>();
+        for(Option o : this){
+            byte[] buf = o.toArray();
+            for(byte byt : buf){
+                fil.add(byt);
+            }
+        }
+        byte[] retu = new byte[fil.size()];
+        for(int i =0; i<retu.length; i++){
+            retu[i] = fil.get(i);
+        }
+        return retu;
+    }
+    
     /**
      * http://www.networksorcery.com/enp/protocol/tcp/option008.htm
      * @param timestampEcho 

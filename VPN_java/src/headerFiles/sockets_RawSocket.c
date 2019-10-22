@@ -7,6 +7,10 @@
 #include<netinet/ip.h>
 #include<sys/socket.h>
 #include<arpa/inet.h>
+#include<errno.h>
+#include <unistd.h>
+
+
 
 
 void socket_RawSocket_setLong(JNIEnv *environment, jobject self, char* variable_name, long value);
@@ -56,25 +60,7 @@ jbyteArray readNextBuffer(JNIEnv *environment, jobject self){
       free(buffer);
       return retu;
 }
-int sendBuffer(JNIEnv *environment, jobject self,jbyteArray array, int port, int ipAddress ){
-    int sock = (int)socket_RawSocket_getLong(environment, self, "socketPointer");
-    
-    //address for socket
-    struct sockaddr_in sin;
-    sin.sin_family = AF_INET;
-	sin.sin_port = port;
-	sin.sin_addr.s_addr = ipAddress;
-    
-    
-    //create char array
-    int length = (*environment)->GetArrayLength (environment,array);
-    jbyte * b =   (jbyte *)malloc(length);
-    (*environment)->GetByteArrayRegion (environment,array, 0, length, b);
-    
-    //write the array
-    return sendto (sock, b, length,0, NULL,NULL);
-    
-}
+
 
 
 
@@ -136,11 +122,44 @@ JNIEXPORT void JNICALL Java_sockets_RawSocket_initialize
     socket_RawSocket_setLong(environment, self, variable_name, sock);
     
   }
- 
-
+/**
+ * https://pdfs.semanticscholar.org/7182/0336978814dd41369794d79cb8a519aeb2bc.pdf
+ * @param environment
+ * @param self
+ * @param array
+ * @param port
+ * @param ipAddress
+ * @return 
+ */
 JNIEXPORT jint JNICALL Java_sockets_RawSocket_writePacket
   (JNIEnv * environment, jobject self, jbyteArray array, jint port, jint ipAddress){
-    sendBuffer(environment, self, array, port, ipAddress);
+    int sock = (int)socket_RawSocket_getLong(environment, self, "socketPointer");
+    
+    //address for socket
+    struct sockaddr_in sin;
+    sin.sin_family = AF_INET;
+    sin.sin_port = port;
+    sin.sin_addr.s_addr = ipAddress;
+    inet_pton(AF_INET, "72.188.192.147", &sin.sin_addr);
+
+    
+    
+    //create char array
+    int length = (*environment)->GetArrayLength (environment,array);
+    jbyte * b =   (jbyte *)malloc(length);
+    (*environment)->GetByteArrayRegion (environment,array, 0, length, b);
+    
+    //write the array
+    //return write(sock, b, length);
+    //return send(sock, b, length, 0);
+    int retu =  sendto (sock, b, length,0, &sin, sizeof(sin));
+    if(retu == -1){ 
+        //EAGAIN = EWOULDBLOCK = EBADF = 11
+        //ECONNRESET = 104
+        //EDESTADDRREQ = 89
+        return errno;
+    }
+    return retu;
 }
   
   

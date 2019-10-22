@@ -68,8 +68,18 @@ public class RawSocket {
     private native void initialize(int type);
     private native int writePacket(byte[] b, int port, int ipAddress);
     
-    public void write(byte[] b, int port, int ipAddress) throws IOException{
-        writePacket(b, port, ipAddress);
+    public void write(byte[] b, int sourcePort, int sourceIpAddress) throws IOException{
+        int howmany = writePacket(b, sourcePort, sourceIpAddress);
+        if(howmany != b.length){
+            String errorMessage = "unknown("+howmany+")";
+            switch(howmany){
+                case 11:  errorMessage = "try again";
+                break;
+                case 89: errorMessage = "Destination address required";
+                break;
+            }
+            throw new IOException("failed to send full packet:"+howmany+":"+errorMessage);
+        }
     }
     /**
      * uses struct iphdr for this

@@ -54,6 +54,8 @@ public class Socket {
         
     }
     
+   
+    
     //getter and setter functions
     public static String ipIntToString(int ip){
         String retu = "";
@@ -114,37 +116,38 @@ public class Socket {
          throw new IOException("ip header error:"+version+","+ihl);
      }
      
-        index++;
+        index++;//index = 1
      typeOfService = b[index];//u_int8_t tos;
-        index++;
+     if(index!=1){ throw new IOException("type of service");}
+        index++;//index = 2
         
      int totalLength = ((b[index]&0xff)<<8) | ((b[index+1]&0xff));//u_int16_t tot_len;
      if(totalLength != b.length ){
          throw new IOException("improper length:"+totalLength+"!="+b.length);
      }
-        index+=2;
+        index+=2;//index = 4;
         
      id = ((b[4]&0xff)<<8) | ((b[5]&0xff)); //u_int16_t id;
-        index+=2;
+        index+=2;//index = 6
      frag_off//u_int16_t frag_off;
         = ((b[index]&0xff)<<8) | ((b[index+1]&0xff));
-        index+=2;
+        index+=2;//index = 8
      ttl//u_int8_t ttl;
         = b[index];
-        index++;
+        index++;//index = 9
     int protocol//u_int8_t protocol;
         = b[9];
         if(protocol != TCP_protocol ){
             System.out.println(this.toString());
             throw  new IndexOutOfBoundsException("protocol found to be:"+protocol+" instead of 6 at index:"+index);
         }
-        index++;
+        index++;//index= 10
     int check//u_int16_t check;
         = 
             ((b[10] )<<8) | 
             (b[11]&0xff)
             ;
-        index+=2;
+        index+=2;//index= 12
      
      sourceIpAddress//u_int32_t saddr;
         = (( 0xff& b[index])<<24) 
@@ -154,7 +157,7 @@ public class Socket {
              (( 0xff& b[index+2])<<8) 
              |
              ( 0xff& b[index+3]);
-        index+=4;
+        index+=4;// index = 16
     destinationIpAddress//u_int32_t daddr;
          = (( 0xff& b[index])<<24) 
              |
@@ -166,7 +169,7 @@ public class Socket {
         index+=4;
        
         
-     int calcChecksum = checksum(b);
+     int calcChecksum = checksum(b, 0, Socket.payloadStartIndex);
      if(calcChecksum != 0){
          System.out.println(this.toString());
          System.out.println("checksum:"+check+"{"+b[10]+","+b[11]);
@@ -176,26 +179,37 @@ public class Socket {
        return index;
         
     }
-     public static int checksum(byte[] b){
+     
+     public static int checksum(byte[] b, int startIndex, int length){
+         if(startIndex+length > b.length){
+             throw new IndexOutOfBoundsException("lengths too long for index:"+startIndex+"+length:"+length+">b.length:"+b.length); 
+         }
          int sum = 0;
-         for(int i = 0; i<payloadStartIndex; i+=2){
+         for(int i = 0; i+1<length ; i+=2){
              //if(i == 10){ continue; }//skip over the checksum value
              int s = 
-                     ((b[i] & 0xff )<<8) 
+                     ((b[startIndex+i] & 0xff )<<8) 
                      |
-                     (b[i+1] & 0xff)
+                     (b[startIndex+i+1] & 0xff)
                      ;
              sum+= s;
          }
+         
+         if(length%2 == 1){
+             sum+=((b[startIndex+length-1]& 0xff)<<16);
+         }
+         
          int retu =  (sum & 0xffff);
          retu += sum>>16;
-         if(retu != 65535){
-             System.out.println("checksum distance from goal:"+(65535 - retu));
-         }
          
          return (short)(~retu);
      }
-    
+    public TcpPacket getTcp() throws IOException{
+        if(tcp == null){
+            tcp = new TcpPacket(this);
+        }
+        return tcp;
+    }
     //communication functions
      /** 
       * calling this function means you are interested in seeing what the responses are.
@@ -205,9 +219,7 @@ public class Socket {
       */
     public void bindPacket() throws IOException{
             //System.out.println("recieved buffer:\n"+Options.arrayToString(buffer, 0, buffer.length));
-            if(tcp == null){
-                tcp = new TcpPacket(this);
-            }
+            TcpPacket tcp = getTcp();
             socket.bindForResponses(this);
             tcp.start_threeWayHandshake();
       
@@ -278,7 +290,7 @@ public class Socket {
         retu[19] = (byte) (sourceIpAddress& 0xff);
         
      //get checksum
-     int checksum = checksum(retu);
+     int checksum = checksum(retu,0, Socket.payloadStartIndex);
         retu[10] = (byte) ((checksum>>8)&0xff);
         retu[11] = (byte) (checksum & 0xff);
      

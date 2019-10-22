@@ -16,7 +16,7 @@ import sockets.tcp.Options;
  */
 public class TcpPacket {
     private static final int SYN_flag = 0x02, ACK_flag = 0x10;
-    private static final int optionsStartIndex = 20;
+    public static final int optionsStartIndex = 20;
    
     private Socket source;
     private byte[] buffer;
@@ -24,7 +24,7 @@ public class TcpPacket {
     /**
      * inbound data in the headers
      */
-        int sourcePort, destinationPort, sequenceNumber, ackNumber, windowSize, urgentPointer, optionsLength;
+       public  int sourcePort, destinationPort, sequenceNumber, ackNumber, windowSize, urgentPointer, optionsLength;
      /**
       * inbound flags
       */
@@ -39,35 +39,35 @@ public class TcpPacket {
    
         
     public TcpPacket(byte[] b) throws IOException{
-        this.buffer = b;
-        initializeVariables(b);
-    }
-    public TcpPacket(Socket s) throws IOException{
-        source = s;
-        buffer = s.buffer;
-        initializeVariables(buffer);
+        this(b,null);
         
     }
-    private void initializeVariables(byte[] b) throws IOException{
+    public TcpPacket(Socket s) throws IOException{
+        this(s.buffer, s);
+        
+    }
+    public TcpPacket(byte[] b, Socket source) throws IOException{
+        this.source = source;
+        this.buffer = b;
         int index = Socket.payloadStartIndex;
         
         
         sourcePort = ((b[index]&0xff)<<8) | ((b[index+1]&0xff)); 
-            index+=2;
+            index+=2;//index= 20+2
         destinationPort = ((b[index]&0xff)<<8) | ((b[index+1]&0xff));
-            index+=2;
+            index+=2;//index = 20+4
             
         sequenceNumber = ((b[index]&0xff)<<24) | ((b[index+1]&0xff)<<16) | ((b[index+2]&0xff)<<8) | ((b[index+3]&0xff));
-        index+=4;
+        index+=4;//index = 20+8
         ackNumber = ((b[index]&0xff)<<24) | ((b[index+1]&0xff)<<16) | ((b[index+2]&0xff)<<8) | ((b[index+3]&0xff));
-        index+=4;
+        index+=4;//index = 20+12
         
         optionsLength = (((b[index]&0xff)>>4)-5)*4;
         if( (b[index]&0x0E) != 0){
             throw new IndexOutOfBoundsException("tcp checksum not 0:"+(b[index]&0x0f) );
         }
         //NS = (b[index]&0x01) == 1;
-            index++;
+            index++;//index = 20+13
         //CWR = (b[index] & 0x80) !=0;
         //ECE = (b[index] & 0x40) != 0;
         URG = (b[index] & 0x20) != 0;
@@ -79,9 +79,9 @@ public class TcpPacket {
         if(index-Socket.payloadStartIndex != 13){
             throw new IOException("flags wrong:"+index);
         }
-        index++;
+        index++;//index = 20+14
         windowSize = ((b[index]&0xff)<<8) | ((b[index+1]&0xff)); 
-            index+=2;
+            index+=2;//index = 20+16
         if(index != 16+Socket.payloadStartIndex){
                 throw new IOException("checksum index found to be:"+index);
         }
@@ -90,7 +90,7 @@ public class TcpPacket {
         if(index!= Socket.payloadStartIndex+16){
             throw new IOException("checksum index is:"+index);
         }
-            index+=2;
+            index+=2;//index = 20+18
         
         
         urgentPointer = ((b[index]&0xff)<<8) | ((b[index+1]&0xff)); 
@@ -179,7 +179,9 @@ public class TcpPacket {
                      ;
              sum+= s;
          }
-        
+        if( (tcpPacket.length%2) == 1){
+            sum+= (tcpPacket[tcpPacket.length-1]&0xff)<<16;
+        }
         
         long retu =  (sum & 0xffff);
          retu += sum>>16;
