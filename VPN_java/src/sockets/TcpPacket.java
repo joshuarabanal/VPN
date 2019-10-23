@@ -8,6 +8,8 @@ package sockets;
 
 import java.io.IOException;
 import java.util.Arrays;
+import sockets.editable.SocketEditable;
+import sockets.editable.TcpEditable;
 import sockets.tcp.Options;
 
 /**
@@ -15,7 +17,14 @@ import sockets.tcp.Options;
  * @author root
  */
 public class TcpPacket {
-    private static final int SYN_flag = 0x02, ACK_flag = 0x10;
+    public static final int
+            URG_flag = 0x20,  
+            ACK_flag = 0x10, 
+            PSH_flag = 0x08,
+            RST_flag = 0x04,
+            SYN_flag = 0x02,
+            FIN_flag = 0x01;
+    
     public static final int optionsStartIndex = 20;
    
     private Socket source;
@@ -72,10 +81,10 @@ public class TcpPacket {
         //ECE = (b[index] & 0x40) != 0;
         URG = (b[index] & 0x20) != 0;
         ACK = (b[index] & ACK_flag) != 0;
-        PSH = (b[index] & 0x08) != 0;
-        RST = (b[index] & 0x04) != 0;
-        SYN = (b[index] & 0x02) != 0;
-        FIN = (b[index] & 0x01) != 0;
+        PSH = (b[index] & PSH_flag) != 0;
+        RST = (b[index] & RST_flag) != 0;
+        SYN = (b[index] & SYN_flag) != 0;
+        FIN = (b[index] & FIN_flag) != 0;
         if(index-Socket.payloadStartIndex != 13){
             throw new IOException("flags wrong:"+index);
         }
@@ -235,22 +244,55 @@ public class TcpPacket {
         
     }
    
+    
+    private int currentClientSequenceNumber;
     /**
      * http://www.omnisecu.com/tcpip/tcp-three-way-handshake.php
      * @throws IOException 
      */
-    public void start_threeWayHandshake() throws IOException{
+    public void start_threeWayHandshake(Socket message) throws IOException{
         
         
         
         if( !ACK && !PSH && !RST && SYN && !FIN && !URG ){//first sync message
             //acknowlege the initialization and send the response initialization params
-            PacketBuilder p = new PacketBuilder(this.sourcePort, this.destinationPort);
+            SocketEditable se = new SocketEditable(Arrays.copyOf(message.buffer, message.buffer.length));
+            TcpEditable tcpe = new TcpEditable(
+                    Arrays.copyOfRange(message.buffer, Socket.payloadStartIndex, message.buffer.length),
+                    se.getSourceIp(),
+                    se.getDestIp()
+            );
+            se.setDestIp(message.sourceIpAddress);
+            se.setSourceIp(message.destinationIpAddress);
+            
+            TcpPacket tcp = message.getTCP();
+            tcpe.setSourcePort(tcp.destinationPort);
+            tcpe.setDestPort(tcp.sourcePort);
+            
+            int sequenceNumber = tcp.ackNumber;
+            if(sequenceNumber == 0){ sequenceNumber= (int) (Math.random()*Short.MAX_VALUE); }
+            tcpe.setSequenceNumber(sequenceNumber);
+            tcpe.setAckNumber(tcp.sequenceNumber+1);
+            tcpe.setACK(true);
+            tcpe.setSYN(true);
+            Options opte = new Options();
+                opte.addMaxSegmentSize(1460);
+                opte.addPadding();
+                opte.addWindowScale(8);
+                opte.addPadding();
+                opte.addPadding();
+                opte.addSelectiveAcknowlegementPermitted();
+            tcpe.setOptions(opte);
+            
+            /**
+             * PacketBuilder p = new PacketBuilder(this.sourcePort, this.destinationPort);
 
             p.setSYN(true).setACK(true);
             this.sequenceNumber++;//increment the sequence number since we are replying
             System.out.println("sent handshake step 1\n"+source.toString());
             source.sendPacket(p.build(), sourcePort);
+            *
+            **/
         }
         
         

@@ -36,30 +36,7 @@ int makeSocket(int type){
     return sock;
   
 }
-jbyteArray readNextBuffer(JNIEnv *environment, jobject self){
-  unsigned char *buffer = (unsigned char *)malloc(65536);
-  int sock = (int)socket_RawSocket_getLong(environment, self, "socketPointer");
 
-  // recvfrom is used to read data from a socket
-      jint packet_size = recvfrom(sock , buffer , 65536 , 0 , NULL, NULL);
-      if (packet_size == -1) {
-          puts("error in reading packet");
-        perror("Failed to read from sockets.RawSocket");
-      }
-     
-      
-      
-      //create return socket
-      jbyteArray retu = (*environment)->NewByteArray( environment,(jsize)packet_size );
-      if(retu == NULL){
-          printf("failed to make array of length %d", packet_size);
-        perror("Failed to read from sockets.RawSocket");
-      }
-      //printf("new packet size %d", packet_size);
-      (*environment)->SetByteArrayRegion(environment, retu, (jsize)0, (jsize)packet_size, (jbyte *) buffer);
-      free(buffer);
-      return retu;
-}
 
 
 
@@ -104,7 +81,28 @@ jlong socket_RawSocket_getLong(JNIEnv *environment, jobject self, char* variable
 
 JNIEXPORT jbyteArray JNICALL Java_sockets_RawSocket_readNextPacket
   (JNIEnv * environment, jobject self){
-    return readNextBuffer(environment, self);
+    unsigned char *buffer = (unsigned char *)malloc(65536);
+  int sock = (int)socket_RawSocket_getLong(environment, self, "socketPointer");
+
+  // recvfrom is used to read data from a socket
+      jint packet_size = recvfrom(sock , buffer , 65536 , 0 , NULL, NULL);
+      if (packet_size == -1) {
+          puts("error in reading packet");
+        perror("Failed to read from sockets.RawSocket");
+      }
+     
+      
+      
+      //create return socket
+      jbyteArray retu = (*environment)->NewByteArray( environment,(jsize)packet_size );
+      if(retu == NULL){
+          printf("failed to make array of length %d", packet_size);
+        perror("Failed to read from sockets.RawSocket");
+      }
+      //printf("new packet size %d", packet_size);
+      (*environment)->SetByteArrayRegion(environment, retu, (jsize)0, (jsize)packet_size, (jbyte *) buffer);
+      free(buffer);
+      return retu;
 }
 
 JNIEXPORT void JNICALL Java_sockets_RawSocket_initialize
@@ -134,13 +132,25 @@ JNIEXPORT void JNICALL Java_sockets_RawSocket_initialize
 JNIEXPORT jint JNICALL Java_sockets_RawSocket_writePacket
   (JNIEnv * environment, jobject self, jbyteArray array, jint port, jint ipAddress){
     int sock = (int)socket_RawSocket_getLong(environment, self, "socketPointer");
-    
+    int swappedIp = 
+            ( (ipAddress>>24) & 0x000000ff ) +//first becomes last
+            ( (ipAddress>> 8) & 0x0000ff00 )+//second becomes 3rd
+            ( (ipAddress<< 8) & 0x00FF0000 )+//3rd becomes 2nd
+            ( (ipAddress<<24) & 0xFF000000);//lasrt becomes first
     //address for socket
     struct sockaddr_in sin;
     sin.sin_family = AF_INET;
-    sin.sin_port = port;
-    sin.sin_addr.s_addr = ipAddress;
-    inet_pton(AF_INET, "72.188.192.147", &sin.sin_addr);
+    sin.sin_port = htons(port);
+    sin.sin_addr.s_addr = swappedIp;//ipAddress;
+    
+    
+    int one = 1;
+	const int *val = &one;
+    if (setsockopt (sock, IPPROTO_IP, IP_HDRINCL, val, sizeof (one)) < 0)
+	{
+		perror("Error setting IP_HDRINCL");
+		exit(0);
+        }
 
     
     
@@ -152,8 +162,8 @@ JNIEXPORT jint JNICALL Java_sockets_RawSocket_writePacket
     //write the array
     //return write(sock, b, length);
     //return send(sock, b, length, 0);
-    int retu =  sendto (sock, b, length,0, &sin, sizeof(sin));
-    if(retu == -1){ 
+    int retu =  sendto (sock, b, length,0, (struct sockaddr *)&sin, sizeof(sin));
+    if(retu < 0){ 
         //EAGAIN = EWOULDBLOCK = EBADF = 11
         //ECONNRESET = 104
         //EDESTADDRREQ = 89

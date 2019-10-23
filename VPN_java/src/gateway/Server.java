@@ -13,7 +13,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import sockets.RawSocket;
 import sockets.Socket;
-import sockets.TcpPacket;
 
 /**
  *
@@ -40,7 +39,12 @@ public class Server implements Runnable {
             try {
                 s = serverSocket.accept();
                 if(s == null){ throw new IOException("socket is null"); }
-                
+                System.out.println(
+                        "ip:"+
+                        Socket.ipIntToString(s.sourceIpAddress)+
+                        "=>"+
+                        Socket.ipIntToString(s.destinationIpAddress)
+                );
                 
                 //System.out.println("new packet:"+s.sourceIpAddress+"=>"+s.destinationIpAddress);
                 
@@ -57,19 +61,14 @@ public class Server implements Runnable {
                 }
                 
                 
-                    if(s.destinationIpAddress == forwardingIp){
-                        System.out.println("response:"+s.toString());
-                    }
-                    else if(s.sourceIpAddress == serverIp){
-                        System.out.println("response:"+s.toString());
-                    }
+                  
                     
                     
                     
                     
                 
                 if(s.destinationIpAddress == serverIp && s.sourceIpAddress == clientIp){
-            System.out.println();  System.out.println(); System.out.println(); System.out.println();
+            System.out.println("\n\n\n");
                     System.out.println("found correct Ip: "+ s.toString());
                         s.bindPacket();
                 }

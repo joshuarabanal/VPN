@@ -18,7 +18,7 @@ import sockets.tcp.Options.Option;
 public class Options extends ArrayList<Option> {
     
     public static class Option{
-        static final int 
+        public static final int 
                 type_padding_flag = 1,
                 type_max_seg_size= 2,//"maximum segment size",
                 type_wind_scale = 3,//"Window scale",
@@ -33,16 +33,23 @@ public class Options extends ArrayList<Option> {
         public String toString(){
             String retu = type+"=";
             switch(type){
+                case type_padding_flag:
+                    retu="Padding_Flag;";
+                    break;
                 case type_max_seg_size:
-                    retu="="+( (data[0]<<8) + (data[1]&0xff) );
+                    retu="Max_Seg_size="+( (data[0]<<8) + (data[1]&0xff) );
                     break;
                 case type_wind_scale:
-                    retu = "="+ data[0];
+                    retu = "Window_Scale="+ data[0];
                     break;
                 case type_selec_ack_permit:
-                    retu ="="+"true";
+                    retu ="Selec_Ack_permit="+"true";
                     break;
                 case type_time:
+                    retu = "Time = "+Arrays.toString(data);
+                    break;
+                default: 
+                    retu = type+"="+Arrays.toString(data);
                     break;
                         
             }
@@ -64,15 +71,7 @@ public class Options extends ArrayList<Option> {
         }
     }
     
-    public static String arrayToString(byte[] b, int start, int length){
-        StringBuilder sb = new StringBuilder();
-        for(int i = 0; i<length; i++){
-            if(i>0){ sb.append(", "); }
-            sb.append(b[i+start]);
-        }
-        return "["+sb.toString()+"]";
-        
-    }
+    public Options(){}
     public Options(byte[] b, int start, int length) throws IOException{
         int offset = 0 ;
         while(offset < length){
@@ -101,7 +100,7 @@ public class Options extends ArrayList<Option> {
                     
                 case 3://window scale
                     if(b[start+1+offset] != 3){ 
-                        throw new IOException("malformed options list:"+arrayToString(b, start,length) );
+                        throw new IOException("malformed options list:"+Arrays.toString(Arrays.copyOfRange(b, start, start+length)) );
                     }
                     offset+=2;
                     this.add(new Option(Option.type_wind_scale, b,start+offset, 1));
@@ -152,6 +151,21 @@ public class Options extends ArrayList<Option> {
         }
         return retu;
     }
+    
+    
+    
+public void addMaxSegmentSize(int size){
+                    this.add(new Option(Option.type_max_seg_size, new byte[]{ (byte)((size>>8)&0xff), (byte)(size&0xff) },0, 2));
+}
+public void addPadding(){
+                    this.add(new Option(Option.type_padding_flag,new byte[]{}, 0,0));
+}
+public void addWindowScale(int scale){
+                    this.add(new Option(Option.type_wind_scale, new byte[]{(byte)scale},0, 1));
+}
+public void addSelectiveAcknowlegementPermitted(){
+                    this.add(new Option(Option.type_selec_ack_permit, new byte[]{},0, 0));
+}
     
     /**
      * http://www.networksorcery.com/enp/protocol/tcp/option008.htm

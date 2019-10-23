@@ -69,6 +69,7 @@ public class RawSocket {
     private native int writePacket(byte[] b, int port, int ipAddress);
     
     public void write(byte[] b, int sourcePort, int sourceIpAddress) throws IOException{
+        System.out.println("sending to:"+sourceIpAddress+":"+Socket.ipIntToString(sourceIpAddress));
         int howmany = writePacket(b, sourcePort, sourceIpAddress);
         if(howmany != b.length){
             String errorMessage = "unknown("+howmany+")";

@@ -51,7 +51,7 @@ public class SocketEditable {
     }
     private void setInt(int val, int index){
         setShort(val>>16, index);
-        setShort(val&0xff, index+2);
+        setShort(val&0xFFFF, index+2);
     }
     
     

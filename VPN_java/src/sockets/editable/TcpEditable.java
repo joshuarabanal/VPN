@@ -21,41 +21,13 @@ public class TcpEditable {
     public byte[] payload;
     public TcpEditable(byte[] buffer, int sourceIp, int destIp) throws IOException{
         this.b = buffer;
-        options = getOptions();
+            options = new Options(b, 20, getOptionsLength());
         payload =Arrays.copyOfRange(b, TcpPacket.optionsStartIndex+getOptionsLength(), b.length);
         b = Arrays.copyOfRange(b, 0, TcpPacket.optionsStartIndex);
         
         int oldChecksum = getShort(16);
         int checksum = getChecksum(sourceIp, destIp);
         if(checksum!= 0){
-            int index = 0;
-            for(int i = 0; i<b.length; i++, index++){
-                if(b[i] != buffer[index]){
-                    System.out.println("tcp["+index+"]:"+Arrays.toString(b));
-                }
-            }
-            
-            byte[] opt = options.toByteArray();
-            for(int i = 0; i<opt.length; i++, index++){
-                if(opt[i] != buffer[index]){
-                    System.out.println("options["+index+"|"+i+"]:"+Arrays.toString(opt) );
-                }
-            }
-            
-            for(int i = 0; i<payload.length; i++, index++){
-                if(payload[i] != buffer[index]){
-                    System.out.println("payload:"+Arrays.toString(payload));
-                }
-            }
-            if(index!= buffer.length){
-                System.out.println("buffers not same length:"+index+"!="+buffer.length);
-            }
-            System.out.println("origBuff:"+Arrays.toString(buffer));
-            System.out.println(
-                    "source ip:"+sourceIp+
-                    "\ndestination Ip:"+destIp+
-                    "\nlength:"+(buffer.length+Socket.payloadStartIndex) 
-            );
             throw new IOException("checksu invalid:"+checksum+"!="+oldChecksum+":"+0xFFFF);
         }
     }
@@ -90,11 +62,11 @@ public class TcpEditable {
     public int getAckNumber(){ return getInt(8); }
     public void setAckNumber(int val){ setInt(val,8); }
     
-    public int getOptionsLength(){ return (((b[12]&0xff)>>4)-5)*4; }
-    public void setOptionsLength() throws IOException{ 
-       Options o =  getOptions();
-       byte[] b = o.toByteArray();
-       int length = b.length;
+    public int getOptionsLength() { 
+        return (((b[12]&0xff)>>4)-5)*4; }
+    
+    public void setOptionsLength() { 
+       int length = options.toByteArray().length;
        length/=4;
        length += 5;
        length = length<<4;
@@ -103,6 +75,32 @@ public class TcpEditable {
     
     public int getFlags(){ return b[13]; }
     public void setFlags(int val){ b[13] = (byte) val; }
+    
+    private void setFlag(boolean on, int flag){
+        int flags = getFlags() & (~flag);
+        if(on){
+            flags |= flag;
+        }
+        setFlags(flags);
+    }
+    public boolean getACK(){   return (getFlags() & TcpPacket.ACK_flag) != 0;  }
+    public void setACK(boolean ACK){ setFlag(ACK,TcpPacket.ACK_flag); }
+    
+    public boolean getPSH(){   return (getFlags() & TcpPacket.PSH_flag) != 0;  }
+    public void setPSH(boolean ACK){ setFlag(ACK,TcpPacket.PSH_flag); }
+    
+    public boolean getRST(){   return (getFlags() & TcpPacket.RST_flag) != 0;  }
+    public void setRST(boolean ACK){ setFlag(ACK,TcpPacket.RST_flag); }
+    
+    public boolean getSYN(){   return (getFlags() & TcpPacket.SYN_flag) != 0;  }
+    public void setSYN(boolean ACK){ setFlag(ACK,TcpPacket.SYN_flag); }
+    
+    public boolean getFIN(){   return (getFlags() & TcpPacket.FIN_flag) != 0;  }
+    public void setFIN(boolean ACK){ setFlag(ACK,TcpPacket.FIN_flag); }
+    
+    public boolean getURG(){   return (getFlags() & TcpPacket.URG_flag) != 0;  }
+    public void setURG(boolean ACK){ setFlag(ACK,TcpPacket.URG_flag); }
+    
     
     public int getWindowSize(){ return getShort(14); }
     public void setWindowSize(int val){ setShort(val,14); }
@@ -151,18 +149,21 @@ public class TcpEditable {
     public void set(int val){ setShort(val,18); }
     
     public Options getOptions() throws IOException{ 
-        if(options == null){
-            options = new Options(b, 20, getOptionsLength());
-        }
+        setOptionsLength(); 
         return options;
     }
-    public void setOptions(Options val){ this.options = options; }
+    public void setOptions( Options val) throws IOException{
+        if(val == null){ throw new NullPointerException(); }
+        setOptionsLength(); 
+        this.options = options; 
+    }
     
     //public int get(){ return getShort(); }
     //public void set(int val){ setShort(val,); }
     public byte[] getPacket(int sourceIp, int destIp) throws IOException{
         setChecksum(sourceIp, destIp);
         byte[] options = getOptions().toByteArray();
+        
         byte[] retu = new byte[ b.length + options.length + payload.length ];
         for(int i = 0; i<b.length; i++){ retu[i] = b[i]; }
         

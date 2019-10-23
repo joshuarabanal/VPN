@@ -1,3 +1,4 @@
+
 /*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
@@ -60,7 +61,9 @@ public class IpPacket {
 
     private void forwardToServer(Socket s) throws IOException {
         SocketEditable se = new SocketEditable(s.buffer);
+        System.out.println("\n\n\n");
         System.out.println("forwarding to server");
+        System.out.println(s.toString()+"\n\n\n");
         TcpEditable tcp = new TcpEditable(
                 Arrays.copyOfRange(s.buffer, Socket.payloadStartIndex, s.buffer.length),
                 s.sourceIpAddress, 
@@ -88,13 +91,16 @@ public class IpPacket {
         se.setSourceIp(gatewayIp);
         outStream.write(
                 se.getPacket(tcp.getPacket(gatewayIp, forwardingIp)), 
-                s.getTCP().destinationPort, 
-                s.destinationIpAddress
+                tcp.getDestPort(), 
+                se.getDestIp()
         );
     }
  
     private void forwardtoClient(Socket s) throws IOException {
+        System.out.println("\n\n\n");
         System.out.println("forward to client");
+        System.out.println(s.toString()+"\n\n\n");
+        
         SocketEditable se = new SocketEditable(s.buffer);
         TcpEditable tcp = new TcpEditable(Arrays.copyOfRange(s.buffer, Socket.payloadStartIndex, s.buffer.length), s.sourceIpAddress, s.destinationIpAddress);
         
