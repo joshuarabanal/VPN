@@ -40,7 +40,7 @@ public class Options extends ArrayList<Option> {
                     retu="Max_Seg_size="+( (data[0]<<8) + (data[1]&0xff) );
                     break;
                 case type_wind_scale:
-                    retu = "Window_Scale="+ data[0];
+                    retu = "Window_Scale:e^"+data[0]+" = "+ Math.pow(2, data[0]);
                     break;
                 case type_selec_ack_permit:
                     retu ="Selec_Ack_permit="+"true";
