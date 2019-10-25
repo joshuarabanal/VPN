@@ -46,7 +46,11 @@ public class Options extends ArrayList<Option> {
                     retu ="Selec_Ack_permit="+"true";
                     break;
                 case type_time:
-                    retu = "Time = "+Arrays.toString(data);
+                    retu = "Time = TsVal"+
+                        (  ((data[0]<<8)&0xff00) | (data[1]&0xff)   )+
+                        ":TsSecr"+
+                        (  ((data[2]<<8)&0xff00) | (data[3]&0xff)   )+
+                         Arrays.toString(data);
                     break;
                 default: 
                     retu = type+"="+Arrays.toString(data);
