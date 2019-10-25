@@ -160,7 +160,14 @@ public void addMaxSegmentSize(int size){
 public void addPadding(){
                     this.add(new Option(Option.type_padding_flag,new byte[]{}, 0,0));
 }
+/**
+takes in a number and converts it to the exponential form
+    scale = 2^{pow}
+    the value is encoded using pow, therefore the number you choose must be an exact power of 2
+    <a href="https://cloudshark.io/articles/tcp-window-scaling-examples/"> source</a>
+**/
 public void addWindowScale(int scale){
+        scale  = (int)(Math.log(scale)/Math.log(2));
                     this.add(new Option(Option.type_wind_scale, new byte[]{(byte)scale},0, 1));
 }
 public void addSelectiveAcknowlegementPermitted(){
