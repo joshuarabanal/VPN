@@ -9,6 +9,7 @@ package sockets.tcp;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import sockets.editable.TcpEditable;
 import sockets.tcp.Options.Option;
 
 /**
@@ -74,6 +75,18 @@ public class Options extends ArrayList<Option> {
             return retu;
         }
     }
+    public static class TimeStamp extends Option{
+        
+        public TimeStamp( byte[] b, int start) {
+            super(Option.type_time, b, start, 8);
+        }
+        public TimeStamp(int type, byte[] b, int start, int length) { super(type, b, start, length); }
+        
+        public int getTsVal(){ return TcpEditable.getInt(0, data); }
+        public int getTsecr(){ return TcpEditable.getInt(4, data); }
+        
+        
+    }
     
     public Options(){}
     public Options(byte[] b, int start, int length) throws IOException{
@@ -130,7 +143,7 @@ public class Options extends ArrayList<Option> {
                         throw new IOException("malformed options list" );
                     }
                     offset+=2;
-                    this.add( new Option(Option.type_time, b,start+offset,8) );
+                    this.add( new TimeStamp( b,start+offset) );
                     offset+=  8;
                     break;
                     
@@ -182,18 +195,20 @@ public void addSelectiveAcknowlegementPermitted(){
      * http://www.networksorcery.com/enp/protocol/tcp/option008.htm
      * @param timestampEcho 
      */
-    
-    public void addTimeStamp(int timestampEcho){
+    public void addTimeStamp(int ourTimeStamp, int timestampEcho){
         byte[] b = new byte[8];
         int ourTime = (int) System.currentTimeMillis();
-        b[0] = (byte) ((ourTime>>24)&0xff);
-            b[1] = (byte) ((ourTime>>16)&0xff);
-            b[2] = (byte) ((ourTime>>8)&0xff);
-            b[3] = (byte) ((ourTime)&0xff);
-        b[4] = (byte) ((ourTime>>24)&0xff);
-            b[5] = (byte) ((ourTime>>16)&0xff);
-            b[6] = (byte) ((ourTime>>8)&0xff);
-            b[7] = (byte) ((ourTime)&0xff);
-        add(new Option(Option.type_time,b, 0, b.length));
+        TcpEditable.setInt(ourTime, 0, b);
+        TcpEditable.setInt(timestampEcho, 4, b);
+        add(new TimeStamp(b, 0));
+    }
+
+    public TimeStamp getTimeStamp(){
+        for(Option o : this){
+            if(o.type == Option.type_time){
+                return (TimeStamp)o;
+            }
+        }
+        return null;
     }
 }

@@ -7,6 +7,8 @@ package sockets.editable;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import sockets.Socket;
 import sockets.TcpPacket;
 import sockets.tcp.Options;
@@ -32,21 +34,32 @@ public class TcpEditable {
         }
     }
     
-     
-    private int getShort(int index){
+    public static int getShort(int index, byte[] b){
         return  ((b[index]&0xff)<<8) | ((b[index+1]&0xff)); 
     }
-    private  void setShort(int value,int index){
+    private int getShort(int index){
+        return getShort(index, b);
+    }
+    public static void setShort(int value, int index, byte[] b){
         b[index] = (byte) ((value>>8) & 0xff);
         b[index+1] = (byte) (value&0xff);
     }
+    private  void setShort(int value,int index){
+        setShort(value, index, b);
+    }
     
+    public static int getInt(int index, byte[] b){
+        return (getShort(index,b)<<16) + getShort(index+2,b);
+    }
     private int getInt(int index){
-        return (getShort(index)<<16) + getShort(index+2);
+        return getInt(index,b);
+    }
+    public static void setInt(int val, int index, byte[] b){
+        setShort(val>>16, index, b);
+        setShort(val&0xff, index+2, b);
     }
     private void setInt(int val, int index){
-        setShort(val>>16, index);
-        setShort(val&0xff, index+2);
+        setInt(val, index, b);
     }
     
     
@@ -156,7 +169,7 @@ public class TcpEditable {
     public int getUrgentPointer(){ return getShort(18); }
     public void set(int val){ setShort(val,18); }
     
-    public Options getOptions() throws IOException{ 
+    public Options getOptions(){ 
         setOptionsLength(); 
         return options;
     }
@@ -166,8 +179,26 @@ public class TcpEditable {
         this.options = options; 
     }
     
-    //public int get(){ return getShort(); }
-    //public void set(int val){ setShort(val,); }
+    public String toString(){
+        StringBuilder sb = new StringBuilder();
+        sb.append("sourcePort:").append(this.getSourcePort());
+        sb.append("destinationPort:").append(this.getDestPort());
+        sb.append("sequence number:").append(this.getSequenceNumber());
+        sb.append("ackNumber:").append(this.getAckNumber());
+        sb.append("window size:").append(this.getWindowSize());
+        sb.append("urgent pointer:").append(this.getUrgentPointer());
+        sb.append("options length:").append(this.getOptionsLength());
+        if(getACK())sb.append("\n ACK:").append(true);
+        if(getPSH())sb.append("\n PSH:").append(true);
+        if(getRST())sb.append("\n RST:").append(true);
+        if(getSYN())sb.append("\n SYN:").append(true);
+        if(getFIN())sb.append("\n FIN:").append(true);
+        if(getURG())sb.append("\n URG:").append(true);
+        sb.append("options:").append(this.getOptions().toString());
+        sb.append("payload length:").append(this.payload.length);
+        sb.append("payload:").append(Arrays.toString(payload));
+        return sb.toString();
+    }
     public byte[] getPacket(int sourceIp, int destIp) throws IOException{
         setChecksum(sourceIp, destIp);
         byte[] options = getOptions().toByteArray();

@@ -12,6 +12,7 @@ import java.util.Arrays;
 import sockets.editable.SocketEditable;
 import sockets.editable.TcpEditable;
 import sockets.tcp.Options;
+import sockets.tcp.Options.TimeStamp;
 
 /**
  *
@@ -145,7 +146,8 @@ public class TcpPacket {
                 if(FIN)sb.append("\n FIN:").append(FIN);
                 if(URG)sb.append("\n URG:").append(URG);
                 if(options!=null){
-                    sb.append("\n options:").append(options.toString());}
+                    sb.append("\n options:").append(options.toString());
+                }
                     sb.append("\n payload length:").append(buffer.length-getPayloadStartIndex());
                     sb.append("\n payload:").append(new String(buffer, getPayloadStartIndex(), buffer.length-getPayloadStartIndex()));
                 
@@ -278,14 +280,21 @@ public class TcpPacket {
             tcpe.setAckNumber(tcp.sequenceNumber+1);
             tcpe.setACK(true);
             tcpe.setSYN(true);
+            Options inOpt = tcp.options;
             Options opte = new Options();
                 opte.addMaxSegmentSize(1460);
                 opte.addPadding();
+                opte.addPadding();
+                TimeStamp ts = inOpt.getTimeStamp();
+                if(ts!= null){
+                    opte.addTimeStamp((int) System.currentTimeMillis(), ts.getTsVal());
+                }
+                opte.addPadding();
                 opte.addWindowScale(8);
-                opte.addPadding();
-                opte.addPadding();
-                opte.addSelectiveAcknowlegementPermitted();
+                //opte.addSelectiveAcknowlegementPermitted();
             tcpe.setOptions(opte);
+            
+            System.out.println("sent response:\n"+tcpe.toString());
             
             source.socket.write(se.getPacket(tcpe.getPacket(se.getSourceIp(), se.getDestIp())),  tcpe.getDestPort(), se.getDestIp());
             /**
