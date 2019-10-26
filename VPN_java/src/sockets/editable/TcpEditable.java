@@ -103,6 +103,14 @@ public class TcpEditable {
     
     
     public int getWindowSize(){ return getShort(14); }
+    /**
+    @param val the number of shorts(16 bit) that can be sent to the reciever before they need to ack(send a read reciept)
+            <br/>
+            this value defaults to the number of shorts, but can be changed using the 
+            <a href="https://en.wikipedia.org/wiki/TCP_window_scale_option">window size scaling option</a>
+            <br/>
+            see #getOptions()
+    **/
     public void setWindowSize(int val){ setShort(val,14); }
     
     //checksum = 16(short)

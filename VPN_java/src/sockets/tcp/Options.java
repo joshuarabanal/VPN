@@ -40,13 +40,17 @@ public class Options extends ArrayList<Option> {
                     retu="Max_Seg_size="+( (data[0]<<8) + (data[1]&0xff) );
                     break;
                 case type_wind_scale:
-                    retu = "Window_Scale="+ data[0];
+                    retu = "Window_Scale:e^"+data[0]+" = "+ Math.pow(2, data[0]);
                     break;
                 case type_selec_ack_permit:
                     retu ="Selec_Ack_permit="+"true";
                     break;
                 case type_time:
-                    retu = "Time = "+Arrays.toString(data);
+                    retu = "Time = TsVal"+
+                        (  ((data[0]<<8)&0xff00) | (data[1]&0xff)   )+
+                        ":TsSecr"+
+                        (  ((data[2]<<8)&0xff00) | (data[3]&0xff)   )+
+                         Arrays.toString(data);
                     break;
                 default: 
                     retu = type+"="+Arrays.toString(data);
@@ -160,7 +164,14 @@ public void addMaxSegmentSize(int size){
 public void addPadding(){
                     this.add(new Option(Option.type_padding_flag,new byte[]{}, 0,0));
 }
+/**
+takes in a number and converts it to the exponential form
+    scale = 2^{pow}
+    the value is encoded using pow, therefore the number you choose must be an exact power of 2
+    <a href="https://cloudshark.io/articles/tcp-window-scaling-examples/"> source</a>
+**/
 public void addWindowScale(int scale){
+        scale  = (int)(Math.log(scale)/Math.log(2));
                     this.add(new Option(Option.type_wind_scale, new byte[]{(byte)scale},0, 1));
 }
 public void addSelectiveAcknowlegementPermitted(){
