@@ -18,12 +18,22 @@ import java.util.logging.Logger;
  */
 public class Test {
     
-    public static void main(String[] args){
+    public static void main_tcp(String[] args){
         
         
         System.setErr(System.out);
         System.out.println(System.getProperty("user.dir"));
         Server s = new Server();
+        s.run();
+        
+       
+    }
+    
+     public static void main(String[] args){
+        
+        
+        System.setErr(System.out);
+        gateway.UDPServer s = new gateway.UDPServer();
         s.run();
         
        

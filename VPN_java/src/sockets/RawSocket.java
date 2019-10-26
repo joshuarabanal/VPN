@@ -26,21 +26,22 @@ public class RawSocket {
    */
   private ArrayList<Socket> boundSockets = new ArrayList<Socket>();
   
-    public static RawSocket initialize_TCP(){
-        return new RawSocket(TYPE_TCP);
+    public static RawSocket initialize_TCP(String interfaceName){
+        return new RawSocket(TYPE_TCP, interfaceName);
     }
-    public static RawSocket initialize_UDP(){
-        return new RawSocket(TYPE_UDP);
+    public static RawSocket initialize_UDP(String interfaceName){
+        return new RawSocket(TYPE_UDP, interfaceName);
     }
     //private String interfaceAddress;
-    private RawSocket(int protocol){
+    private RawSocket(int protocol, String interfaceName){
         File f = new File(System.getProperty("user.dir"));
         f = f.getParentFile();
         f = new File(f, "/rawSocket_native/dist/Debug/GNU-Linux/librawSocket_native.so");
         System.load(f.toString());
         //this.interfaceAddress = interface_address;
-        this.type = 6;
-        initialize(protocol, null);
+        this.type = protocol;
+        if(interfaceName == null){ interfaceName = "eth0"; }
+        initialize(protocol, interfaceName);
         System.out.println("socketPointer:"+socketPointer);
         
         

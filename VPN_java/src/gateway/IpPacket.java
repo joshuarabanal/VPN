@@ -24,6 +24,7 @@ public class IpPacket {
     }
     
     public static class UDPPacket{
+        private static final int UDP_header_length  = 8;
         public static int getSourcePort(byte[]b){
             return getShort(getIPHeaderLength(b), b);
         }
@@ -32,6 +33,12 @@ public class IpPacket {
         }
         public static int getLength(byte[]b){
             return getShort(getIPHeaderLength(b)+4, b);
+        }
+        public static int getChecksum(byte[]b){
+            return getShort(getIPHeaderLength(b)+6, b);
+        }
+        public static int getPayloadStartIndex(byte[]b){
+            return getIPHeaderLength(b)+UDP_header_length;
         }
     }
     

@@ -19,7 +19,7 @@ import sockets.Socket;
  * @author root
  */
 public class Server implements Runnable {
-    private RawSocket TCP_serverSocket = RawSocket.initialize_TCP();
+    private RawSocket TCP_serverSocket = RawSocket.initialize_TCP("wlan0");
     private int clientIp = Socket.ipStringToInt("192.168.1.11");
     private int serverIp = Socket.ipStringToInt("192.168.1.12"), forwardingIp = Socket.ipStringToInt("72.188.192.147");
     
