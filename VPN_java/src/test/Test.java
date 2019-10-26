@@ -33,7 +33,7 @@ public class Test {
      * @param args the command line arguments
      * @deprecated 
      */
-    public static void mainz(String[] args) {
+    @Deprecated public static void mainz(String[] args) {
         // TODO code application logic here
         System.out.println("test");
         ServerSocket serve = null;

@@ -25,7 +25,7 @@ JNIEXPORT jbyteArray JNICALL Java_sockets_RawSocket_readNextPacket
  * Signature: (I)V
  */
 JNIEXPORT void JNICALL Java_sockets_RawSocket_initialize
-  (JNIEnv *, jobject, jint);
+  (JNIEnv *, jobject, jint, jstring);
 
 /*
  * Class:     sockets_RawSocket

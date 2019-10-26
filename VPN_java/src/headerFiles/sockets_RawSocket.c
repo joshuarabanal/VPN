@@ -21,7 +21,7 @@ jlong socket_RawSocket_getLong(JNIEnv *environment, jobject self, char* variable
 
 
 
-int makeSocket(int type){
+int makeSocket(int type, const char *interfaceName){
   //struct sockaddr_in source_socket_address, dest_socket_address;
 
     // Open the raw socket
@@ -34,6 +34,15 @@ int makeSocket(int type){
         perror("Failed to create sockets.RawSocket");
         exit(1);
     }
+    
+    
+    
+    //bind to interface
+    if(interfaceName != NULL){
+        setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, interfaceName, sizeof(interfaceName));
+    }
+    
+    
     return sock;
   
 }
@@ -107,19 +116,19 @@ JNIEXPORT jbyteArray JNICALL Java_sockets_RawSocket_readNextPacket
 }
 
 JNIEXPORT void JNICALL Java_sockets_RawSocket_initialize
-  (JNIEnv * environment, jobject self, jint type){
-   
-    char * variable_name = "socketPointer";
+  (JNIEnv * environment, jobject self, jint type, jstring interface){
+   const char *interf = (*environment)->GetStringUTFChars(environment, interface, 0);
     int sock = 0;
     if(type == 6){//
-        sock = makeSocket(IPPROTO_TCP);
+        sock = makeSocket(IPPROTO_TCP, interf);
     }
     if(type == 17){//
-        sock = makeSocket(IPPROTO_UDP);
+        sock = makeSocket(IPPROTO_UDP, interf);
     }
     
+    char * variable_name = "socketPointer";
     socket_RawSocket_setLong(environment, self, variable_name, sock);
-    
+    (*environment)->ReleaseStringUTFChars(environment, interface, interf);
   }
 /**
  * https://pdfs.semanticscholar.org/7182/0336978814dd41369794d79cb8a519aeb2bc.pdf

@@ -20,7 +20,7 @@ public class UdpPacket {
     public UdpPacket(byte[] b, int offset){
         this.b = b; this.offset = offset;
     }
-    public int getSourcePort(){
+    public  int getSourcePort(){
         return TcpEditable.getShort(0, b);
     }
     public int getDestPort(){

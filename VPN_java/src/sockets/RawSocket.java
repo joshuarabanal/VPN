@@ -40,7 +40,7 @@ public class RawSocket {
         System.load(f.toString());
         //this.interfaceAddress = interface_address;
         this.type = 6;
-        initialize(protocol);
+        initialize(protocol, null);
         System.out.println("socketPointer:"+socketPointer);
         
         
@@ -69,7 +69,7 @@ public class RawSocket {
         boundSockets.add(s);
     }
     public native byte[] readNextPacket();
-    private native void initialize(int type);
+    private native void initialize(int type, String interfaceName);
     private native int writePacket(byte[] b, int port, int ipAddress);
     
     public void write(byte[] b, int destinationPort, int destinationIp) throws IOException{
