@@ -8,16 +8,22 @@ import sockets.Socket;
 import sockets.editable.TcpEditable;
 
 /**
- *
+ *<a href="https://tools.ietf.org/html/rfc1533"> source </a>
  * @author root
  */
 public class Option {
-    public static final int type_subnet_mask = 1,
-            type_router =3,
-            type_dns = 6,
-            type_host_name = 12,
+    public static final int 
+    type_subnet_mask = 1,type_time_offset = 2,type_router =3,type_time_server = 4,type_name_server = 5,
+    type_dns = 6,type_log_server = 7,type_cookie_server = 8,type_lpr_server = 9,type_impress_server = 10,
+    type_resource_location_server = 11,type_host_name = 12,type_boot_file_size = 13,type_merit_dump_file = 14,type_domain_name = 15,
+            type_interface_mtu = 26,
+            type_broadcast_address_option = 28,
             type_static_route = 33,
+            type_ip_address_lease_time = 51,
             type_message_type = 53,
+            type_server_identifier = 54,
+            type_renewal_time_val = 58,
+            type_rebinding_time_value = 59,
             type_client_identifier = 61,
             type_param_request_list = 55,
             type_max_message_size = 57,
@@ -67,7 +73,29 @@ public class Option {
     }
     public static String typeToString(int type){
         switch(type){
+            case type_subnet_mask:  return  "subnetMask";
+            case type_time_offset:  return  "timeOffset";
+            case type_router:  return  "router";
+            case type_time_server:  return  "timeServer";
+            case type_name_server:  return  "nameServer";
+            case type_dns:  return  "dns";
+            case type_log_server:  return  "logServer";
+            case type_cookie_server:  return  "cookieServer";
+            case type_lpr_server:  return  "lprServer";
+            case type_impress_server:  return  "impressServer";
+            case type_resource_location_server:  return  "resourceLocationServer";
+            case type_boot_file_size:  return  "bootFileSize";
+            case type_merit_dump_file:  return  "meritDumpFile";
+            case type_host_name:  return  "hostName";
+            case type_domain_name:  return  "domainName";
+            case type_interface_mtu:  return  "interfaceMTU";
+            case type_broadcast_address_option:  return  "broadcastAddress";
+            case type_static_route:  return  "staticRoute";
             case type_message_type:  return  "MessageType";
+            case type_ip_address_lease_time:  return  "ipAddrLeaseTime";
+            case type_server_identifier:  return "serverId";
+            case type_renewal_time_val:  return "renewalTimeVal";
+            case type_rebinding_time_value:  return "rebindingTimeVal";
             case type_client_identifier:  return "ClientIdentifier";
             case type_param_request_list:  return "ParamRequestList";
             case type_max_message_size:  return "MaxMessageSize";
@@ -79,6 +107,7 @@ public class Option {
     
     //----------------------------------------------------------------------------------------------------
     //extended classes
+    
     public static class MessageType extends Option{
          public static final int DHCPDISCOVER = 1,DHCPOFFER = 2, DHCPREQUEST = 3, 
                  DHCPDECLINE = 4, DHCPACK = 5, DHCPNAK = 6, DHCPRELEASE = 7;
@@ -88,6 +117,7 @@ public class Option {
                 throw new IndexOutOfBoundsException("incorrect Type:"+type);
             }
         }
+        public int getMessageType(){ return data[0]; }
         public String toString(){
             switch(data[0]){
                 case DHCPDISCOVER: return "MessageType:Discover";
@@ -100,6 +130,21 @@ public class Option {
             }
             return "MessageType:unknown("+data[0]+")";
         }
+    }
+    
+    public static class SubnetMask extends Option{
+        
+        public SubnetMask(byte[] b, int start) {
+            super(b, start);
+            
+            if(type!= type_subnet_mask){
+                throw new IndexOutOfBoundsException("incorrect Type:"+type);
+            }
+        }
+        public String toString(){
+           return "SubnetMask:"+Socket.ipIntToString(TcpEditable.getInt(0, data));
+        }
+        
     }
     
     public static class ClientIdentifier extends Option{
@@ -127,7 +172,7 @@ public class Option {
             }
         }
         public String toString(){
-            return "CliendIdentifier:"+TcpEditable.getShort(0,data);
+            return "maxMessageSize:"+TcpEditable.getShort(0,data);
         }
         
     }
@@ -142,7 +187,7 @@ public class Option {
             }
         }
         public String toString(){
-            return "CliendIdentifier:"+new String(data,0,data.length);
+            return "classIdentifier:"+new String(data,0,data.length);
         }
         
     }
@@ -178,21 +223,6 @@ public class Option {
             }
             sb.append("]");
             return sb.toString();
-        }
-        
-    }
-    
-    public static class SubnetMask extends Option{
-        
-        public SubnetMask(byte[] b, int start) {
-            super(b, start);
-            
-            if(type!= type_subnet_mask){
-                throw new IndexOutOfBoundsException("incorrect Type:"+type);
-            }
-        }
-        public String toString(){
-           return "SubnetMask:"+Socket.ipIntToString(TcpEditable.getInt(0, data));
         }
         
     }
@@ -272,6 +302,51 @@ public class Option {
         }
         public String toString(){
             return "host name:"+new String(data,0,data.length);
+        }
+        
+    }
+    
+    public static class DomainName extends Option{
+        
+        public DomainName(byte[] b, int start) {
+            super(b, start);
+            
+            if(type!= type_domain_name){
+                throw new IndexOutOfBoundsException("incorrect Type:"+type);
+            }
+        }
+        public String toString(){
+            return "Domain name:"+new String(data,0,data.length);
+        }
+        
+    }
+    
+    public static class InterfaceMTU extends Option{
+        
+        public InterfaceMTU(byte[] b, int start) {
+            super(b, start);
+            
+            if(type!= type_interface_mtu){
+                throw new IndexOutOfBoundsException("incorrect Type:"+type);
+            }
+        }
+        public String toString(){
+            return "interfaceMtu:"+TcpEditable.getShort(0,data);
+        }
+        
+    }
+    
+    public static class BroadcastAddress extends Option{
+        
+        public BroadcastAddress(byte[] b, int start) {
+            super(b, start);
+            
+            if(type!= type_broadcast_address_option){
+                throw new IndexOutOfBoundsException("incorrect Type:"+type);
+            }
+        }
+        public String toString(){
+            return "interfaceMtu:"+Socket.ipIntToString(TcpEditable.getInt(0,data));
         }
         
     }

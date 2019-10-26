@@ -5,10 +5,18 @@
  */
 package dhcp;
 
+import dhcp.dhcpPacket.Options;
+
 /**
  *
  * @author root
  */
-public class Server {
+public class DhcpPacketEditable {
+    public Options o;
+    
+    public DhcpPacketEditable(byte[] b){
+        o = DHCPPacket.getOptions(b);
+        int end = DHCPPacket.getOptionsStartIndex(b);
+    }
     
 }

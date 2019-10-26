@@ -6,6 +6,7 @@
 package dhcp;
 
 import dhcp.dhcpPacket.Option;
+import dhcp.dhcpPacket.Options;
 import static gateway.IpPacket.UDPPacket.getPayloadStartIndex;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -73,10 +74,12 @@ public class DHCPPacket {
         }
         return new String(retu,0,length); 
     }
-    
-    public static ArrayList<Option> getOptions(byte[] b){
-        ArrayList<Option> retu = new ArrayList<Option>();
-        int index = 236+getPayloadStartIndex(b);
+    public static int getOptionsStartIndex(byte[] b){
+        return 236+getPayloadStartIndex(b);
+    } 
+    public static Options getOptions(byte[] b){
+        Options retu = new Options();
+        int index = getOptionsStartIndex(b);
         if(b[index] != 99 && b[index+1] != -126 && b[index+2] != 83 && b[index+3] != 99 ){
             throw new IndexOutOfBoundsException("magic cokies failed");
         }

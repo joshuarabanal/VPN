@@ -22,9 +22,12 @@ public class UDPServer {
     private int serverIp = Socket.ipStringToInt("192.168.1.12"), forwardingIp = Socket.ipStringToInt("72.188.192.147");
     
     public void run(){
+                dhcp.Server s = new dhcp.Server();
         while(true){
             try {
                 byte[] b = sock.accept();
+                if(s.accept(b)){ continue; }
+                
                 System.out.println("packetRecieved:"+
                         Socket.ipIntToString(IpPacket.getSourceIp(b))
                         +":"+
