@@ -56,7 +56,7 @@ public class TcpEditable {
     }
     public static void setInt(int val, int index, byte[] b){
         setShort(val>>16, index, b);
-        setShort(val&0xff, index+2, b);
+        setShort(val&0xffff, index+2, b);
     }
     private void setInt(int val, int index){
         setInt(val, index, b);
@@ -175,28 +175,28 @@ public class TcpEditable {
     }
     public void setOptions( Options val) throws IOException{
         if(val == null){ throw new NullPointerException(); }
+        this.options = val; 
         setOptionsLength(); 
-        this.options = options; 
     }
     
     public String toString(){
         StringBuilder sb = new StringBuilder();
         sb.append("sourcePort:").append(this.getSourcePort());
-        sb.append("destinationPort:").append(this.getDestPort());
-        sb.append("sequence number:").append(this.getSequenceNumber());
-        sb.append("ackNumber:").append(this.getAckNumber());
-        sb.append("window size:").append(this.getWindowSize());
-        sb.append("urgent pointer:").append(this.getUrgentPointer());
-        sb.append("options length:").append(this.getOptionsLength());
+        sb.append("\ndestinationPort:").append(this.getDestPort());
+        sb.append("\nsequence number:").append(this.getSequenceNumber());
+        sb.append("\nackNumber:").append(this.getAckNumber());
+        sb.append("\nwindow size:").append(this.getWindowSize());
+        sb.append("\nurgent pointer:").append(this.getUrgentPointer());
+        sb.append("\noptions length:").append(this.getOptionsLength());
         if(getACK())sb.append("\n ACK:").append(true);
         if(getPSH())sb.append("\n PSH:").append(true);
         if(getRST())sb.append("\n RST:").append(true);
         if(getSYN())sb.append("\n SYN:").append(true);
         if(getFIN())sb.append("\n FIN:").append(true);
         if(getURG())sb.append("\n URG:").append(true);
-        sb.append("options:").append(this.getOptions().toString());
-        sb.append("payload length:").append(this.payload.length);
-        sb.append("payload:").append(Arrays.toString(payload));
+        sb.append("\noptions:").append(this.getOptions().toString());
+        sb.append("\npayload length:").append(this.payload.length);
+        sb.append("\npayload:").append(Arrays.toString(payload));
         return sb.toString();
     }
     public byte[] getPacket(int sourceIp, int destIp) throws IOException{

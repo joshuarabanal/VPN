@@ -25,7 +25,8 @@ int makeSocket(int type){
   //struct sockaddr_in source_socket_address, dest_socket_address;
 
     // Open the raw socket
-    int sock = socket (PF_INET, SOCK_RAW, type);//IPPROTO_TCP);
+    int sock = socket (PF_INET, SOCK_RAW, type);
+    //IPPROTO_TCP;
     if(sock == -1)
     {
         //socket creation failed, may be because of non-root privileges
@@ -110,10 +111,10 @@ JNIEXPORT void JNICALL Java_sockets_RawSocket_initialize
    
     char * variable_name = "socketPointer";
     int sock = 0;
-    if(type == 0){//
+    if(type == 6){//
         sock = makeSocket(IPPROTO_TCP);
     }
-    if(type == 1){//
+    if(type == 17){//
         sock = makeSocket(IPPROTO_UDP);
     }
     

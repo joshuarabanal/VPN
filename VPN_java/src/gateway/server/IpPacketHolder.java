@@ -6,6 +6,7 @@
  */
 package gateway.server;
 
+import gateway.IpPacket;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,7 +19,7 @@ import sockets.editable.TcpEditable;
  *
  * @author root
  */
-public class IpPacket {
+public class IpPacketHolder {
     public final int clientIp, clientPort, serverIp, serverPort, gatewayIp, 
             forwardingIp = Socket.ipStringToInt("72.188.192.147");
     private Socket firstSocket;
@@ -26,7 +27,7 @@ public class IpPacket {
     private ArrayList<Socket> requests = new ArrayList<Socket>();
 
     
-    public IpPacket(Socket s, RawSocket out, int gatewayIp) throws IOException{
+    public IpPacketHolder(Socket s, RawSocket out, int gatewayIp) throws IOException{
         firstSocket = s;
         outStream = out;
         this.gatewayIp = gatewayIp;
@@ -36,24 +37,27 @@ public class IpPacket {
         serverPort = s.getTCP().destinationPort;
     }
     
-    public boolean accept(Socket s) throws IOException{
+    public boolean accept(byte[] s) throws IOException{
+        
+        
+        
         if(
-                s.sourceIpAddress == clientIp && //comes from our client
-                s.getTCP().sourcePort == clientPort &&//from our process
-                s.destinationIpAddress == serverIp &&//goes to our server
-                s.getTCP().destinationPort == serverPort//on the correct server port
+                IpPacket.getSourceIp(s) == clientIp && //comes from our client
+                IpPacket.TCPPacket.getSourcePort(s) == clientPort &&//from our process
+                IpPacket.getDestIp(s) == serverIp &&//goes to our server
+                IpPacket.TCPPacket.getDestPort(s)== serverPort//on the correct server port
         ){
-            forwardToServer(s);
+            forwardToServer(new Socket(s,outStream) );
             return true;
         }
         else if(
-                s.sourceIpAddress == forwardingIp &&//came from our forwarding server
-                    s.getTCP().sourcePort == serverPort &&//on server port
-                s.destinationIpAddress == gatewayIp &&//
-                    s.getTCP().destinationPort == clientPort
+                IpPacket.getSourceIp(s)== forwardingIp &&//came from our forwarding server
+                    IpPacket.TCPPacket.getSourcePort(s) == serverPort &&//on server port
+                IpPacket.getDestIp(s) == gatewayIp &&//
+                    IpPacket.TCPPacket.getDestPort(s)== clientPort
                 
         ){
-            forwardtoClient(s);
+            forwardtoClient(new Socket(s,outStream) );
             return true;
         }
         return false;

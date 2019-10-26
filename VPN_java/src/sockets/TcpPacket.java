@@ -274,9 +274,7 @@ public class TcpPacket {
             tcpe.setSourcePort(tcp.destinationPort);
             tcpe.setDestPort(tcp.sourcePort);
             
-            int sequenceNumber = tcp.ackNumber;
-            if(sequenceNumber == 0){ sequenceNumber= (int) (Math.random()*Short.MAX_VALUE); }
-            tcpe.setSequenceNumber(sequenceNumber);
+            tcpe.setSequenceNumber(0);
             tcpe.setAckNumber(tcp.sequenceNumber+1);
             tcpe.setACK(true);
             tcpe.setSYN(true);
@@ -294,7 +292,8 @@ public class TcpPacket {
                 //opte.addSelectiveAcknowlegementPermitted();
             tcpe.setOptions(opte);
             
-            System.out.println("sent response:\n"+tcpe.toString());
+            System.out.println("recieved message:\n"+message.getTCP().toString());
+            System.out.println("\n\nsent response:\n"+tcpe.toString());
             
             source.socket.write(se.getPacket(tcpe.getPacket(se.getSourceIp(), se.getDestIp())),  tcpe.getDestPort(), se.getDestIp());
             /**
@@ -308,7 +307,7 @@ public class TcpPacket {
             **/
         }
         else if(RST && !ACK && !PSH && !SYN && !FIN && !URG){
-            System.out.println("client rejected 3 way handshake:\n"+message.toString());
+            throw new IOException("client rejected 3 way handshake:\n"+message.toString());
         }
         
         
@@ -322,9 +321,10 @@ public class TcpPacket {
        
         
     }
-    private void threeWayHandshake_step2(TcpPacket response){
+    private void threeWayHandshake_step2(TcpPacket response) throws IOException{
         if(response.RST){
-            return;//handshake was cancelled
+            throw new IOException("connection closed unexpectedly");
+            //return;//handshake was cancelled
         }
        System.out.println("outbound sequence:"+this.outboundSequenceNumber);
     }
@@ -332,7 +332,11 @@ public class TcpPacket {
         //t //To change body of generated methods, choose Tools | Templates.
         
         TcpPacket neu = new TcpPacket(b);
-        
+        int sourcePort = TcpEditable.getShort(Socket.payloadStartIndex, b);
+        int destinationPort = TcpEditable.getShort(Socket.payloadStartIndex+2, b);
+        if(sourcePort != neu.sourcePort || destinationPort != neu.destinationPort){
+            throw new IOException("failed:"+sourcePort+" != "+neu.sourcePort+" || "+destinationPort+" != "+neu.destinationPort);
+        }
         
         if(
                 neu.destinationPort == this.sourcePort &&

@@ -6,8 +6,10 @@
 
 package sockets;
 
+import gateway.IpPacket;
 import java.io.IOException;
 import java.util.Arrays;
+import sockets.editable.TcpEditable;
 
 /**
  *
@@ -225,23 +227,25 @@ public class Socket {
     boolean packetIsResponse(byte[] b) throws IOException{
         
         
-     int sourceIp = 
-             (b[12]&0xff)<<24
+     int sourceIp = IpPacket.getSourceIp(b);
+            /** (b[12]&0xff)<<24
              |
              (b[13]&0xff)<<16
              |
              (b[14]&0xff)<<8
              | 
              (b[15]&0xff);
-     int destinationIp = 
-             (b[16]&0xff)<<24
+             * **/
+     int destinationIp = IpPacket.getDestIp( b);
+             /**(b[16]&0xff)<<24
              |
              (b[17]&0xff)<<16
              |
              (b[18]&0xff)<<8
              | 
              (b[19]&0xff);
-     int id = (b[4]&0xff)<<8 | (b[5] & 0xff);
+             * **/
+     //int id = (b[4]&0xff)<<8 | (b[5] & 0xff);
      
       if(
               b[9] == TCP_protocol &&//protocol is tcp

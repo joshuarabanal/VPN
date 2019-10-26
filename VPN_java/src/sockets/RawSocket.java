@@ -19,28 +19,33 @@ import java.util.ArrayList;
  */
 public class RawSocket {
   private long socketPointer = 0;
-  private static final int TYPE_TCP = 0, TYPE_UDP = 1;
+  private static final int TYPE_TCP = 6, TYPE_UDP = 17;
   private int type;
   /**
    * list of all sockets that are waiting for responses
    */
   private ArrayList<Socket> boundSockets = new ArrayList<Socket>();
   
-        
+    public static RawSocket initialize_TCP(){
+        return new RawSocket(TYPE_TCP);
+    }
+    public static RawSocket initialize_UDP(){
+        return new RawSocket(TYPE_UDP);
+    }
     //private String interfaceAddress;
-    public RawSocket(/*String interface_address*/){
+    private RawSocket(int protocol){
         File f = new File(System.getProperty("user.dir"));
         f = f.getParentFile();
         f = new File(f, "/rawSocket_native/dist/Debug/GNU-Linux/librawSocket_native.so");
         System.load(f.toString());
         //this.interfaceAddress = interface_address;
         this.type = 6;
-        initialize(TYPE_TCP);
+        initialize(protocol);
         System.out.println("socketPointer:"+socketPointer);
         
         
     }
-    public Socket accept() throws IOException{
+    public byte[] accept() throws IOException{
         byte[] b = readNextPacket();
             if(b == null){
                 throw new NullPointerException("failed to get packet");
@@ -55,7 +60,7 @@ public class RawSocket {
             System.out.println("accepting response packet");
             return accept();
         }
-        return new Socket(b, this);
+        return b;
     }
     void bindForResponses(Socket s){
         if(boundSockets.contains(s)){

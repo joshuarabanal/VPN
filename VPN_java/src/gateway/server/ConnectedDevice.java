@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import sockets.RawSocket;
 import sockets.Socket;
 import sockets.TcpPacket;
+import sockets.editable.TcpEditable;
 
 /**
  *
@@ -17,7 +18,7 @@ import sockets.TcpPacket;
  */
 public class ConnectedDevice {
     private final int clientIp, gatewayIp;
-    private ArrayList<IpPacket> requests = new ArrayList<IpPacket>();
+    private ArrayList<IpPacketHolder> requests = new ArrayList<IpPacketHolder>();
     private RawSocket rawOut;
     
     public ConnectedDevice(int ClientIp, int gatewayIp, RawSocket outputStream){
@@ -26,16 +27,21 @@ public class ConnectedDevice {
         this.rawOut = outputStream;
     }
     
-    public boolean accept(Socket s) throws IOException{
+    public boolean accept(byte[] s) throws IOException{
         
-        for(IpPacket p : requests){
+        for(IpPacketHolder p : requests){
             if(p.accept(s)){
                 return true;
             }
         }
-        if(s.sourceIpAddress == clientIp){
+        
+        int sourceIpAddress = TcpEditable.getInt(12, s);
+        int destinationIp = TcpEditable.getInt(16, s);
+        
+        if(sourceIpAddress == clientIp){
             System.out.println("making new packet");
-            IpPacket req = new IpPacket(s, rawOut, gatewayIp);
+            Socket sock = new Socket(s, rawOut);
+            IpPacketHolder req = new IpPacketHolder(sock, rawOut, gatewayIp);
             requests.add(req);
             
             if(!req.accept(s)){ throw new IOException(); }

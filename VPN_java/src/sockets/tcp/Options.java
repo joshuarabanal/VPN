@@ -46,13 +46,6 @@ public class Options extends ArrayList<Option> {
                 case type_selec_ack_permit:
                     retu ="Selec_Ack_permit="+"true";
                     break;
-                case type_time:
-                    retu = "Time = TsVal"+
-                        (  ((data[0]<<8)&0xff00) | (data[1]&0xff)   )+
-                        ":TsSecr"+
-                        (  ((data[2]<<8)&0xff00) | (data[3]&0xff)   )+
-                         Arrays.toString(data);
-                    break;
                 default: 
                     retu = type+"="+Arrays.toString(data);
                     break;
@@ -82,6 +75,7 @@ public class Options extends ArrayList<Option> {
         }
         public TimeStamp(int type, byte[] b, int start, int length) { super(type, b, start, length); }
         
+        public String toString(){ return "Time="+getTsVal()+"(TsVal):"+getTsecr()+"(Tsecr)"; }
         public int getTsVal(){ return TcpEditable.getInt(0, data); }
         public int getTsecr(){ return TcpEditable.getInt(4, data); }
         
@@ -200,6 +194,7 @@ public void addSelectiveAcknowlegementPermitted(){
         int ourTime = (int) System.currentTimeMillis();
         TcpEditable.setInt(ourTime, 0, b);
         TcpEditable.setInt(timestampEcho, 4, b);
+        System.out.println("addind timestamp:"+ourTimeStamp+":"+timestampEcho);
         add(new TimeStamp(b, 0));
     }
 
