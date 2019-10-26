@@ -133,16 +133,16 @@ public class TcpPacket {
                 .append("\n ackNumber:").append(ackNumber)
                 .append("\n window size:").append(windowSize)
                 .append("\n urgent pointer:").append(urgentPointer)
-                .append("\n options length:").append(optionsLength)
+                .append("\n options length:").append(optionsLength);
                 //.append("\n NS:").append(NS)
                 //.append("\n CWR:").append(CWR)
                 //.append("\n ECE:").append(ECE)
-                .append("\n ACK:").append(ACK)
-                .append("\n PSH:").append(PSH)
-                .append("\n RST:").append(RST)
-                .append("\n SYN:").append(SYN)
-                .append("\n FIN:").append(FIN)
-                .append("\n URG:").append(URG);
+                if(ACK)sb.append("\n ACK:").append(ACK);
+                if(PSH)sb.append("\n PSH:").append(PSH);
+                if(RST)sb.append("\n RST:").append(RST);
+                if(SYN)sb.append("\n SYN:").append(SYN);
+                if(FIN)sb.append("\n FIN:").append(FIN);
+                if(URG)sb.append("\n URG:").append(URG);
                 if(options!=null){
                     sb.append("\n options:").append(options.toString());}
                     sb.append("\n payload length:").append(buffer.length-getPayloadStartIndex());
@@ -256,6 +256,8 @@ public class TcpPacket {
         
         if( !ACK && !PSH && !RST && SYN && !FIN && !URG ){//first sync message
             //acknowlege the initialization and send the response initialization params
+            System.out.println("starting 3 way handshake with:"+Socket.ipIntToString(message.sourceIpAddress)+":"+message.getTCP().sourcePort);
+            
             SocketEditable se = new SocketEditable(Arrays.copyOf(message.buffer, message.buffer.length));
             TcpEditable tcpe = new TcpEditable(
                     Arrays.copyOfRange(message.buffer, Socket.payloadStartIndex, message.buffer.length),
@@ -284,6 +286,7 @@ public class TcpPacket {
                 opte.addSelectiveAcknowlegementPermitted();
             tcpe.setOptions(opte);
             
+            source.socket.write(se.getPacket(tcpe.getPacket(se.getSourceIp(), se.getDestIp())),  tcpe.getDestPort(), se.getDestIp());
             /**
              * PacketBuilder p = new PacketBuilder(this.sourcePort, this.destinationPort);
 
@@ -293,6 +296,9 @@ public class TcpPacket {
             source.sendPacket(p.build(), sourcePort);
             *
             **/
+        }
+        else if(RST && !ACK && !PSH && !SYN && !FIN && !URG){
+            System.out.println("client rejected 3 way handshake:\n"+message.toString());
         }
         
         

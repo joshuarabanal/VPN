@@ -26,7 +26,7 @@ public class Server implements Runnable {
     private ArrayList<ConnectedDevice> clients = new ArrayList<ConnectedDevice>();
     
     public Server(){
-        clients.add( new ConnectedDevice(clientIp, serverIp, serverSocket));
+        //clients.add( new ConnectedDevice(clientIp, serverIp, serverSocket));
     }
     
     /**

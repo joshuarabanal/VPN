@@ -45,14 +45,13 @@ public class RawSocket {
             if(b == null){
                 throw new NullPointerException("failed to get packet");
             }
-        boolean isResponse = false;
         for(Socket s: boundSockets){
             if(s.packetIsResponse(b)){
-                isResponse = true;
+                b = null;
                 break;
             }
         }
-        if(isResponse){//this socket was already taken, waiting for next socket
+        if(b == null){//this socket was already taken, waiting for next socket
             System.out.println("accepting response packet");
             return accept();
         }
@@ -68,9 +67,8 @@ public class RawSocket {
     private native void initialize(int type);
     private native int writePacket(byte[] b, int port, int ipAddress);
     
-    public void write(byte[] b, int sourcePort, int sourceIpAddress) throws IOException{
-        System.out.println("sending to:"+sourceIpAddress+":"+Socket.ipIntToString(sourceIpAddress));
-        int howmany = writePacket(b, sourcePort, sourceIpAddress);
+    public void write(byte[] b, int destinationPort, int destinationIp) throws IOException{
+        int howmany = writePacket(b, destinationPort, destinationIp);
         if(howmany != b.length){
             String errorMessage = "unknown("+howmany+")";
             switch(howmany){

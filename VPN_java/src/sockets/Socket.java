@@ -7,9 +7,7 @@
 package sockets;
 
 import java.io.IOException;
-import java.nio.charset.MalformedInputException;
 import java.util.Arrays;
-import sockets.tcp.Options;
 
 /**
  *
@@ -18,7 +16,7 @@ import sockets.tcp.Options;
 public class Socket {
     
     public static final int payloadStartIndex = 20, ipHeaderVersion = 4, TCP_protocol = 6; 
-    private RawSocket socket;
+    public RawSocket socket;
     
     
     //all of the inbound data
