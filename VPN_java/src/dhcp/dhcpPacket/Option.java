@@ -8,7 +8,9 @@ import sockets.Socket;
 import sockets.editable.TcpEditable;
 
 /**
- *<a href="https://tools.ietf.org/html/rfc1533"> source </a>
+ * <a href="https://tools.ietf.org/html/rfc1533"> source </a>
+ * <br/>
+ * <a href="http://www.networksorcery.com/enp/protocol/bootp/options.htm">nicer reference</a>
  * @author root
  */
 public class Option {
@@ -17,7 +19,7 @@ public class Option {
     type_dns = 6,type_log_server = 7,type_cookie_server = 8,type_lpr_server = 9,type_impress_server = 10,
     type_resource_location_server = 11,type_host_name = 12,type_boot_file_size = 13,type_merit_dump_file = 14,type_domain_name = 15,
             type_interface_mtu = 26,
-            type_broadcast_address_option = 28,
+            type_broadcast_address = 28,
             type_static_route = 33,
             type_ip_address_lease_time = 51,
             type_message_type = 53,
@@ -28,6 +30,9 @@ public class Option {
             type_param_request_list = 55,
             type_max_message_size = 57,
             type_class_identifier = 60,
+            type_domain_search = 119,
+            type_classless_static_route = 121,
+            type_WPAD = 252,
             type_end = 255;
     public int type;
     public byte[] data;
@@ -35,10 +40,10 @@ public class Option {
     public static Option initialize(byte[] b, int start){
         switch(b[start]&0xff){
             case type_subnet_mask:  return new SubnetMask(b,start);
-            case type_router:  return new RouterOption(b,start);
-            case type_dns:  return new DNSOption(b,start);
+            case type_router:  return new Router(b,start);
+            case type_dns:  return new DNS(b,start);
             case type_host_name:  return new HostName(b,start);
-            case type_static_route:  return new StaticRouteOption(b,start);
+            case type_static_route:  return new StaticRoute(b,start);
             case type_message_type:  return new MessageType(b,start);
             case type_client_identifier:  return new ClientIdentifier(b,start);
             case type_param_request_list:  return new ParamRequestList(b,start);
@@ -89,7 +94,7 @@ public class Option {
             case type_host_name:  return  "hostName";
             case type_domain_name:  return  "domainName";
             case type_interface_mtu:  return  "interfaceMTU";
-            case type_broadcast_address_option:  return  "broadcastAddress";
+            case type_broadcast_address:  return  "broadcastAddress";
             case type_static_route:  return  "staticRoute";
             case type_message_type:  return  "MessageType";
             case type_ip_address_lease_time:  return  "ipAddrLeaseTime";
@@ -102,7 +107,7 @@ public class Option {
             case type_class_identifier:  return "ClassIdentifier";
             case type_end:  return "EndOption";
         }
-        return "unknown("+type+")";
+        return "unknown("+(type&0xff)+")";
     }
     
     //----------------------------------------------------------------------------------------------------
@@ -111,12 +116,17 @@ public class Option {
     public static class MessageType extends Option{
          public static final int DHCPDISCOVER = 1,DHCPOFFER = 2, DHCPREQUEST = 3, 
                  DHCPDECLINE = 4, DHCPACK = 5, DHCPNAK = 6, DHCPRELEASE = 7;
+         public MessageType(int type){
+             super(new byte[]{(byte)type_message_type, (byte)0},0);
+             data = new byte[]{(byte)type};
+         }
         public MessageType(byte[] b, int start) {
             super(b, start);
             if(type!= type_message_type){
                 throw new IndexOutOfBoundsException("incorrect Type:"+type);
             }
         }
+        public void setMessageType(int type){ data[0] = (byte)type; }
         public int getMessageType(){ return data[0]; }
         public String toString(){
             switch(data[0]){
@@ -133,7 +143,19 @@ public class Option {
     }
     
     public static class SubnetMask extends Option{
-        
+        public SubnetMask(int mask){
+            this(
+                    new byte[]{
+                        Option.type_subnet_mask, 
+                        4, 
+                        (byte) ((mask>>24) &0xff), 
+                        (byte)((mask>>16) & 0xff), 
+                        (byte)((mask>>8) & 0xff), 
+                        (byte)(mask&0xff)
+                    },
+                    0
+            );
+        }
         public SubnetMask(byte[] b, int start) {
             super(b, start);
             
@@ -215,6 +237,7 @@ public class Option {
                 throw new IndexOutOfBoundsException("incorrect Type:"+type);
             }
         }
+        public byte[] getRequestList(){ return data; }
         public String toString(){
             StringBuilder sb = new StringBuilder("ParamRequestList:[");
             for(int i = 0; i<data.length; i++){
@@ -226,10 +249,22 @@ public class Option {
         }
         
     }
-    
-    public static class StaticRouteOption extends Option{
-        
-        public StaticRouteOption(byte[] b, int start) {
+    /**
+     * <a href="http://www.networksorcery.com/enp/protocol/bootp/option033.htm">source</a>
+     */
+    public static class StaticRoute extends Option{
+        public StaticRoute(int[] ipAddressPairs){
+            super(new byte[]{type_static_route, 0},0);
+            
+            byte[] b = new byte[2+(ipAddressPairs.length*4)];
+            b[0] = Option.type_static_route;
+            b[1] = (byte) (b.length-2);
+            for(int i = 0; i<ipAddressPairs.length; i++){
+                TcpEditable.setInt(ipAddressPairs[i], (i*4)+2, b);
+            }
+            this.data = b;
+        }
+        public StaticRoute(byte[] b, int start) {
             super(b, start);
             
             if(type!= type_static_route){
@@ -249,9 +284,15 @@ public class Option {
         
     }
     
-    public static class RouterOption extends Option{
-        
-        public RouterOption(byte[] b, int start) {
+    public static class Router extends Option{
+        public Router(int... routerIps){
+            super(new byte[]{type_router, 0}, 0);
+            this.data= new byte[routerIps.length*4];
+            for(int i = 0; i<routerIps.length; i++){
+                TcpEditable.setInt(routerIps[i], i*4, data);
+            }
+        }
+        public Router(byte[] b, int start) {
             super(b, start);
             
             if(type!= type_router){
@@ -260,20 +301,24 @@ public class Option {
         }
         public String toString(){
             StringBuilder sb = new StringBuilder("router option:");
-            for(int i = 0; i<data.length; i+=8){
+            for(int i = 0; i<data.length; i+=4){
                 sb.append("\n")
-                        .append(Socket.ipIntToString(TcpEditable.getInt(i, data)))
-                        .append("=>")
-                        .append(Socket.ipIntToString(TcpEditable.getInt(i+4, data)));
+                        .append(Socket.ipIntToString(TcpEditable.getInt(i, data)));
             }
            return sb.toString();
         }
         
     }
     
-    public static class DNSOption extends Option{
-        
-        public DNSOption(byte[] b, int start) {
+    public static class DNS extends Option{
+        public DNS(int... dnsIPs){
+            super(new byte[]{type_dns, 0}, 0);
+            this.data= new byte[dnsIPs.length*4];
+            for(int i = 0; i<dnsIPs.length; i++){
+                TcpEditable.setInt(dnsIPs[i], i*4, data);
+            }
+        }
+        public DNS(byte[] b, int start) {
             super(b, start);
             
             if(type!= type_router){
@@ -292,6 +337,11 @@ public class Option {
     }
     
     public static class HostName extends Option{
+        public HostName(String hostname){
+            super(new byte[]{type_host_name, 0}, 0);
+            data = hostname.getBytes();
+            
+        }
         
         public HostName(byte[] b, int start) {
             super(b, start);
@@ -322,7 +372,12 @@ public class Option {
     }
     
     public static class InterfaceMTU extends Option{
-        
+        public InterfaceMTU(int maxFrameSize){
+            super(new byte[]{type_interface_mtu, 0}, 0);
+            data = new byte[2];
+            TcpEditable.setShort(maxFrameSize, 0, data);
+            
+        }
         public InterfaceMTU(byte[] b, int start) {
             super(b, start);
             
@@ -337,19 +392,99 @@ public class Option {
     }
     
     public static class BroadcastAddress extends Option{
-        
+        public BroadcastAddress(int ipAddress){
+            super(new byte[]{type_broadcast_address, 0}, 0);
+            data = new byte[4];
+            TcpEditable.setInt(ipAddress, 0, data);
+        }
         public BroadcastAddress(byte[] b, int start) {
             super(b, start);
             
-            if(type!= type_broadcast_address_option){
+            if(type!= type_broadcast_address){
                 throw new IndexOutOfBoundsException("incorrect Type:"+type);
             }
         }
         public String toString(){
-            return "interfaceMtu:"+Socket.ipIntToString(TcpEditable.getInt(0,data));
+            return "broadcast address:"+Socket.ipIntToString(TcpEditable.getInt(0,data));
         }
         
     }
+    public static class IpAddressLeaseTime extends Option{
+        public IpAddressLeaseTime(int timeInSeconds){
+            super(new byte[]{type_ip_address_lease_time, 0}, 0);
+            data = new byte[4];
+            TcpEditable.setInt(timeInSeconds, 0, data);
+        }
+        public IpAddressLeaseTime(byte[] b, int start) {
+            super(b, start);
+            
+            if(type!= type_ip_address_lease_time){
+                throw new IndexOutOfBoundsException("incorrect Type:"+type);
+            }
+        }
+        public String toString(){
+            return "IP address lease in seconds:"+TcpEditable.getInt(0,data);
+        }
+        
+    }
+    
+    public static class RenewalTimeValue extends Option{
+        public RenewalTimeValue(int timeInSeconds){
+            super(new byte[]{type_renewal_time_val, 0}, 0);
+            data = new byte[4];
+            TcpEditable.setInt(timeInSeconds, 0, data);
+        }
+        public RenewalTimeValue(byte[] b, int start) {
+            super(b, start);
+            
+            if(type!= type_renewal_time_val){
+                throw new IndexOutOfBoundsException("incorrect Type:"+type);
+            }
+        }
+        public String toString(){
+            return "IP address lease in seconds:"+TcpEditable.getInt(0,data);
+        }
+        
+    }
+    
+    public static class RebindingTimeValue extends Option{
+        public RebindingTimeValue(int timeInSeconds){
+            super(new byte[]{type_rebinding_time_value, 0}, 0);
+            data = new byte[4];
+            TcpEditable.setInt(timeInSeconds, 0, data);
+        }
+        public RebindingTimeValue(byte[] b, int start) {
+            super(b, start);
+            
+            if(type!= type_rebinding_time_value){
+                throw new IndexOutOfBoundsException("incorrect Type:"+type);
+            }
+        }
+        public String toString(){
+            return "IP address reattempt:"+TcpEditable.getInt(0,data);
+        }
+        
+    }
+    
+    public static class ServerID extends Option{
+        public ServerID(int identifier){
+            super(new byte[]{type_server_identifier, 0}, 0);
+            data = new byte[4];
+            TcpEditable.setInt(identifier, 0, data);
+        }
+        public ServerID(byte[] b, int start) {
+            super(b, start);
+            
+            if(type!= type_server_identifier){
+                throw new IndexOutOfBoundsException("incorrect Type:"+type);
+            }
+        }
+        public String toString(){
+            return "ServerID:"+TcpEditable.getInt(0,data);
+        }
+        
+    }
+    
     
     
     

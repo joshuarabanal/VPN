@@ -16,25 +16,37 @@ public class UdpPacket {
     
     private int offset;
     private byte[]b ;
-    
+    public UdpPacket(){
+        b = new byte[8];
+        offset = 0;
+    }
     public UdpPacket(byte[] b, int offset){
         this.b = b; this.offset = offset;
     }
     public  int getSourcePort(){
-        return TcpEditable.getShort(0, b);
+        return TcpEditable.getShort(offset+0, b);
+    }
+    public void setSourcePort(int port){
+        TcpEditable.setShort(port, offset+0, b);
     }
     public int getDestPort(){
-        return TcpEditable.getShort(2, b);
+        return TcpEditable.getShort(offset+2, b);
+    }
+    public void setDestPort(int port){
+        TcpEditable.setShort(port, offset+0, b);
     }
     public int getLength(){
-        return TcpEditable.getShort(4, b);
+        return TcpEditable.getShort(offset+4, b);
+    }
+    public void setLength(int length){
+        TcpEditable.setShort(length, offset+0, b);
     }
     /**
      * 
      * @return true if the checksum passes, or false if the checksum fails
      */
     public boolean checksum(int sourceIp, int destIp, int totalLength){
-        int checksum = TcpEditable.getShort(6,b);
+        int checksum = TcpEditable.getShort(offset+6,b);
         if(checksum == 0){
             return true;
         }
@@ -61,5 +73,7 @@ public class UdpPacket {
         
         return ((~sum)&0xffff) == 0;
     }
-    
+    public void setChecksum(int sourceIp, int destIp, int totalLength){
+        TcpEditable.setShort(0,offset+6,b);
+    }
 }

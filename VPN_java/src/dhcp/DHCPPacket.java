@@ -20,13 +20,13 @@ import static sockets.editable.TcpEditable.getShort;
  */
 public class DHCPPacket {
     
-    public static int getOP(byte[] b){  return b[getPayloadStartIndex(b)+0]; }
+    public static byte getOP(byte[] b){  return b[getPayloadStartIndex(b)+0]; }
     
-    public static int getHTYPE(byte[] b){  return b[getPayloadStartIndex(b)+1]; }
+    public static byte getHTYPE(byte[] b){  return b[getPayloadStartIndex(b)+1]; }
     
-    public static int getHLEN(byte[] b){  return b[getPayloadStartIndex(b)+2]; }
+    public static byte getHLEN(byte[] b){  return b[getPayloadStartIndex(b)+2]; }
     
-    public static int getHOPS(byte[] b){  return b[getPayloadStartIndex(b)+3]; }
+    public static byte getHOPS(byte[] b){  return b[getPayloadStartIndex(b)+3]; }
     
     public static int getXID(byte[] b){  return getInt(getPayloadStartIndex(b)+4,b); }
     
@@ -86,7 +86,6 @@ public class DHCPPacket {
         index+=4;
         while(index<b.length){
             Option o = Option.initialize(b, index);
-            System.out.print("new option created["+index+"]="+o.toString());
             index+=o.getByteArrayLength();
             retu.add(o);
         }
