@@ -5,6 +5,7 @@
  */
 package gateway;
 
+import sockets.Socket;
 import static sockets.editable.TcpPacketBuilder.getInt;
 import static sockets.editable.TcpPacketBuilder.getShort;
 
@@ -92,8 +93,8 @@ public class IpPacket {
         sb.append("\nTTL:").append(getTTL(b));
         sb.append("\nprotocol:").append(getProtocol(b));
         sb.append("\ncheck sum:").append(getCheckSum(b));
-        sb.append("\nsource Ip:").append(getSourceIp(b));
-        sb.append("\ndest ip:").append(getDestIp(b));
+        sb.append("\nsource Ip:").append(Socket.ipIntToString(getSourceIp(b)));
+        sb.append("\ndest ip:").append(Socket.ipIntToString(getDestIp(b)));
         return sb.toString();
     }
     

@@ -177,9 +177,10 @@ JNIEXPORT jint JNICALL Java_sockets_RawSocket_writePacket
     int retu =  sendto (sock, b, length,0, (const struct sockaddr *)&sin, sizeof(sin));
     if(retu < 0){ 
         //EAGAIN = EWOULDBLOCK = EBADF = 11
-        ECONNRESET //= 104
+        //ECONNRESET //= 104
         //EDESTADDRREQ 89;
-                EFAULT
+                //EFAULT
+                perror("error sending packet:");
         return errno;
     }
     return retu;

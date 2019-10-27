@@ -75,12 +75,8 @@ public class DHCPPacket {
         return new String(retu,0,length); 
     }
     public static int getOptionsStartIndex(byte[] b){
-        return 236+getPayloadStartIndex(b);
-    } 
-    public static Options getOptions(byte[] b){
-        Options retu = new Options();
-        int index = getOptionsStartIndex(b);
-        if(b[index] != 99 || b[index+1] != -126 || b[index+2] != 83 || b[index+3] != 99 ){
+        int optionsStart = 236+getPayloadStartIndex(b);
+        if(b[optionsStart] != 99 || b[optionsStart+1] != -126 || b[optionsStart+2] != 83 || b[optionsStart+3] != 99 ){
             System.out.println(
                     "magic cookies b["+getOptionsStartIndex(b)+"]:"+
                     Arrays.toString(
@@ -89,7 +85,14 @@ public class DHCPPacket {
             );
             throw new IndexOutOfBoundsException("magic cokies failed");
         }
-        index+=4;
+        
+        return optionsStart;
+    } 
+    public static Options getOptions(byte[] b){
+        Options retu = new Options();
+        int index = getOptionsStartIndex(b);
+        
+        index+=4;//for the magic cookie
         while(index<b.length){
             Option o = Option.initialize(b, index);
             index+=o.getByteArrayLength();
@@ -128,7 +131,6 @@ public class DHCPPacket {
         
     }
     
-    //public static int get(byte[] b){  return getInt(getPayloadStartIndex(b)+4,b); }
     
     
 }

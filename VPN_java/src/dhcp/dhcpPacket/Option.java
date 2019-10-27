@@ -21,6 +21,7 @@ public class Option {
             type_interface_mtu = 26,
             type_broadcast_address = 28,
             type_static_route = 33,
+            type_requested_ip_address = 50,
             type_ip_address_lease_time = 51,
             type_message_type = 53,
             type_server_identifier = 54,
@@ -52,6 +53,7 @@ public class Option {
             case type_end:  return new EndOption(b,start);
             case type_interface_mtu: return new InterfaceMTU(b,start);
             case type_broadcast_address: return new BroadcastAddress(b,start);
+            case type_requested_ip_address: return new RequestedIp(b,start);
             case type_ip_address_lease_time: return new IpAddressLeaseTime(b,start);
             case type_server_identifier: return new ServerID(b,start);
             case type_renewal_time_val: return new RenewalTimeValue(b,start);
@@ -103,6 +105,7 @@ public class Option {
             case type_broadcast_address:  return  "broadcastAddress";
             case type_static_route:  return  "staticRoute";
             case type_message_type:  return  "MessageType";
+            case type_requested_ip_address: return "RequestedIp";
             case type_ip_address_lease_time:  return  "ipAddrLeaseTime";
             case type_server_identifier:  return "serverId";
             case type_renewal_time_val:  return "renewalTimeVal";
@@ -146,6 +149,37 @@ public class Option {
             }
             return "MessageType:unknown("+data[0]+")";
         }
+    }
+    
+    public static class RequestedIp extends Option{
+        public RequestedIp(int mask){
+            this(
+                    new byte[]{
+                        Option.type_requested_ip_address, 
+                        4, 
+                        (byte) ((mask>>24) &0xff), 
+                        (byte)((mask>>16) & 0xff), 
+                        (byte)((mask>>8) & 0xff), 
+                        (byte)(mask&0xff)
+                    },
+                    0
+            );
+        }
+        public RequestedIp(byte[] b, int start) {
+            super(b, start);
+            
+            if(type!= type_requested_ip_address){
+                throw new IndexOutOfBoundsException("incorrect Type:"+type);
+            }
+        }
+        public String toString(){
+           return "RequestedIp:"+Socket.ipIntToString(TcpPacketBuilder.getInt(0, data));
+        }
+
+        public int getIpAddress() {
+            return TcpPacketBuilder.getInt(0, data);
+        }
+        
     }
     
     public static class SubnetMask extends Option{
