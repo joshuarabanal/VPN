@@ -9,8 +9,8 @@ package sockets;
 
 import java.io.IOException;
 import java.util.Arrays;
-import sockets.editable.SocketEditable;
-import sockets.editable.TcpEditable;
+import sockets.editable.IpPacketBuilder;
+import sockets.editable.TcpPacketBuilder;
 import sockets.tcp.Options;
 import sockets.tcp.Options.TimeStamp;
 
@@ -261,8 +261,8 @@ public class TcpPacket {
             //acknowlege the initialization and send the response initialization params
             System.out.println("starting 3 way handshake with:"+Socket.ipIntToString(message.sourceIpAddress)+":"+message.getTCP().sourcePort);
             
-            SocketEditable se = new SocketEditable(Arrays.copyOf(message.buffer, message.buffer.length));
-            TcpEditable tcpe = new TcpEditable(
+            IpPacketBuilder se = new IpPacketBuilder(Arrays.copyOf(message.buffer, message.buffer.length));
+            TcpPacketBuilder tcpe = new TcpPacketBuilder(
                     Arrays.copyOfRange(message.buffer, Socket.payloadStartIndex, message.buffer.length),
                     se.getSourceIp(),
                     se.getDestIp()
@@ -295,7 +295,7 @@ public class TcpPacket {
             System.out.println("recieved message:\n"+message.getTCP().toString());
             System.out.println("\n\nsent response:\n"+tcpe.toString());
             
-            source.socket.write(se.getPacket(tcpe.getPacket(se.getSourceIp(), se.getDestIp())),  tcpe.getDestPort(), se.getDestIp());
+            source.socket.write(se.build(tcpe.getPacket(se.getSourceIp(), se.getDestIp())),  tcpe.getDestPort(), se.getDestIp());
             /**
              * PacketBuilder p = new PacketBuilder(this.sourcePort, this.destinationPort);
 
@@ -332,8 +332,8 @@ public class TcpPacket {
         //t //To change body of generated methods, choose Tools | Templates.
         
         TcpPacket neu = new TcpPacket(b);
-        int sourcePort = TcpEditable.getShort(Socket.payloadStartIndex, b);
-        int destinationPort = TcpEditable.getShort(Socket.payloadStartIndex+2, b);
+        int sourcePort = TcpPacketBuilder.getShort(Socket.payloadStartIndex, b);
+        int destinationPort = TcpPacketBuilder.getShort(Socket.payloadStartIndex+2, b);
         if(sourcePort != neu.sourcePort || destinationPort != neu.destinationPort){
             throw new IOException("failed:"+sourcePort+" != "+neu.sourcePort+" || "+destinationPort+" != "+neu.destinationPort);
         }

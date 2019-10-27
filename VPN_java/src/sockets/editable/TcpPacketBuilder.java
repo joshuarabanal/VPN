@@ -17,11 +17,11 @@ import sockets.tcp.Options;
  *
  * @author root
  */
-public class TcpEditable {
+public class TcpPacketBuilder {
     private byte[] b;
     private Options options;
     public byte[] payload;
-    public TcpEditable(byte[] buffer, int sourceIp, int destIp) throws IOException{
+    public TcpPacketBuilder(byte[] buffer, int sourceIp, int destIp) throws IOException{
         this.b = buffer;
             options = new Options(b, 20, getOptionsLength());
         payload =Arrays.copyOfRange(b, TcpPacket.optionsStartIndex+getOptionsLength(), b.length);
@@ -64,30 +64,31 @@ public class TcpEditable {
     
     
     public int getSourcePort(){ return getShort(0); }
-    public void setSourcePort(int val){ setShort(val,0); }
+    public TcpPacketBuilder setSourcePort(int val){ setShort(val,0); return this; }
     
     public int getDestPort(){ return getShort(2); }
-    public void setDestPort(int val){ setShort(val,2); }
+    public TcpPacketBuilder setDestPort(int val){ setShort(val,2); return this; }
     
     public int getSequenceNumber(){ return getInt(4); }
-    public void setSequenceNumber(int val){ setInt(val,4); }
+    public TcpPacketBuilder setSequenceNumber(int val){ setInt(val,4); return this; }
     
     public int getAckNumber(){ return getInt(8); }
-    public void setAckNumber(int val){ setInt(val,8); }
+    public TcpPacketBuilder setAckNumber(int val){ setInt(val,8); return this; }
     
     public int getOptionsLength() { 
         return (((b[12]&0xff)>>4)-5)*4; }
     
-    public void setOptionsLength() { 
+    public TcpPacketBuilder setOptionsLength() { 
        int length = options.toByteArray().length;
        length/=4;
        length += 5;
        length = length<<4;
        b[12] = (byte)length;
+       return this;
     }
     
     public int getFlags(){ return b[13]; }
-    public void setFlags(int val){ b[13] = (byte) val; }
+    public TcpPacketBuilder setFlags(int val){ b[13] = (byte) val; return this; }
     
     private void setFlag(boolean on, int flag){
         int flags = getFlags() & (~flag);
@@ -97,22 +98,22 @@ public class TcpEditable {
         setFlags(flags);
     }
     public boolean getACK(){   return (getFlags() & TcpPacket.ACK_flag) != 0;  }
-    public void setACK(boolean ACK){ setFlag(ACK,TcpPacket.ACK_flag); }
+    public TcpPacketBuilder setACK(boolean ACK){ setFlag(ACK,TcpPacket.ACK_flag); return this; }
     
     public boolean getPSH(){   return (getFlags() & TcpPacket.PSH_flag) != 0;  }
-    public void setPSH(boolean ACK){ setFlag(ACK,TcpPacket.PSH_flag); }
+    public TcpPacketBuilder setPSH(boolean ACK){ setFlag(ACK,TcpPacket.PSH_flag); return this; }
     
     public boolean getRST(){   return (getFlags() & TcpPacket.RST_flag) != 0;  }
-    public void setRST(boolean ACK){ setFlag(ACK,TcpPacket.RST_flag); }
+    public TcpPacketBuilder setRST(boolean ACK){ setFlag(ACK,TcpPacket.RST_flag); return this; }
     
     public boolean getSYN(){   return (getFlags() & TcpPacket.SYN_flag) != 0;  }
-    public void setSYN(boolean ACK){ setFlag(ACK,TcpPacket.SYN_flag); }
+    public TcpPacketBuilder setSYN(boolean ACK){ setFlag(ACK,TcpPacket.SYN_flag); return this; }
     
     public boolean getFIN(){   return (getFlags() & TcpPacket.FIN_flag) != 0;  }
-    public void setFIN(boolean ACK){ setFlag(ACK,TcpPacket.FIN_flag); }
+    public TcpPacketBuilder setFIN(boolean ACK){ setFlag(ACK,TcpPacket.FIN_flag); return this; }
     
     public boolean getURG(){   return (getFlags() & TcpPacket.URG_flag) != 0;  }
-    public void setURG(boolean ACK){ setFlag(ACK,TcpPacket.URG_flag); }
+    public TcpPacketBuilder setURG(boolean ACK){ setFlag(ACK,TcpPacket.URG_flag); return this; }
     
     
     public int getWindowSize(){ return getShort(14); }

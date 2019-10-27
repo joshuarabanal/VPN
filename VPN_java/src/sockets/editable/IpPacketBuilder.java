@@ -13,11 +13,15 @@ import sockets.Socket;
  *
  * @author root
  */
-public class SocketEditable {
+public class IpPacketBuilder {
     private byte[] b;
     //public byte[] payload;
-    
-    public SocketEditable(byte[] b) throws IOException{
+    public IpPacketBuilder(){
+        this.b = new byte[Socket.payloadStartIndex];
+        b[0] = ((4<<4) + 5);
+                
+    }
+    public IpPacketBuilder(byte[] b) throws IOException{
         this.b = Arrays.copyOfRange(
                 b, 0, Socket.payloadStartIndex
         );
@@ -57,7 +61,7 @@ public class SocketEditable {
     
     
     public int getTypeOfService() { return b[1]; }
-    public void setTypeOfService(int type){ b[1] = (byte)( type & 0xff ); } 
+    public IpPacketBuilder setTypeOfService(int type){ b[1] = (byte)( type & 0xff ); return this; } 
     
     public int setLength(byte[] payload){ 
         setShort(b.length+payload.length, 2);
@@ -65,14 +69,16 @@ public class SocketEditable {
     }
     
     public int getId(){ return getShort(4); }
-    public void setId(int id){  setShort(id, 4); }
+    public IpPacketBuilder setId(int id){  setShort(id, 4); return this; }
     
     public int getFragOffset(){ return getShort(6); }
-    public void setFragOffset(int offset){ setShort(offset, 6); }
+    public IpPacketBuilder setFragOffset(int offset){ setShort(offset, 6); return this; }
     
     public int getTTL(){ return b[8];}
-    public void setTTL(int ttl){ b[8] = (byte) ttl;}
+    public IpPacketBuilder setTTL(int ttl){ b[8] = (byte) ttl; return this; }
     
+    public int getProtocol(){ return b[9]; }
+    public IpPacketBuilder setProtocol(int protocol){ b[9] = (byte)protocol; return this; }
     public int setCheckSum(){
         b[10] = b[11] = 0;
         int check = Socket.checksum(b, 0, Socket.payloadStartIndex);
@@ -81,13 +87,13 @@ public class SocketEditable {
     }
     
     public int getSourceIp(){ return getInt(12); }
-    public void setSourceIp(int ip){ setInt(ip, 12); }
+    public IpPacketBuilder setSourceIp(int ip){ setInt(ip, 12); return this; }
     
     public int getDestIp(){ return getInt(16); }
-    public void setDestIp(int ip){ setInt(ip, 16); }
+    public IpPacketBuilder setDestIp(int ip){ setInt(ip, 16); return this; }
     
     
-    public byte[] getPacket(byte[] payload){
+    public byte[] build(byte[] payload){
         setLength(payload);
         setCheckSum();
         byte[] retu = new byte[b.length+payload.length];

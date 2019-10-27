@@ -6,15 +6,15 @@
 package dhcp;
 
 import dhcp.dhcpPacket.Options;
-import static sockets.editable.TcpEditable.setInt;
-import static sockets.editable.TcpEditable.setShort;
+import static sockets.editable.TcpPacketBuilder.setInt;
+import static sockets.editable.TcpPacketBuilder.setShort;
 
 /**
  *
  * @author root
  */
 public class DhcpPacketBuilder {
-    private byte[] b = new byte[236];
+    private byte[] b = new byte[236+4];
     public Options options = new Options();
     
     public void initializeFromCopy(byte[] b){
@@ -32,6 +32,10 @@ public class DhcpPacketBuilder {
                 .setClient_hardware_address(DHCPPacket.getClient_hardware_address(b))
                 .setServer_host_name(DHCPPacket.getServer_host_name(b))
                 .setBoot_file_name(DHCPPacket.getBoot_file_name(b));
+            this.b[236] = 99;
+            this.b[237] = -126;
+            this.b[238] = 83;
+            this.b[239] = 99;
         this.options = DHCPPacket.getOptions(b);
     }
     
@@ -59,7 +63,10 @@ public class DhcpPacketBuilder {
     public DhcpPacketBuilder setGateway_IP_address(int val){ setInt(val,24,b);  return this; }
     
     public DhcpPacketBuilder setClient_hardware_address(int[] val){ 
-        for(int i = 0; i<val.length; i++){
+        if(val.length>4){ 
+            throw new IndexOutOfBoundsException("hardware address greater than 4 ints long");
+        }
+        for(int i = 0; i<4; i++){
             setInt(val[i],28+(i*4),b);
         }
      return this; 
@@ -78,23 +85,32 @@ public class DhcpPacketBuilder {
     }
     public DhcpPacketBuilder setBoot_file_name(String val){ 
         byte[] retu = val.getBytes();
+        if(retu.length>128 ){ throw new IndexOutOfBoundsException("string length longer than 64"); }
         int length = 0;
         for(int i = 0; i<(retu.length); i++){
              b[108+i] = retu[i];
         }
-        for(int i = retu.length; i<64; i++){
-            b[108+1] = 0;
+        for(int i = retu.length; i<128; i++){
+            b[108+i] = 0;
         }
         return this;
     }
+    public void checkMagicCookie(){
+        if(b[236] != 99 || b[237] != -126 || b[238] != 83 || b[239] != 99 ){
+            throw new IndexOutOfBoundsException("magic cookie failed");
+        }
+    }
     public byte[] build(){
+        
+        checkMagicCookie();
+        
         byte[] options = this.options.toByteArray();
-        byte[] retu = new byte[this.b.length+options.length];
-        for(int i = 0; i<this.b.length; i++){
+        byte[] retu = new byte[b.length+options.length];
+        for(int i = 0; i<b.length; i++){
             retu[i] = this.b[i];
         }
         for(int i = 0; i<options.length; i++){
-            retu[i+this.b.length] = options[i];
+            retu[i+b.length] = options[i];
         }
         
         return retu;

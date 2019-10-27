@@ -11,8 +11,8 @@ import static gateway.IpPacket.UDPPacket.getPayloadStartIndex;
 import java.util.ArrayList;
 import java.util.Arrays;
 import sockets.Socket;
-import static sockets.editable.TcpEditable.getInt;
-import static sockets.editable.TcpEditable.getShort;
+import static sockets.editable.TcpPacketBuilder.getInt;
+import static sockets.editable.TcpPacketBuilder.getShort;
 
 /**
  *<a href="https://tools.ietf.org/html/rfc2131">source</a>
@@ -80,7 +80,13 @@ public class DHCPPacket {
     public static Options getOptions(byte[] b){
         Options retu = new Options();
         int index = getOptionsStartIndex(b);
-        if(b[index] != 99 && b[index+1] != -126 && b[index+2] != 83 && b[index+3] != 99 ){
+        if(b[index] != 99 || b[index+1] != -126 || b[index+2] != 83 || b[index+3] != 99 ){
+            System.out.println(
+                    "magic cookies b["+getOptionsStartIndex(b)+"]:"+
+                    Arrays.toString(
+                        Arrays.copyOfRange(b, getOptionsStartIndex(b), b.length)
+                    )
+            );
             throw new IndexOutOfBoundsException("magic cokies failed");
         }
         index+=4;
@@ -93,28 +99,33 @@ public class DHCPPacket {
     }
     public static String toString(byte[]b){
         StringBuilder sb = new StringBuilder();
-        sb.append("start index:").append(getPayloadStartIndex(b));
-        sb.append("\nOP:").append(getOP(b));
-        sb.append("\nHTYPE:").append(getHTYPE(b));
-        sb.append("\nHLEN:").append(getHLEN(b));
-        sb.append("\nHOPS:").append(getHOPS(b));
-        sb.append("\nXID:").append(getXID(b));
-        sb.append("\nSECS:").append(getSECS(b));
-        sb.append("\nFLAGS:").append(getFLAGS(b));
-        sb.append("\nClient_IP_address:").append(Socket.ipIntToString(getClient_IP_address(b)));
-        sb.append("\nYour_IP_address:").append(Socket.ipIntToString(getYour_IP_address(b)));
-        sb.append("\nServer_IP_address:").append(Socket.ipIntToString(getServer_IP_address(b)));
-        sb.append("\nGateway_IP_address:").append(Socket.ipIntToString(getGateway_IP_address(b)));
-        sb.append("\nClient_hardware_address:").append(Arrays.toString(getClient_hardware_address(b)));
-        sb.append("\nServer_host_name:").append(getServer_host_name(b));
-        sb.append("\nBoot_file_name:").append(getBoot_file_name(b));
-        ArrayList<Option> options = getOptions(b);
-         sb.append("\nOPTIONS:");
-        for(Option o : options){
-             sb.append("\n\t\t").append(o.toString());
+        try{
+            sb.append("start index:").append(getPayloadStartIndex(b));
+            sb.append("\nOP:").append(getOP(b));
+            sb.append("\nHTYPE:").append(getHTYPE(b));
+            sb.append("\nHLEN:").append(getHLEN(b));
+            sb.append("\nHOPS:").append(getHOPS(b));
+            sb.append("\nXID:").append(getXID(b));
+            sb.append("\nSECS:").append(getSECS(b));
+            sb.append("\nFLAGS:").append(getFLAGS(b));
+            sb.append("\nClient_IP_address:").append(Socket.ipIntToString(getClient_IP_address(b)));
+            sb.append("\nYour_IP_address:").append(Socket.ipIntToString(getYour_IP_address(b)));
+            sb.append("\nServer_IP_address:").append(Socket.ipIntToString(getServer_IP_address(b)));
+            sb.append("\nGateway_IP_address:").append(Socket.ipIntToString(getGateway_IP_address(b)));
+            sb.append("\nClient_hardware_address:").append(Arrays.toString(getClient_hardware_address(b)));
+            sb.append("\nServer_host_name:").append(getServer_host_name(b));
+            sb.append("\nBoot_file_name:").append(getBoot_file_name(b));
+            ArrayList<Option> options = getOptions(b);
+             sb.append("\nOPTIONS:");
+            for(Option o : options){
+                 sb.append("\n\t\t").append(o.toString());
+            }
+            return sb.toString();
+        }catch(Exception e){
+            System.out.println("failed to make string of packet \n "+sb.toString());
+            throw e;
         }
         
-        return sb.toString();
     }
     
     //public static int get(byte[] b){  return getInt(getPayloadStartIndex(b)+4,b); }

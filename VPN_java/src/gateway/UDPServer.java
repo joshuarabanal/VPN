@@ -7,6 +7,7 @@ package gateway;
 
 import dhcp.DHCPPacket;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import sockets.RawSocket;
@@ -22,13 +23,15 @@ public class UDPServer {
     private int serverIp = Socket.ipStringToInt("192.168.1.12"), forwardingIp = Socket.ipStringToInt("72.188.192.147");
     
     public void run(){
-                dhcp.DHCPServer s = new dhcp.DHCPServer();
+                dhcp.DHCPServer s = new dhcp.DHCPServer(sock);
         while(true){
             try {
+                System.out.println("\n\n\n\nread loop:");
+                
                 byte[] b = sock.accept();
                 if(s.accept(b)){ continue; }
                 
-                System.out.println("packetRecieved:"+
+                System.out.println("unknown packetRecieved:"+
                         Socket.ipIntToString(IpPacket.getSourceIp(b))
                         +":"+
                         IpPacket.UDPPacket.getSourcePort(b)+
@@ -38,8 +41,22 @@ public class UDPServer {
                         IpPacket.UDPPacket.getDestPort(b)
                         
                 );
-                if(IpPacket.UDPPacket.getSourcePort(b) == 68 /**IpPacket.UDPPacket.getDestPort(b) == 67**/){
+                if(IpPacket.UDPPacket.getSourcePort(b) == 68 && IpPacket.UDPPacket.getDestPort(b) == 67 ){
                     System.out.println("DHCP packet:"+DHCPPacket.toString(b));
+                }
+                else{//log errors
+                    try{
+                        System.out.println("unknonwn ip packet:"+IpPacket.toString(b));
+                        System.out.println("unknown UDP packet:"+IpPacket.UDPPacket.toString(b));
+                        System.out.println("unknonwn DHCP packet:"+DHCPPacket.toString(b));
+                    }catch (IndexOutOfBoundsException e){
+                        System.out.println(
+                                "array"+Arrays.toString(
+                                    Arrays.copyOfRange(b, IpPacket.UDPPacket.getPayloadStartIndex(b), b.length)
+                                )
+                        );
+                        throw e;
+                    }
                 }
                 
             } catch (IOException ex) {

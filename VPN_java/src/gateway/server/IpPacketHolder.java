@@ -12,8 +12,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import sockets.RawSocket;
 import sockets.Socket;
-import sockets.editable.SocketEditable;
-import sockets.editable.TcpEditable;
+import sockets.editable.IpPacketBuilder;
+import sockets.editable.TcpPacketBuilder;
 
 /**
  *
@@ -64,11 +64,11 @@ public class IpPacketHolder {
     }
 
     private void forwardToServer(Socket s) throws IOException {
-        SocketEditable se = new SocketEditable(s.buffer);
+        IpPacketBuilder se = new IpPacketBuilder(s.buffer);
         System.out.println("\n\n\n");
         System.out.println("forwarding to server");
         System.out.println(s.toString()+"\n\n\n");
-        TcpEditable tcp = new TcpEditable(
+        TcpPacketBuilder tcp = new TcpPacketBuilder(
                 Arrays.copyOfRange(s.buffer, Socket.payloadStartIndex, s.buffer.length),
                 s.sourceIpAddress, 
                 s.destinationIpAddress
@@ -76,7 +76,7 @@ public class IpPacketHolder {
         
         
         //check for errors
-        byte[] fin = se.getPacket(tcp.getPacket(s.sourceIpAddress, s.destinationIpAddress));
+        byte[] fin = se.build(tcp.getPacket(s.sourceIpAddress, s.destinationIpAddress));
         if(fin.length!= s.buffer.length){
             System.out.println("fin:"+Arrays.toString(fin));
             System.out.println("s:"+Arrays.toString(s.buffer));
@@ -94,7 +94,7 @@ public class IpPacketHolder {
         se.setDestIp(forwardingIp);
         se.setSourceIp(gatewayIp);
         outStream.write(
-                se.getPacket(tcp.getPacket(gatewayIp, forwardingIp)), 
+                se.build(tcp.getPacket(gatewayIp, forwardingIp)), 
                 tcp.getDestPort(), 
                 se.getDestIp()
         );
@@ -105,12 +105,12 @@ public class IpPacketHolder {
         System.out.println("forward to client");
         System.out.println(s.toString()+"\n\n\n");
         
-        SocketEditable se = new SocketEditable(s.buffer);
-        TcpEditable tcp = new TcpEditable(Arrays.copyOfRange(s.buffer, Socket.payloadStartIndex, s.buffer.length), s.sourceIpAddress, s.destinationIpAddress);
+        IpPacketBuilder se = new IpPacketBuilder(s.buffer);
+        TcpPacketBuilder tcp = new TcpPacketBuilder(Arrays.copyOfRange(s.buffer, Socket.payloadStartIndex, s.buffer.length), s.sourceIpAddress, s.destinationIpAddress);
         
         
         //check for errors
-        byte[] fin = se.getPacket(tcp.getPacket(s.sourceIpAddress, s.destinationIpAddress));
+        byte[] fin = se.build(tcp.getPacket(s.sourceIpAddress, s.destinationIpAddress));
         if(fin.length!= s.buffer.length){
             System.out.println("fin:"+Arrays.toString(fin));
             System.out.println("s:"+Arrays.toString(s.buffer));
@@ -128,7 +128,7 @@ public class IpPacketHolder {
         se.setSourceIp(serverIp);
         se.setDestIp(clientIp);
         outStream.write(
-                se.getPacket(tcp.getPacket(serverIp,clientIp)), 
+                se.build(tcp.getPacket(serverIp,clientIp)), 
                 s.getTCP().sourcePort, 
                 s.sourceIpAddress
         );

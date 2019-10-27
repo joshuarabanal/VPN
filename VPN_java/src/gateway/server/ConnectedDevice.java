@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import sockets.RawSocket;
 import sockets.Socket;
 import sockets.TcpPacket;
-import sockets.editable.TcpEditable;
+import sockets.editable.TcpPacketBuilder;
 
 /**
  *
@@ -35,8 +35,8 @@ public class ConnectedDevice {
             }
         }
         
-        int sourceIpAddress = TcpEditable.getInt(12, s);
-        int destinationIp = TcpEditable.getInt(16, s);
+        int sourceIpAddress = TcpPacketBuilder.getInt(12, s);
+        int destinationIp = TcpPacketBuilder.getInt(16, s);
         
         if(sourceIpAddress == clientIp){
             System.out.println("making new packet");

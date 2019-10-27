@@ -80,6 +80,8 @@ public class RawSocket {
             switch(howmany){
                 case 11:  errorMessage = "try again";
                 break;
+                case 13: errorMessage = "permission denied";
+                break;
                 case 89: errorMessage = "Destination address required";
                 break;
             }

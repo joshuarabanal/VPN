@@ -9,7 +9,7 @@ package sockets;
 import gateway.IpPacket;
 import java.io.IOException;
 import java.util.Arrays;
-import sockets.editable.TcpEditable;
+import sockets.editable.TcpPacketBuilder;
 
 /**
  *

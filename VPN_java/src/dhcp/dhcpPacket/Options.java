@@ -36,6 +36,10 @@ public class Options extends ArrayList<Option> {
     }
     public byte[] toByteArray() {
         int length = 0;
+        if(get(size()-1).type != Option.type_end){
+            System.out.println("you forgot to add the end option!!");
+            add( new Option.EndOption() );
+        }
         for(Option o :this){
             length+=o.getByteArrayLength();
         }
@@ -53,6 +57,7 @@ public class Options extends ArrayList<Option> {
                 }
             }
         }
+        
         return retu;
     }
 }

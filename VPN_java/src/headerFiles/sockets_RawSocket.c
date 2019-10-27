@@ -43,12 +43,10 @@ int makeSocket(int type, const char *interfaceName){
     }
     
     
+    
     return sock;
   
 }
-
-
-
 
 
 /**
@@ -86,8 +84,6 @@ jlong socket_RawSocket_getLong(JNIEnv *environment, jobject self, char* variable
 
   return (*environment)->GetLongField(environment, self , fieldId);
 }
-
-
 
 JNIEXPORT jbyteArray JNICALL Java_sockets_RawSocket_readNextPacket
   (JNIEnv * environment, jobject self){
@@ -147,6 +143,7 @@ JNIEXPORT jint JNICALL Java_sockets_RawSocket_writePacket
             ( (ipAddress>> 8) & 0x0000ff00 )+//second becomes 3rd
             ( (ipAddress<< 8) & 0x00FF0000 )+//3rd becomes 2nd
             ( (ipAddress<<24) & 0xFF000000);//lasrt becomes first
+    
     //address for socket
     struct sockaddr_in sin;
     sin.sin_family = AF_INET;
@@ -161,9 +158,14 @@ JNIEXPORT jint JNICALL Java_sockets_RawSocket_writePacket
 		perror("Error setting IP_HDRINCL");
 		exit(0);
         }
+    
+        int broadcastEnable=1;
+        if(setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &broadcastEnable, sizeof(broadcastEnable))<0){
+		perror("Error setting SO_BROADCAST");
+		exit(0);
+        }
 
-    
-    
+        
     //create char array
     int length = (*environment)->GetArrayLength (environment,array);
     jbyte * b =   (jbyte *)malloc(length);
@@ -171,12 +173,13 @@ JNIEXPORT jint JNICALL Java_sockets_RawSocket_writePacket
     
     //write the array
     //return write(sock, b, length);
-    //return send(sock, b, length, 0);
-    int retu =  sendto (sock, b, length,0, (struct sockaddr *)&sin, sizeof(sin));
+    //int retu =  send(sock, b, length, 0);
+    int retu =  sendto (sock, b, length,0, (const struct sockaddr *)&sin, sizeof(sin));
     if(retu < 0){ 
         //EAGAIN = EWOULDBLOCK = EBADF = 11
-        //ECONNRESET = 104
-        //EDESTADDRREQ = 89
+        ECONNRESET //= 104
+        //EDESTADDRREQ 89;
+                EFAULT
         return errno;
     }
     return retu;

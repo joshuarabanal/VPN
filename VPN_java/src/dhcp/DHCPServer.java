@@ -8,26 +8,36 @@ package dhcp;
 import gateway.IpPacket;
 import dhcp.dhcpPacket.Options;
 import dhcp.dhcpPacket.Option;
+import java.io.IOException;
 import java.util.ArrayList;
+import sockets.RawSocket;
 import sockets.Socket;
-import sockets.editable.SocketEditable;
+import sockets.UdpPacketBuilder;
+import sockets.editable.IpPacketBuilder;
 
 /**
  *
  * @author root
  */
 public class DHCPServer {
-    private static final int subnetMask = Socket.ipStringToInt("255.255.255.0"), 
-            serverIpAddress = Socket.ipStringToInt("192.168.1.0"),
-            serverIdentifier = Socket.ipStringToInt("192.168.1.1"),
-            broadcastAddress = Socket.ipStringToInt("192.168.1.101"),
+    private static final int subnetMask = Socket.ipStringToInt("255.255.255.0"),
+            
+            serverIpAddress = Socket.ipStringToInt("192.168.2.1"),
+            serverIdentifier = Socket.ipStringToInt("192.168.2.1"),
+            gatewayIpAddress = Socket.ipStringToInt("0.0.0.0"),
+            broadcastAddress = Socket.ipStringToInt("192.168.2.101"),
             addressLeaseTime = 60*60*24,
             renewalLeaseTime = 60*60*12,
             rebindingLeaseTime = 60*60*21;
     
+    private RawSocket out;
     ArrayList<Integer> usedSubnets = new ArrayList<Integer>();
     
-    public boolean accept(byte[] b){
+    public DHCPServer(RawSocket outStream){
+        this.out = outStream;
+    }
+    
+    public boolean accept(byte[] b) throws IOException{
         if(IpPacket.UDPPacket.getSourcePort(b) != 68 || IpPacket.UDPPacket.getDestPort(b) != 67){
             return false;
         }
@@ -54,13 +64,18 @@ public class DHCPServer {
         }
         throw new IndexOutOfBoundsException("no available clients");
     }
-    private void discover(byte[] b, Options opts){
+    private void discover(byte[] b, Options opts) throws IOException{
+        System.out.println(
+                "new Discover request:"+
+                IpPacket.getSourceIp(b)+":"+IpPacket.UDPPacket.getSourcePort(b)+
+                "=>"+IpPacket.getDestIp(b)+":"+IpPacket.UDPPacket.getDestPort(b)+"\nDCHP details:"+DHCPPacket.toString(b)
+        );
         DhcpPacketBuilder builder = new DhcpPacketBuilder();
         
         builder.initializeFromCopy(b);
         builder.setOP((byte)2);
         builder.setServer_IP_address(serverIpAddress);
-        builder.setClient_IP_address(Socket.ipStringToInt("192.168.1."+getAvailableIp()));
+        builder.setYour_IP_address(Socket.ipStringToInt("192.168.2."+getAvailableIp()));
         builder.options = buildResponseOptions(opts);
         
         //add the default options
@@ -106,9 +121,24 @@ public class DHCPServer {
             o = buildResponseByType((byte)Option.type_dns);
             builder.options.add(o);
         }
-        SocketEditable se = new SocketEditable(b);
         
-        byte[] dhcp = builder.build();
+        
+        //build final packets
+        //ip packet
+        IpPacketBuilder ipe = new IpPacketBuilder(b);
+            ipe.setSourceIp(serverIpAddress)
+                    .setDestIp(IpPacket.getDestIp(b));
+        //udp packet
+        UdpPacketBuilder udpe = new UdpPacketBuilder(b, IpPacket.getIPHeaderLength(b));
+        int destPort = udpe.getDestPort();
+        int srcPort = udpe.getSourcePort();
+            udpe.setDestPort(srcPort)
+                .setSourcePort(destPort);
+            
+        byte[] retu = builder.build();//dhcp packet
+        retu = udpe.build(ipe.getSourceIp(), ipe.getDestIp(), Socket.payloadStartIndex+UdpPacketBuilder.payload_start_index+retu.length,retu );
+        retu = ipe.build(retu);
+        out.write(retu, udpe.getDestPort(), ipe.getDestIp());
         
         
     }
@@ -134,8 +164,7 @@ public class DHCPServer {
             case Option.type_static_route:
                 return new Option.StaticRoute( 
                         new int[]{
-                            Socket.ipStringToInt("0.0.0.0"), serverIpAddress,
-                            Socket.ipStringToInt("192.168.1.0"), serverIpAddress
+                            gatewayIpAddress, serverIpAddress
                         } 
                 );
                 
@@ -149,7 +178,7 @@ public class DHCPServer {
                 );
                 
             case Option.type_host_name:
-                return new Option.HostName("192.168.0.1");
+                return new Option.HostName("192.168.1.1");
                 
             case Option.type_domain_name:
                 System.out.println("skipping domain name because its confusing, and appears to be unneccessary");

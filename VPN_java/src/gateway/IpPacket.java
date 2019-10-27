@@ -5,8 +5,8 @@
  */
 package gateway;
 
-import static sockets.editable.TcpEditable.getInt;
-import static sockets.editable.TcpEditable.getShort;
+import static sockets.editable.TcpPacketBuilder.getInt;
+import static sockets.editable.TcpPacketBuilder.getShort;
 
 
 /**
@@ -40,6 +40,14 @@ public class IpPacket {
         public static int getPayloadStartIndex(byte[]b){
             return getIPHeaderLength(b)+UDP_header_length;
         }
+        public static String toString(byte[] b){
+            StringBuilder sb = new StringBuilder("UDP packet:");
+            sb.append("\nsource port:").append(getSourcePort(b));
+            sb.append("\ndest port:").append(getDestPort(b));
+            sb.append("\nlength:").append(getLength(b));
+            sb.append("\ncheck sum:").append(getChecksum(b));
+            return sb.toString();
+        }
     }
     
     public static int getVersion(byte[]b){
@@ -71,6 +79,22 @@ public class IpPacket {
     }
     public static int getDestIp(byte[] b){
         return getInt(16, b);
+    }
+    
+    public static  String toString(byte[] b){
+        StringBuilder sb = new StringBuilder("IP packet:");
+        sb.append("\nversion:").append(getVersion(b));
+        sb.append("\nip header length:").append(getIPHeaderLength(b));
+        sb.append("\ntype of service:").append(getTypeOfService(b));
+        sb.append("\n total length:").append(getTotalLength(b));
+        sb.append("\nID:").append(getId(b));
+        sb.append("\nFrag ofset:").append(getFragOffset(b));
+        sb.append("\nTTL:").append(getTTL(b));
+        sb.append("\nprotocol:").append(getProtocol(b));
+        sb.append("\ncheck sum:").append(getCheckSum(b));
+        sb.append("\nsource Ip:").append(getSourceIp(b));
+        sb.append("\ndest ip:").append(getDestIp(b));
+        return sb.toString();
     }
     
     

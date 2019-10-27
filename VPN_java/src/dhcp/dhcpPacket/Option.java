@@ -5,7 +5,7 @@ package dhcp.dhcpPacket;
 
 import java.util.Arrays;
 import sockets.Socket;
-import sockets.editable.TcpEditable;
+import sockets.editable.TcpPacketBuilder;
 
 /**
  * <a href="https://tools.ietf.org/html/rfc1533"> source </a>
@@ -50,6 +50,12 @@ public class Option {
             case type_max_message_size:  return new MaxMessageSize(b,start);
             case type_class_identifier:  return new ClassIdentifier(b,start);
             case type_end:  return new EndOption(b,start);
+            case type_interface_mtu: return new InterfaceMTU(b,start);
+            case type_broadcast_address: return new BroadcastAddress(b,start);
+            case type_ip_address_lease_time: return new IpAddressLeaseTime(b,start);
+            case type_server_identifier: return new ServerID(b,start);
+            case type_renewal_time_val: return new RenewalTimeValue(b,start);
+            case type_rebinding_time_value: return new RebindingTimeValue(b,start);
         }
         return new Option(b,start);
     }
@@ -164,7 +170,7 @@ public class Option {
             }
         }
         public String toString(){
-           return "SubnetMask:"+Socket.ipIntToString(TcpEditable.getInt(0, data));
+           return "SubnetMask:"+Socket.ipIntToString(TcpPacketBuilder.getInt(0, data));
         }
         
     }
@@ -194,7 +200,7 @@ public class Option {
             }
         }
         public String toString(){
-            return "maxMessageSize:"+TcpEditable.getShort(0,data);
+            return "maxMessageSize:"+TcpPacketBuilder.getShort(0,data);
         }
         
     }
@@ -215,7 +221,9 @@ public class Option {
     }
     
     public static class EndOption extends Option{
-        
+        public EndOption(){
+            super(new byte[]{(byte)type_end, 0},0);
+        }
         public EndOption(byte[] b, int start) {
             super(b, start);
             
@@ -255,12 +263,12 @@ public class Option {
     public static class StaticRoute extends Option{
         public StaticRoute(int[] ipAddressPairs){
             super(new byte[]{type_static_route, 0},0);
-            
-            byte[] b = new byte[2+(ipAddressPairs.length*4)];
-            b[0] = Option.type_static_route;
-            b[1] = (byte) (b.length-2);
+            if(ipAddressPairs.length%2 != 0){
+                throw new IndexOutOfBoundsException("static routes must come in pairs of Ip addresses");
+            }
+            byte[] b = new byte[(ipAddressPairs.length*4)];
             for(int i = 0; i<ipAddressPairs.length; i++){
-                TcpEditable.setInt(ipAddressPairs[i], (i*4)+2, b);
+                TcpPacketBuilder.setInt(ipAddressPairs[i], (i*4), b);
             }
             this.data = b;
         }
@@ -275,9 +283,9 @@ public class Option {
             StringBuilder sb = new StringBuilder("static route option:");
             for(int i = 0; i<data.length; i+=8){
                 sb.append("\n")
-                        .append(Socket.ipIntToString(TcpEditable.getInt(i, data)))
+                        .append(Socket.ipIntToString(TcpPacketBuilder.getInt(i, data)))
                         .append("=>")
-                        .append(Socket.ipIntToString(TcpEditable.getInt(i+4, data)));
+                        .append(Socket.ipIntToString(TcpPacketBuilder.getInt(i+4, data)));
             }
            return sb.toString();
         }
@@ -289,7 +297,7 @@ public class Option {
             super(new byte[]{type_router, 0}, 0);
             this.data= new byte[routerIps.length*4];
             for(int i = 0; i<routerIps.length; i++){
-                TcpEditable.setInt(routerIps[i], i*4, data);
+                TcpPacketBuilder.setInt(routerIps[i], i*4, data);
             }
         }
         public Router(byte[] b, int start) {
@@ -303,7 +311,7 @@ public class Option {
             StringBuilder sb = new StringBuilder("router option:");
             for(int i = 0; i<data.length; i+=4){
                 sb.append("\n")
-                        .append(Socket.ipIntToString(TcpEditable.getInt(i, data)));
+                        .append(Socket.ipIntToString(TcpPacketBuilder.getInt(i, data)));
             }
            return sb.toString();
         }
@@ -315,13 +323,13 @@ public class Option {
             super(new byte[]{type_dns, 0}, 0);
             this.data= new byte[dnsIPs.length*4];
             for(int i = 0; i<dnsIPs.length; i++){
-                TcpEditable.setInt(dnsIPs[i], i*4, data);
+                TcpPacketBuilder.setInt(dnsIPs[i], i*4, data);
             }
         }
         public DNS(byte[] b, int start) {
             super(b, start);
             
-            if(type!= type_router){
+            if(type!= type_dns){
                 throw new IndexOutOfBoundsException("incorrect Type:"+type);
             }
         }
@@ -329,7 +337,7 @@ public class Option {
             StringBuilder sb = new StringBuilder("DNS option:");
             for(int i = 0; i<data.length; i+=4){
                 sb.append("\n")
-                        .append(Socket.ipIntToString(TcpEditable.getInt(i, data)));
+                        .append(Socket.ipIntToString(TcpPacketBuilder.getInt(i, data)));
             }
            return sb.toString();
         }
@@ -375,7 +383,7 @@ public class Option {
         public InterfaceMTU(int maxFrameSize){
             super(new byte[]{type_interface_mtu, 0}, 0);
             data = new byte[2];
-            TcpEditable.setShort(maxFrameSize, 0, data);
+            TcpPacketBuilder.setShort(maxFrameSize, 0, data);
             
         }
         public InterfaceMTU(byte[] b, int start) {
@@ -386,7 +394,7 @@ public class Option {
             }
         }
         public String toString(){
-            return "interfaceMtu:"+TcpEditable.getShort(0,data);
+            return "interfaceMtu:"+TcpPacketBuilder.getShort(0,data);
         }
         
     }
@@ -395,7 +403,7 @@ public class Option {
         public BroadcastAddress(int ipAddress){
             super(new byte[]{type_broadcast_address, 0}, 0);
             data = new byte[4];
-            TcpEditable.setInt(ipAddress, 0, data);
+            TcpPacketBuilder.setInt(ipAddress, 0, data);
         }
         public BroadcastAddress(byte[] b, int start) {
             super(b, start);
@@ -405,7 +413,7 @@ public class Option {
             }
         }
         public String toString(){
-            return "broadcast address:"+Socket.ipIntToString(TcpEditable.getInt(0,data));
+            return "broadcast address:"+Socket.ipIntToString(TcpPacketBuilder.getInt(0,data));
         }
         
     }
@@ -413,7 +421,7 @@ public class Option {
         public IpAddressLeaseTime(int timeInSeconds){
             super(new byte[]{type_ip_address_lease_time, 0}, 0);
             data = new byte[4];
-            TcpEditable.setInt(timeInSeconds, 0, data);
+            TcpPacketBuilder.setInt(timeInSeconds, 0, data);
         }
         public IpAddressLeaseTime(byte[] b, int start) {
             super(b, start);
@@ -423,7 +431,7 @@ public class Option {
             }
         }
         public String toString(){
-            return "IP address lease in seconds:"+TcpEditable.getInt(0,data);
+            return "IP address lease in seconds:"+TcpPacketBuilder.getInt(0,data);
         }
         
     }
@@ -432,7 +440,7 @@ public class Option {
         public RenewalTimeValue(int timeInSeconds){
             super(new byte[]{type_renewal_time_val, 0}, 0);
             data = new byte[4];
-            TcpEditable.setInt(timeInSeconds, 0, data);
+            TcpPacketBuilder.setInt(timeInSeconds, 0, data);
         }
         public RenewalTimeValue(byte[] b, int start) {
             super(b, start);
@@ -442,7 +450,7 @@ public class Option {
             }
         }
         public String toString(){
-            return "IP address lease in seconds:"+TcpEditable.getInt(0,data);
+            return "IP address lease in seconds:"+TcpPacketBuilder.getInt(0,data);
         }
         
     }
@@ -451,7 +459,7 @@ public class Option {
         public RebindingTimeValue(int timeInSeconds){
             super(new byte[]{type_rebinding_time_value, 0}, 0);
             data = new byte[4];
-            TcpEditable.setInt(timeInSeconds, 0, data);
+            TcpPacketBuilder.setInt(timeInSeconds, 0, data);
         }
         public RebindingTimeValue(byte[] b, int start) {
             super(b, start);
@@ -461,7 +469,7 @@ public class Option {
             }
         }
         public String toString(){
-            return "IP address reattempt:"+TcpEditable.getInt(0,data);
+            return "IP address reattempt:"+TcpPacketBuilder.getInt(0,data);
         }
         
     }
@@ -470,7 +478,7 @@ public class Option {
         public ServerID(int identifier){
             super(new byte[]{type_server_identifier, 0}, 0);
             data = new byte[4];
-            TcpEditable.setInt(identifier, 0, data);
+            TcpPacketBuilder.setInt(identifier, 0, data);
         }
         public ServerID(byte[] b, int start) {
             super(b, start);
@@ -480,7 +488,7 @@ public class Option {
             }
         }
         public String toString(){
-            return "ServerID:"+TcpEditable.getInt(0,data);
+            return "ServerID:"+TcpPacketBuilder.getInt(0,data);
         }
         
     }

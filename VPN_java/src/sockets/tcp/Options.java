@@ -9,7 +9,7 @@ package sockets.tcp;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import sockets.editable.TcpEditable;
+import sockets.editable.TcpPacketBuilder;
 import sockets.tcp.Options.Option;
 
 /**
@@ -76,8 +76,8 @@ public class Options extends ArrayList<Option> {
         public TimeStamp(int type, byte[] b, int start, int length) { super(type, b, start, length); }
         
         public String toString(){ return "Time="+getTsVal()+"(TsVal):"+getTsecr()+"(Tsecr)"; }
-        public int getTsVal(){ return TcpEditable.getInt(0, data); }
-        public int getTsecr(){ return TcpEditable.getInt(4, data); }
+        public int getTsVal(){ return TcpPacketBuilder.getInt(0, data); }
+        public int getTsecr(){ return TcpPacketBuilder.getInt(4, data); }
         
         
     }
@@ -192,8 +192,8 @@ public void addSelectiveAcknowlegementPermitted(){
     public void addTimeStamp(int ourTimeStamp, int timestampEcho){
         byte[] b = new byte[8];
         int ourTime = (int) System.currentTimeMillis();
-        TcpEditable.setInt(ourTime, 0, b);
-        TcpEditable.setInt(timestampEcho, 4, b);
+        TcpPacketBuilder.setInt(ourTime, 0, b);
+        TcpPacketBuilder.setInt(timestampEcho, 4, b);
         System.out.println("addind timestamp:"+ourTimeStamp+":"+timestampEcho);
         add(new TimeStamp(b, 0));
     }
