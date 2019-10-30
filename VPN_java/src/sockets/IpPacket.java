@@ -3,9 +3,9 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package gateway;
+package sockets;
 
-import sockets.Socket;
+import java.util.Arrays;
 import static sockets.editable.TcpPacketBuilder.getInt;
 import static sockets.editable.TcpPacketBuilder.getShort;
 
@@ -15,6 +15,8 @@ import static sockets.editable.TcpPacketBuilder.getShort;
  * @author root
  */
 public class IpPacket {
+    public static final int  ipv4HeaderVersion = 4, TCP_protocol = 6, UDP_protocol = 17; 
+    
     public static class TCPPacket{
         public static int getSourcePort(byte[] b){
             return getShort(getIPHeaderLength(b), b);
@@ -32,6 +34,11 @@ public class IpPacket {
         public static int getDestPort(byte[]b){
             return getShort(getIPHeaderLength(b)+2, b);
         }
+        /**
+         * payload length+udpHeader length = {@link #getPayload(byte[])}.length+ 8
+         * @param b
+         * @return 
+         */
         public static int getLength(byte[]b){
             return getShort(getIPHeaderLength(b)+4, b);
         }
@@ -40,6 +47,10 @@ public class IpPacket {
         }
         public static int getPayloadStartIndex(byte[]b){
             return getIPHeaderLength(b)+UDP_header_length;
+        }
+        public static byte[] getPayload(byte[]b){
+            int start = getPayloadStartIndex(b);
+            return Arrays.copyOfRange(b, start, start+getLength(b)-8);
         }
         public static String toString(byte[] b){
             StringBuilder sb = new StringBuilder("UDP packet:");
@@ -82,6 +93,30 @@ public class IpPacket {
         return getInt(16, b);
     }
     
+    public static String ipIntToString(int ip){
+        String retu = "";
+        retu += (ip>>24)&0xff;
+        retu += ".";
+        retu += (ip>>16)&0xff;
+        retu+=".";
+        retu += (ip>>8)&0xff;
+        retu+=".";
+        retu += ip&0xff;
+        return retu;
+       
+    }
+    
+    public static int ipStringToInt(String ipAddress){
+        int retu = 0;
+        String[] pieces = ipAddress.split("\\.");
+        for(String byt : pieces){
+            retu = retu<<8;
+            retu = retu | (Integer.parseInt(byt) & 0xff);
+        }
+        return retu;
+    }
+    
+    
     public static  String toString(byte[] b){
         StringBuilder sb = new StringBuilder("IP packet:");
         sb.append("\nversion:").append(getVersion(b));
@@ -93,8 +128,8 @@ public class IpPacket {
         sb.append("\nTTL:").append(getTTL(b));
         sb.append("\nprotocol:").append(getProtocol(b));
         sb.append("\ncheck sum:").append(getCheckSum(b));
-        sb.append("\nsource Ip:").append(Socket.ipIntToString(getSourceIp(b)));
-        sb.append("\ndest ip:").append(Socket.ipIntToString(getDestIp(b)));
+        sb.append("\nsource Ip:").append(sockets.IpPacket_deprecated.ipIntToString(getSourceIp(b)));
+        sb.append("\ndest ip:").append(sockets.IpPacket_deprecated.ipIntToString(getDestIp(b)));
         return sb.toString();
     }
     

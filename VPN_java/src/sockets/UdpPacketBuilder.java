@@ -66,9 +66,9 @@ public class UdpPacketBuilder {
         // 8 bit 0
         
         //protocol
-        sum+=  (Socket.TCP_protocol);
+        sum+=  (IpPacket_deprecated.TCP_protocol);
         
-        sum+=(~Socket.checksum(b, 0, b.length))&0xffff;
+        sum+=(~IpPacket_deprecated.checksum(b, 0, b.length))&0xffff;
         
         while(sum>0xFFFF){
             sum = (sum&0xffff) + (sum>>16);

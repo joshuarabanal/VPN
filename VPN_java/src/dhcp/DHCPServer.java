@@ -5,13 +5,13 @@
  */
 package dhcp;
 
-import gateway.IpPacket;
 import dhcp.dhcpPacket.Options;
 import dhcp.dhcpPacket.Option;
 import java.io.IOException;
 import java.util.ArrayList;
 import sockets.RawSocket;
-import sockets.Socket;
+import sockets.IpPacket;
+import sockets.IpPacket_deprecated;
 import sockets.UdpPacketBuilder;
 import sockets.editable.IpPacketBuilder;
 
@@ -20,12 +20,12 @@ import sockets.editable.IpPacketBuilder;
  * @author root
  */
 public class DHCPServer {
-    private static final int subnetMask = Socket.ipStringToInt("255.255.255.0"),
-            subnetPrefix = Socket.ipStringToInt("192.168.1.0"),
-            serverIpAddress = Socket.ipStringToInt("192.168.1.1"),
-            serverIdentifier = Socket.ipStringToInt("192.168.1.1"),
-            gatewayIpAddress = Socket.ipStringToInt("0.0.0.0"),
-            broadcastAddress = Socket.ipStringToInt("192.168.1.101"),
+    private static final int subnetMask = IpPacket.ipStringToInt("255.255.255.0"),
+            subnetPrefix = IpPacket.ipStringToInt("192.168.1.0"),
+            serverIpAddress = IpPacket.ipStringToInt("192.168.1.1"),
+            serverIdentifier = IpPacket.ipStringToInt("192.168.1.1"),
+            gatewayIpAddress = IpPacket.ipStringToInt("0.0.0.0"),
+            broadcastAddress = IpPacket.ipStringToInt("192.168.1.101"),
             addressLeaseTime = 60*60*24,
             renewalLeaseTime = 60*60*12,
             rebindingLeaseTime = 60*60*21;
@@ -74,7 +74,7 @@ public class DHCPServer {
         int requestedSubnet = (~subnetMask) & ip;
             for(int clientSubnet: usedSubnets){
                 if(requestedSubnet == clientSubnet){
-                    throw new IOException("address already in use:"+Socket.ipIntToString(ip));
+                    throw new IOException("address already in use:"+IpPacket.ipIntToString(ip));
                 }
             }
             usedSubnets.add(requestedSubnet);
@@ -152,7 +152,7 @@ public class DHCPServer {
                 .setSourcePort(destPort);
             
         byte[] retu = builder.build();//dhcp packet
-        retu = udpe.build(ipe.getSourceIp(), ipe.getDestIp(), Socket.payloadStartIndex+UdpPacketBuilder.payload_start_index+retu.length,retu );
+        retu = udpe.build(ipe.getSourceIp(), ipe.getDestIp(), IpPacket_deprecated.payloadStartIndex+UdpPacketBuilder.payload_start_index+retu.length,retu );
         retu = ipe.build(retu);
         out.write(retu, udpe.getDestPort(), ipe.getDestIp());
         
@@ -234,7 +234,7 @@ public class DHCPServer {
             
         byte[] retu = builder.build();//dhcp packet
         //udp packet
-        retu = udpe.build(ipe.getSourceIp(), ipe.getDestIp(), Socket.payloadStartIndex+UdpPacketBuilder.payload_start_index+retu.length,retu );
+        retu = udpe.build(ipe.getSourceIp(), ipe.getDestIp(), IpPacket_deprecated.payloadStartIndex+UdpPacketBuilder.payload_start_index+retu.length,retu );
         //ip packet
         retu = ipe.build(retu);
         out.write(retu, udpe.getDestPort(), ipe.getDestIp());
@@ -269,8 +269,8 @@ public class DHCPServer {
                 
             case Option.type_dns:
                 return new Option.DNS(
-                        Socket.ipStringToInt("8.8.8.8"),
-                        Socket.ipStringToInt("8.8.4.4")
+                        IpPacket.ipStringToInt("8.8.8.8"),
+                        IpPacket.ipStringToInt("8.8.4.4")
                 );
                 
             case Option.type_host_name:

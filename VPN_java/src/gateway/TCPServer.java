@@ -12,20 +12,21 @@ import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import sockets.RawSocket;
-import sockets.Socket;
+import sockets.IpPacket;
+import sockets.IpPacket_deprecated;
 
 /**
  *
  * @author root
  */
-public class Server implements Runnable {
+public class TCPServer implements Runnable {
     private RawSocket TCP_serverSocket = RawSocket.initialize_TCP("wlan0");
-    private int clientIp = Socket.ipStringToInt("192.168.1.11");
-    private int serverIp = Socket.ipStringToInt("192.168.1.12"), forwardingIp = Socket.ipStringToInt("72.188.192.147");
+    private int clientIp = IpPacket.ipStringToInt("192.168.1.11");
+    private int serverIp = IpPacket.ipStringToInt("192.168.1.12"), forwardingIp = IpPacket.ipStringToInt("72.188.192.147");
     
     private ArrayList<ConnectedDevice> clients = new ArrayList<ConnectedDevice>();
     
-    public Server(){
+    public TCPServer(){
         clients.add( new ConnectedDevice(clientIp, serverIp, TCP_serverSocket));
     }
     
@@ -72,16 +73,18 @@ public class Server implements Runnable {
                 if(IpPacket.getDestIp(s) == serverIp && IpPacket.getSourceIp(s) == clientIp){
                     System.out.println("\n\n\n");
                     System.out.println("found correct Ip: "+ s.toString());
-                        new Socket(s, TCP_serverSocket).bindPacket();
+                        new IpPacket_deprecated(s, TCP_serverSocket).bindPacket();
                 }
             
             } catch (IOException ex) {
-                        Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
+                        Logger.getLogger(TCPServer.class.getName()).log(Level.SEVERE, null, ex);
                         if(s !=null){
                             System.out.println(s.toString());
                         }
                         return;
             }
+            
+           // System.out.println("packet["+b.length+"]:"+new String(b,0,b.length));
             
            // System.out.println("packet["+b.length+"]:"+new String(b,0,b.length));
         }

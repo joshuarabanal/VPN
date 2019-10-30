@@ -7,7 +7,7 @@ package sockets.editable;
 
 import java.io.IOException;
 import java.util.Arrays;
-import sockets.Socket;
+import sockets.IpPacket_deprecated;
 
 /**
  *
@@ -17,13 +17,12 @@ public class IpPacketBuilder {
     private byte[] b;
     //public byte[] payload;
     public IpPacketBuilder(){
-        this.b = new byte[Socket.payloadStartIndex];
+        this.b = new byte[IpPacket_deprecated.payloadStartIndex];
         b[0] = ((4<<4) + 5);
                 
     }
     public IpPacketBuilder(byte[] b) throws IOException{
-        this.b = Arrays.copyOfRange(
-                b, 0, Socket.payloadStartIndex
+        this.b = Arrays.copyOfRange(b, 0, IpPacket_deprecated.payloadStartIndex
         );
         //this.payload = Arrays.copyOfRange(
         //        b, Socket.payloadStartIndex, b.length
@@ -33,9 +32,9 @@ public class IpPacketBuilder {
                 && 
                 b[0] != ((4<<4) + 5)//4 = version & 5 = ihl
                 &&
-                b[9] != Socket.TCP_protocol //tcp protocol
+                b[9] != IpPacket_deprecated.TCP_protocol //tcp protocol
                 & 
-                getShort(10) != Socket.checksum(b, 0, Socket.payloadStartIndex)
+                getShort(10) != IpPacket_deprecated.checksum(b, 0, IpPacket_deprecated.payloadStartIndex)
         ){
             throw new IOException("failed to parse packet correctly");
         }
@@ -81,7 +80,7 @@ public class IpPacketBuilder {
     public IpPacketBuilder setProtocol(int protocol){ b[9] = (byte)protocol; return this; }
     public int setCheckSum(){
         b[10] = b[11] = 0;
-        int check = Socket.checksum(b, 0, Socket.payloadStartIndex);
+        int check = IpPacket_deprecated.checksum(b, 0, IpPacket_deprecated.payloadStartIndex);
         setShort(check, 10);
         return check;
     }

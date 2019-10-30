@@ -6,12 +6,12 @@
  */
 package gateway.server;
 
-import gateway.IpPacket;
+import sockets.IpPacket;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import sockets.RawSocket;
-import sockets.Socket;
+import sockets.IpPacket_deprecated;
 import sockets.editable.IpPacketBuilder;
 import sockets.editable.TcpPacketBuilder;
 
@@ -21,13 +21,13 @@ import sockets.editable.TcpPacketBuilder;
  */
 public class IpPacketHolder {
     public final int clientIp, clientPort, serverIp, serverPort, gatewayIp, 
-            forwardingIp = Socket.ipStringToInt("72.188.192.147");
-    private Socket firstSocket;
+            forwardingIp = IpPacket.ipStringToInt("72.188.192.147");
+    private IpPacket_deprecated firstSocket;
     private RawSocket outStream;
-    private ArrayList<Socket> requests = new ArrayList<Socket>();
+    private ArrayList<IpPacket> requests = new ArrayList<IpPacket>();
 
     
-    public IpPacketHolder(Socket s, RawSocket out, int gatewayIp) throws IOException{
+    public IpPacketHolder(IpPacket_deprecated s, RawSocket out, int gatewayIp) throws IOException{
         firstSocket = s;
         outStream = out;
         this.gatewayIp = gatewayIp;
@@ -47,7 +47,7 @@ public class IpPacketHolder {
                 IpPacket.getDestIp(s) == serverIp &&//goes to our server
                 IpPacket.TCPPacket.getDestPort(s)== serverPort//on the correct server port
         ){
-            forwardToServer(new Socket(s,outStream) );
+            forwardToServer(new IpPacket_deprecated(s,outStream) );
             return true;
         }
         else if(
@@ -57,19 +57,19 @@ public class IpPacketHolder {
                     IpPacket.TCPPacket.getDestPort(s)== clientPort
                 
         ){
-            forwardtoClient(new Socket(s,outStream) );
+            forwardtoClient(new IpPacket_deprecated(s,outStream) );
             return true;
         }
         return false;
     }
 
-    private void forwardToServer(Socket s) throws IOException {
+    private void forwardToServer(IpPacket_deprecated s) throws IOException {
         IpPacketBuilder se = new IpPacketBuilder(s.buffer);
         System.out.println("\n\n\n");
         System.out.println("forwarding to server");
         System.out.println(s.toString()+"\n\n\n");
         TcpPacketBuilder tcp = new TcpPacketBuilder(
-                Arrays.copyOfRange(s.buffer, Socket.payloadStartIndex, s.buffer.length),
+                Arrays.copyOfRange(s.buffer, IpPacket_deprecated.payloadStartIndex, s.buffer.length),
                 s.sourceIpAddress, 
                 s.destinationIpAddress
         );
@@ -100,13 +100,13 @@ public class IpPacketHolder {
         );
     }
  
-    private void forwardtoClient(Socket s) throws IOException {
+    private void forwardtoClient(IpPacket_deprecated s) throws IOException {
         System.out.println("\n\n\n");
         System.out.println("forward to client");
         System.out.println(s.toString()+"\n\n\n");
         
         IpPacketBuilder se = new IpPacketBuilder(s.buffer);
-        TcpPacketBuilder tcp = new TcpPacketBuilder(Arrays.copyOfRange(s.buffer, Socket.payloadStartIndex, s.buffer.length), s.sourceIpAddress, s.destinationIpAddress);
+        TcpPacketBuilder tcp = new TcpPacketBuilder(Arrays.copyOfRange(s.buffer, IpPacket_deprecated.payloadStartIndex, s.buffer.length), s.sourceIpAddress, s.destinationIpAddress);
         
         
         //check for errors

@@ -11,7 +11,8 @@ import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import sockets.RawSocket;
-import sockets.Socket;
+import sockets.IpPacket;
+import udp.PrivateIpHandler;
 
 /**
  *
@@ -19,24 +20,27 @@ import sockets.Socket;
  */
 public class UDPServer {
     private RawSocket sock = RawSocket.initialize_UDP("eth0");
-    private int clientIp = Socket.ipStringToInt("192.168.1.11");
-    private int serverIp = Socket.ipStringToInt("192.168.1.12"), forwardingIp = Socket.ipStringToInt("72.188.192.147");
+    private int clientIp = IpPacket.ipStringToInt("192.168.1.11");
+    private int serverIp = IpPacket.ipStringToInt("192.168.1.12"), forwardingIp = IpPacket.ipStringToInt("72.188.192.147");
     
     public void run(){
                 dhcp.DHCPServer dhcp = new dhcp.DHCPServer(sock);
+                PrivateIpHandler privateIp = new PrivateIpHandler(sock);
         while(true){
             try {
                 System.out.println("\n\n\n\nread loop:");
                 
                 byte[] b = sock.accept();
+                
                 if(dhcp.accept(b)){ continue; }//check if its a dhcp packet
+                if(privateIp.accept(b)){ continue; }
                 
                 System.out.println("regular packetRecieved:"+
-                        Socket.ipIntToString(IpPacket.getSourceIp(b))
+                        IpPacket.ipIntToString(IpPacket.getSourceIp(b))
                         +":"+
                         IpPacket.UDPPacket.getSourcePort(b)+
                         "=>"+
-                        Socket.ipIntToString(IpPacket.getDestIp(b))
+                        IpPacket.ipIntToString(IpPacket.getDestIp(b))
                         +":"+
                         IpPacket.UDPPacket.getDestPort(b)
                         
@@ -45,9 +49,7 @@ public class UDPServer {
                     try{
                         System.out.println("unknonwn ip packet:"+IpPacket.toString(b));
                         System.out.println("unknown UDP packet:"+IpPacket.UDPPacket.toString(b));
-                        System.out.println(
-                                "array"+Arrays.toString(
-                                    Arrays.copyOfRange(b, IpPacket.UDPPacket.getPayloadStartIndex(b), b.length)
+                        System.out.println("array"+Arrays.toString(Arrays.copyOfRange(b, IpPacket.UDPPacket.getPayloadStartIndex(b), b.length)
                                 )
                         );
                     }catch (IndexOutOfBoundsException e){

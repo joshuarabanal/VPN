@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import sockets.Socket;
+import sockets.IpPacket_deprecated;
 import sockets.TcpPacket;
 import sockets.tcp.Options;
 
@@ -141,13 +141,13 @@ public class TcpPacketBuilder {
         // 8 bit 0
         
         //protocol
-        sum+=  (Socket.TCP_protocol);
+        sum+=  (IpPacket_deprecated.TCP_protocol);
         
         //buffer checksums
-        sum+=(~Socket.checksum(b, 0, b.length))&0xffff;
+        sum+=(~IpPacket_deprecated.checksum(b, 0, b.length))&0xffff;
             byte[] options = getOptions().toByteArray();
-        sum+=(~Socket.checksum(options, 0, options.length)) & 0xffff;
-        sum+=(~Socket.checksum(payload, 0, payload.length)) & 0xffff;
+        sum+=(~IpPacket_deprecated.checksum(options, 0, options.length)) & 0xffff;
+        sum+=(~IpPacket_deprecated.checksum(payload, 0, payload.length)) & 0xffff;
         
         //tcp length
         sum+= b.length+options.length+payload.length;

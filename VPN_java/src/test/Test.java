@@ -5,7 +5,7 @@
  */
 package test;
 
-import gateway.Server;
+import gateway.TCPServer;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -23,7 +23,7 @@ public class Test {
         
         System.setErr(System.out);
         System.out.println(System.getProperty("user.dir"));
-        Server s = new Server();
+        TCPServer s = new TCPServer();
         s.run();
         
        

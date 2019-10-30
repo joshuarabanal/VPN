@@ -29,7 +29,7 @@ public class TcpPacket {
     
     public static final int optionsStartIndex = 20;
    
-    private Socket source;
+    private IpPacket_deprecated source;
     private byte[] buffer;
     
     /**
@@ -53,14 +53,14 @@ public class TcpPacket {
         this(b,null);
         
     }
-    public TcpPacket(Socket s) throws IOException{
+    public TcpPacket(IpPacket_deprecated s) throws IOException{
         this(s.buffer, s);
         
     }
-    public TcpPacket(byte[] b, Socket source) throws IOException{
+    public TcpPacket(byte[] b, IpPacket_deprecated source) throws IOException{
         this.source = source;
         this.buffer = b;
-        int index = Socket.payloadStartIndex;
+        int index = IpPacket_deprecated.payloadStartIndex;
         
         
         sourcePort = ((b[index]&0xff)<<8) | ((b[index+1]&0xff)); 
@@ -87,18 +87,18 @@ public class TcpPacket {
         RST = (b[index] & RST_flag) != 0;
         SYN = (b[index] & SYN_flag) != 0;
         FIN = (b[index] & FIN_flag) != 0;
-        if(index-Socket.payloadStartIndex != 13){
+        if(index-IpPacket_deprecated.payloadStartIndex != 13){
             throw new IOException("flags wrong:"+index);
         }
         index++;//index = 20+14
         windowSize = ((b[index]&0xff)<<8) | ((b[index+1]&0xff)); 
             index+=2;//index = 20+16
-        if(index != 16+Socket.payloadStartIndex){
+        if(index != 16+IpPacket_deprecated.payloadStartIndex){
                 throw new IOException("checksum index found to be:"+index);
         }
         
         int checksum = ((b[index]&0xff)<<8) | ((b[index+1]&0xff)); 
-        if(index!= Socket.payloadStartIndex+16){
+        if(index!= IpPacket_deprecated.payloadStartIndex+16){
             throw new IOException("checksum index is:"+index);
         }
             index+=2;//index = 20+18
@@ -125,7 +125,7 @@ public class TcpPacket {
         
         
     }
-    private int getOptionsStartIndex(){ return Socket.payloadStartIndex+optionsStartIndex; }
+    private int getOptionsStartIndex(){ return IpPacket_deprecated.payloadStartIndex+optionsStartIndex; }
     private int getPayloadStartIndex(){ return getOptionsStartIndex()+optionsLength; }
     public String toString(){
         StringBuilder sb = new StringBuilder();
@@ -177,7 +177,7 @@ public class TcpPacket {
         // 8 bit 0
         
         //protocol
-        sum+=  (Socket.TCP_protocol);
+        sum+=  (IpPacket_deprecated.TCP_protocol);
         
         //tcp length
         sum+= tcpPacket.length;
@@ -216,13 +216,13 @@ public class TcpPacket {
         // 8 bit 0
         
         //protocol
-        sum+=  (Socket.TCP_protocol);
+        sum+=  (IpPacket_deprecated.TCP_protocol);
         
         //tcp length
-        int length = (source.buffer.length- Socket.payloadStartIndex);
+        int length = (source.buffer.length- IpPacket_deprecated.payloadStartIndex);
         sum+= length;
 
-        for(int i = Socket.payloadStartIndex; i<source.buffer.length; i+=2){//since the ip header adds to FFFF it will not effect the summation since FFFF+FFFF=1FFFE
+        for(int i = IpPacket_deprecated.payloadStartIndex; i<source.buffer.length; i+=2){//since the ip header adds to FFFF it will not effect the summation since FFFF+FFFF=1FFFE
              //if(i == Socket.payloadStartIndex + 16){ continue; }//skip over the checksum value
              int s = 
                      ((source.buffer[i] & 0xff )<<8) 
@@ -238,7 +238,7 @@ public class TcpPacket {
          
          retu = ((~retu) & 0xffff) ;
          
-         byte[] tcp = Arrays.copyOfRange(source.buffer, Socket.payloadStartIndex, source.buffer.length);
+         byte[] tcp = Arrays.copyOfRange(source.buffer, IpPacket_deprecated.payloadStartIndex, source.buffer.length);
          int check2 = checksum(tcp, source.destinationIpAddress, source.sourceIpAddress);
          if(retu != check2){
              throw new IndexOutOfBoundsException(retu +"!="+check2);
@@ -253,17 +253,17 @@ public class TcpPacket {
      * http://www.omnisecu.com/tcpip/tcp-three-way-handshake.php
      * @throws IOException 
      */
-    public void start_threeWayHandshake(Socket message) throws IOException{
+    public void start_threeWayHandshake(IpPacket_deprecated message) throws IOException{
         
         
         
         if( !ACK && !PSH && !RST && SYN && !FIN && !URG ){//first sync message
             //acknowlege the initialization and send the response initialization params
-            System.out.println("starting 3 way handshake with:"+Socket.ipIntToString(message.sourceIpAddress)+":"+message.getTCP().sourcePort);
+            System.out.println("starting 3 way handshake with:"+IpPacket_deprecated.ipIntToString(message.sourceIpAddress)+":"+message.getTCP().sourcePort);
             
             IpPacketBuilder se = new IpPacketBuilder(Arrays.copyOf(message.buffer, message.buffer.length));
             TcpPacketBuilder tcpe = new TcpPacketBuilder(
-                    Arrays.copyOfRange(message.buffer, Socket.payloadStartIndex, message.buffer.length),
+                    Arrays.copyOfRange(message.buffer, IpPacket_deprecated.payloadStartIndex, message.buffer.length),
                     se.getSourceIp(),
                     se.getDestIp()
             );
@@ -332,8 +332,8 @@ public class TcpPacket {
         //t //To change body of generated methods, choose Tools | Templates.
         
         TcpPacket neu = new TcpPacket(b);
-        int sourcePort = TcpPacketBuilder.getShort(Socket.payloadStartIndex, b);
-        int destinationPort = TcpPacketBuilder.getShort(Socket.payloadStartIndex+2, b);
+        int sourcePort = TcpPacketBuilder.getShort(IpPacket_deprecated.payloadStartIndex, b);
+        int destinationPort = TcpPacketBuilder.getShort(IpPacket_deprecated.payloadStartIndex+2, b);
         if(sourcePort != neu.sourcePort || destinationPort != neu.destinationPort){
             throw new IOException("failed:"+sourcePort+" != "+neu.sourcePort+" || "+destinationPort+" != "+neu.destinationPort);
         }

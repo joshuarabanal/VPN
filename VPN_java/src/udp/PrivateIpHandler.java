@@ -1,0 +1,59 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package udp;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import sockets.IpPacket;
+import sockets.RawSocket;
+import gateway.routers.Client;
+
+/**
+ *
+ * @author root
+ */
+public class PrivateIpHandler {
+    private static final int priv10min = IpPacket.ipStringToInt("10.0.0.0"), priv10max = IpPacket.ipStringToInt("10.255.255.255"),
+            priv172min = IpPacket.ipStringToInt("172.16.0.0"), priv172max = IpPacket.ipStringToInt("172.31.255.255"),
+            priv192min = IpPacket.ipStringToInt("192.168.0.0"), priv192max = IpPacket.ipStringToInt("192.168.255.255"),
+            priv224min = IpPacket.ipStringToInt("224.0.0.0"), priv224max = IpPacket.ipStringToInt("224.0.0.255")
+            ;
+    
+    private RawSocket out;
+    private ArrayList<Client> clients = new ArrayList<Client>();
+    
+    public PrivateIpHandler(RawSocket out){
+        this.out = out;
+    }
+    public static boolean isPrivateIp(int ip){
+             if(ip>=priv10min && ip<=priv10max){ return true; }
+        else if(ip>=priv172min && ip<=priv172max){ return true; }
+        else if(ip>=priv192min && ip<=priv192max){ return true; }
+        else if(ip>=priv224min && ip<=priv224max){ return true; }
+        return false;
+    }
+    public boolean accept(byte[] b){
+        if(!isPrivateIp(IpPacket.getDestIp(b))){
+            return false;
+        }
+        if(IpPacket.getProtocol(b) == IpPacket.TCP_protocol){
+            throw new UnsupportedOperationException("cannot yet handle local tcp packets");
+        }
+        else if(IpPacket.getProtocol(b) == IpPacket.UDP_protocol){
+            System.out.println(
+                    "unknown local udp packet:"+
+                    "\nIpPacket:"+IpPacket.toString(b)+
+                    "\nUDPPacket:"+IpPacket.UDPPacket.toString(b)+
+                    "\n payload:"+Arrays.toString( IpPacket.UDPPacket.getPayload(b) )
+            );
+            throw new UnsupportedOperationException("not sure how to handle this");
+        }
+        else{
+            throw new UnsupportedOperationException("unknown protocol:"+IpPacket.getProtocol(b));
+        }
+    }
+    
+}

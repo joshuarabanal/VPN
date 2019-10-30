@@ -4,7 +4,7 @@
 package dhcp.dhcpPacket;
 
 import java.util.Arrays;
-import sockets.Socket;
+import sockets.IpPacket_deprecated;
 import sockets.editable.TcpPacketBuilder;
 
 /**
@@ -173,7 +173,7 @@ public class Option {
             }
         }
         public String toString(){
-           return "RequestedIp:"+Socket.ipIntToString(TcpPacketBuilder.getInt(0, data));
+           return "RequestedIp:"+IpPacket_deprecated.ipIntToString(TcpPacketBuilder.getInt(0, data));
         }
 
         public int getIpAddress() {
@@ -204,7 +204,7 @@ public class Option {
             }
         }
         public String toString(){
-           return "SubnetMask:"+Socket.ipIntToString(TcpPacketBuilder.getInt(0, data));
+           return "SubnetMask:"+IpPacket_deprecated.ipIntToString(TcpPacketBuilder.getInt(0, data));
         }
         
     }
@@ -317,9 +317,9 @@ public class Option {
             StringBuilder sb = new StringBuilder("static route option:");
             for(int i = 0; i<data.length; i+=8){
                 sb.append("\n")
-                        .append(Socket.ipIntToString(TcpPacketBuilder.getInt(i, data)))
+                        .append(IpPacket_deprecated.ipIntToString(TcpPacketBuilder.getInt(i, data)))
                         .append("=>")
-                        .append(Socket.ipIntToString(TcpPacketBuilder.getInt(i+4, data)));
+                        .append(IpPacket_deprecated.ipIntToString(TcpPacketBuilder.getInt(i+4, data)));
             }
            return sb.toString();
         }
@@ -345,7 +345,7 @@ public class Option {
             StringBuilder sb = new StringBuilder("router option:");
             for(int i = 0; i<data.length; i+=4){
                 sb.append("\n")
-                        .append(Socket.ipIntToString(TcpPacketBuilder.getInt(i, data)));
+                        .append(IpPacket_deprecated.ipIntToString(TcpPacketBuilder.getInt(i, data)));
             }
            return sb.toString();
         }
@@ -371,7 +371,7 @@ public class Option {
             StringBuilder sb = new StringBuilder("DNS option:");
             for(int i = 0; i<data.length; i+=4){
                 sb.append("\n")
-                        .append(Socket.ipIntToString(TcpPacketBuilder.getInt(i, data)));
+                        .append(IpPacket_deprecated.ipIntToString(TcpPacketBuilder.getInt(i, data)));
             }
            return sb.toString();
         }
@@ -447,7 +447,7 @@ public class Option {
             }
         }
         public String toString(){
-            return "broadcast address:"+Socket.ipIntToString(TcpPacketBuilder.getInt(0,data));
+            return "broadcast address:"+IpPacket_deprecated.ipIntToString(TcpPacketBuilder.getInt(0,data));
         }
         
     }

@@ -6,7 +6,6 @@
 
 package sockets;
 
-import gateway.IpPacket;
 import java.io.IOException;
 import java.util.Arrays;
 import sockets.editable.TcpPacketBuilder;
@@ -15,7 +14,7 @@ import sockets.editable.TcpPacketBuilder;
  *
  * @author root
  */
-public class Socket {
+public class IpPacket_deprecated {
     
     public static final int payloadStartIndex = 20, ipHeaderVersion = 4, TCP_protocol = 6; 
     public RawSocket socket;
@@ -42,7 +41,7 @@ public class Socket {
     private byte[] backup;
 
 
-    public Socket(byte[] source, RawSocket socket) throws IOException {
+    public IpPacket_deprecated(byte[] source, RawSocket socket) throws IOException {
         this.backup = Arrays.copyOfRange(source, 0, source.length);
         this.buffer = source;
         this.socket = socket;
@@ -57,7 +56,13 @@ public class Socket {
    
     
     //getter and setter functions
-    public static String ipIntToString(int ip){
+    /**
+     * @deprecated use {@link IpPacket#ipIntToString(java.lang.String)  }
+     * @param ip
+     * @return
+     * @deprecated
+     */
+    @Deprecated public static String ipIntToString(int ip){
         String retu = "";
         retu += (ip>>24)&0xff;
         retu += ".";
@@ -69,7 +74,13 @@ public class Socket {
         return retu;
        
     }
-    public static int ipStringToInt(String ipAddress){
+    /**
+     * @deprecated use {@Link IpPacket#ipStringToInt(String)} instead
+     * @param ipAddress
+     * @return
+     * @deprecated
+     */
+    @Deprecated public static int ipStringToInt(String ipAddress){
         int retu = 0;
         String[] pieces = ipAddress.split("\\.");
         for(String byt : pieces){
@@ -169,7 +180,7 @@ public class Socket {
         index+=4;
        
         
-     int calcChecksum = checksum(b, 0, Socket.payloadStartIndex);
+     int calcChecksum = checksum(b, 0, IpPacket_deprecated.payloadStartIndex);
      if(calcChecksum != 0){
          System.out.println(this.toString());
          System.out.println("checksum:"+check+"{"+b[10]+","+b[11]);
@@ -292,7 +303,7 @@ public class Socket {
         retu[19] = (byte) (sourceIpAddress& 0xff);
         
      //get checksum
-     int checksum = checksum(retu,0, Socket.payloadStartIndex);
+     int checksum = checksum(retu,0, IpPacket_deprecated.payloadStartIndex);
         retu[10] = (byte) ((checksum>>8)&0xff);
         retu[11] = (byte) (checksum & 0xff);
      

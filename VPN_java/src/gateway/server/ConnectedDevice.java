@@ -8,7 +8,7 @@ package gateway.server;
 import java.io.IOException;
 import java.util.ArrayList;
 import sockets.RawSocket;
-import sockets.Socket;
+import sockets.IpPacket_deprecated;
 import sockets.TcpPacket;
 import sockets.editable.TcpPacketBuilder;
 
@@ -40,7 +40,7 @@ public class ConnectedDevice {
         
         if(sourceIpAddress == clientIp){
             System.out.println("making new packet");
-            Socket sock = new Socket(s, rawOut);
+            IpPacket_deprecated sock = new IpPacket_deprecated(s, rawOut);
             IpPacketHolder req = new IpPacketHolder(sock, rawOut, gatewayIp);
             requests.add(req);
             

@@ -24,7 +24,7 @@ public class RawSocket {
   /**
    * list of all sockets that are waiting for responses
    */
-  private ArrayList<Socket> boundSockets = new ArrayList<Socket>();
+  private ArrayList<IpPacket_deprecated> boundSockets = new ArrayList<IpPacket_deprecated>();
   
     public static RawSocket initialize_TCP(String interfaceName){
         return new RawSocket(TYPE_TCP, interfaceName);
@@ -51,7 +51,7 @@ public class RawSocket {
             if(b == null){
                 throw new NullPointerException("failed to get packet");
             }
-        for(Socket s: boundSockets){
+        for(IpPacket_deprecated s: boundSockets){
             if(s.packetIsResponse(b)){
                 b = null;
                 break;
@@ -63,7 +63,7 @@ public class RawSocket {
         }
         return b;
     }
-    void bindForResponses(Socket s){
+    void bindForResponses(IpPacket_deprecated s){
         if(boundSockets.contains(s)){
             return;
         }

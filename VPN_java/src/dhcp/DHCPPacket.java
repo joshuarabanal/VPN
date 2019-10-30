@@ -7,10 +7,10 @@ package dhcp;
 
 import dhcp.dhcpPacket.Option;
 import dhcp.dhcpPacket.Options;
-import static gateway.IpPacket.UDPPacket.getPayloadStartIndex;
+import static sockets.IpPacket.UDPPacket.getPayloadStartIndex;
 import java.util.ArrayList;
 import java.util.Arrays;
-import sockets.Socket;
+import sockets.IpPacket_deprecated;
 import static sockets.editable.TcpPacketBuilder.getInt;
 import static sockets.editable.TcpPacketBuilder.getShort;
 
@@ -111,10 +111,10 @@ public class DHCPPacket {
             sb.append("\nXID:").append(getXID(b));
             sb.append("\nSECS:").append(getSECS(b));
             sb.append("\nFLAGS:").append(getFLAGS(b));
-            sb.append("\nClient_IP_address:").append(Socket.ipIntToString(getClient_IP_address(b)));
-            sb.append("\nYour_IP_address:").append(Socket.ipIntToString(getYour_IP_address(b)));
-            sb.append("\nServer_IP_address:").append(Socket.ipIntToString(getServer_IP_address(b)));
-            sb.append("\nGateway_IP_address:").append(Socket.ipIntToString(getGateway_IP_address(b)));
+            sb.append("\nClient_IP_address:").append(IpPacket_deprecated.ipIntToString(getClient_IP_address(b)));
+            sb.append("\nYour_IP_address:").append(IpPacket_deprecated.ipIntToString(getYour_IP_address(b)));
+            sb.append("\nServer_IP_address:").append(IpPacket_deprecated.ipIntToString(getServer_IP_address(b)));
+            sb.append("\nGateway_IP_address:").append(IpPacket_deprecated.ipIntToString(getGateway_IP_address(b)));
             sb.append("\nClient_hardware_address:").append(Arrays.toString(getClient_hardware_address(b)));
             sb.append("\nServer_host_name:").append(getServer_host_name(b));
             sb.append("\nBoot_file_name:").append(getBoot_file_name(b));
