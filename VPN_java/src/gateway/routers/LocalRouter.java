@@ -26,7 +26,11 @@ import sockets.editable.IpPacketBuilder;
  * @author root
  */
 public class LocalRouter implements PortConnectionBuilder {
-    private RawSocket clientOut;
+    private RawSocket outTCP, outUDP;
+    public LocalRouter(RawSocket outTCP, RawSocket outUDP){ 
+        this.outTCP = outTCP; 
+        this.outUDP = outUDP; 
+    }
 
     @Override
     public ConnectionForwarder bind(Client.UDP conn) throws IOException {
@@ -63,8 +67,10 @@ public class LocalRouter implements PortConnectionBuilder {
         @Override
         public void newClientMessage(byte[] buf) throws IOException{
             if(buf == null){ firstpacket = buf; }
+            byte[] payload = IpPacket.UDPPacket.getPayload(buf);
+            System.out.println("sending client message to server:"+new String(payload));
             DatagramPacket packet;
-            packet = new DatagramPacket(buf, buf.length, outAddress, conn.serverPort);
+            packet = new DatagramPacket(payload, payload.length, outAddress, conn.serverPort);
             socket.send(packet);
             lastSendTime = System.currentTimeMillis();
             if(!running){
@@ -102,8 +108,10 @@ public class LocalRouter implements PortConnectionBuilder {
             udp.setDestPort(conn.clientPort);
             udp.setSourcePort(conn.serverPort);
             
-            Arrays.copyOfRange(packet., socketTimeout, socketTimeout)
-            udp.buildWholePacket(ip, )
+            byte[] b = Arrays.copyOfRange(packet.getData(), socketTimeout, socketTimeout);
+            System.out.println("sending packet to client:"+new String(b));
+            byte[] send = udp.buildWholePacket(ip,b );
+            outUDP.write(b);
             
         }
         

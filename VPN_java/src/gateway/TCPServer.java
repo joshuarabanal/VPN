@@ -6,28 +6,44 @@
 
 package gateway;
 
+import dhcp.DHCPServer;
 import gateway.server.ConnectedDevice;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import sockets.RawSocket;
 import sockets.IpPacket;
 import sockets.IpPacket_deprecated;
+import udp.PrivateIpHandler;
 
 /**
  *
  * @author root
  */
 public class TCPServer implements Runnable {
-    private RawSocket TCP_serverSocket = RawSocket.initialize_TCP("wlan0");
+    private RawSocket TCP_serverSocket;// = RawSocket.initialize_TCP("wlan0");
     private int clientIp = IpPacket.ipStringToInt("192.168.1.11");
     private int serverIp = IpPacket.ipStringToInt("192.168.1.12"), forwardingIp = IpPacket.ipStringToInt("72.188.192.147");
+    public final DHCPServer dhcp;
+    public final PrivateIpHandler privateIp;
     
     private ArrayList<ConnectedDevice> clients = new ArrayList<ConnectedDevice>();
     
-    public TCPServer(){
-        clients.add( new ConnectedDevice(clientIp, serverIp, TCP_serverSocket));
+    public TCPServer(DHCPServer dhcp, PrivateIpHandler priv){
+        this.dhcp = dhcp;
+        this.privateIp = priv;
+        this.TCP_serverSocket = priv.outTCP;
+        //TCP
+    }
+    
+    public Thread t = null;
+    public void start(){
+        if(t == null){
+            t = new Thread(this);
+            t.start();
+        }
     }
     
     /**
@@ -40,40 +56,12 @@ public class TCPServer implements Runnable {
             try {
                 s = TCP_serverSocket.accept();
                 if(s == null){ throw new IOException("socket is null"); }
-                /**
-                System.out.println(
-                        "ip:"+
-                        Socket.ipIntToString(s.sourceIpAddress)+
-                        "=>"+
-                        Socket.ipIntToString(s.destinationIpAddress)
-                );
-                * **/
-                
-                //System.out.println("new packet:"+s.sourceIpAddress+"=>"+s.destinationIpAddress);
-                
-                //check if the packet belongs to a connected client
-                    for(int i = 0;i<clients.size(); i++){
-                        if(clients.get(i).accept(s)){
-                            s = null;//this packet was used up
-                        }
-                    }
-                    
-                
-                if(s == null){
-                    continue;//packet was consumed by client
-                }
                 
                 
-                  
-                    
-                    
-                    
-                    
+                if(privateIp.accept(s)){ continue; }
                 
-                if(IpPacket.getDestIp(s) == serverIp && IpPacket.getSourceIp(s) == clientIp){
-                    System.out.println("\n\n\n");
-                    System.out.println("found correct Ip: "+ s.toString());
-                        new IpPacket_deprecated(s, TCP_serverSocket).bindPacket();
+                else{
+                    logUnknownPacket(s);
                 }
             
             } catch (IOException ex) {
@@ -81,12 +69,34 @@ public class TCPServer implements Runnable {
                         if(s !=null){
                             System.out.println(s.toString());
                         }
-                        return;
+                       break;
             }
             
-           // System.out.println("packet["+b.length+"]:"+new String(b,0,b.length));
-            
-           // System.out.println("packet["+b.length+"]:"+new String(b,0,b.length));
+           
+        }
+        t = null;
+        
+    }
+    private void logUnknownPacket(byte[] b){
+        System.out.println("regular packetRecieved:"+
+                IpPacket.ipIntToString(IpPacket.getSourceIp(b))
+                +":"+
+                IpPacket.UDPPacket.getSourcePort(b)+
+                "=>"+
+                IpPacket.ipIntToString(IpPacket.getDestIp(b))
+                +":"+
+                IpPacket.UDPPacket.getDestPort(b)
+
+        );
+                
+        try{
+            System.out.println("unknonwn ip packet:"+IpPacket.toString(b));
+            System.out.println("unknown UDP packet:"+IpPacket.UDPPacket.toString(b));
+            System.out.println("array"+Arrays.toString(Arrays.copyOfRange(b, IpPacket.UDPPacket.getPayloadStartIndex(b), b.length)
+                    )
+            );
+        }catch (IndexOutOfBoundsException e){
+            throw e;
         }
     }
     

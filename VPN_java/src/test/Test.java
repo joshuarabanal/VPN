@@ -5,26 +5,35 @@
  */
 package test;
 
+import dhcp.DHCPServer;
 import gateway.TCPServer;
+import gateway.UDPServer;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import sockets.RawSocket;
+import udp.PrivateIpHandler;
 
 /**
  *
  * @author joshuarabanal
  */
 public class Test {
+    public static final RawSocket rawTCP = RawSocket.initialize_TCP("eth0");
+    public static final RawSocket rawUDP = RawSocket.initialize_UDP("eth0");
+    public static final DHCPServer dhcp = new DHCPServer(rawUDP);
+    public static final PrivateIpHandler priv = new PrivateIpHandler( rawTCP, rawUDP, dhcp);
     
     public static void main_tcp(String[] args){
         
-        
         System.setErr(System.out);
         System.out.println(System.getProperty("user.dir"));
-        TCPServer s = new TCPServer();
-        s.run();
+        TCPServer tcps = new TCPServer(dhcp,priv);
+            tcps.start();
+        UDPServer udps = new UDPServer(dhcp,priv);
+        udps.run();
         
        
     }
@@ -33,7 +42,7 @@ public class Test {
         
         
         System.setErr(System.out);
-        gateway.UDPServer s = new gateway.UDPServer();
+        gateway.UDPServer s = new gateway.UDPServer(dhcp,priv);
         s.run();
         
        

@@ -5,11 +5,14 @@
  */
 package udp;
 
+import dhcp.DHCPServer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import sockets.IpPacket;
 import sockets.RawSocket;
 import gateway.routers.Client;
+import gateway.routers.LocalRouter;
+import java.io.IOException;
 
 /**
  *
@@ -22,11 +25,17 @@ public class PrivateIpHandler {
             priv224min = IpPacket.ipStringToInt("224.0.0.0"), priv224max = IpPacket.ipStringToInt("224.0.0.255")
             ;
     
-    private RawSocket out;
     private ArrayList<Client> clients = new ArrayList<Client>();
+    private LocalRouter router;
+    private DHCPServer clientManager;
     
-    public PrivateIpHandler(RawSocket out){
-        this.out = out;
+    public final RawSocket outTCP, outUDP;
+    
+    public PrivateIpHandler(RawSocket outTCP, RawSocket outUDP, DHCPServer clientManager){
+        this.outUDP = outUDP;
+        this.outTCP = outTCP;
+        this.clientManager = clientManager;
+        this.router = new LocalRouter(outTCP,outUDP);
     }
     public static boolean isPrivateIp(int ip){
              if(ip>=priv10min && ip<=priv10max){ return true; }
@@ -35,7 +44,7 @@ public class PrivateIpHandler {
         else if(ip>=priv224min && ip<=priv224max){ return true; }
         return false;
     }
-    public boolean accept(byte[] b){
+    public boolean accept(byte[] b) throws IOException{
         if(!isPrivateIp(IpPacket.getDestIp(b))){
             return false;
         }
@@ -49,7 +58,20 @@ public class PrivateIpHandler {
                     "\nUDPPacket:"+IpPacket.UDPPacket.toString(b)+
                     "\n payload:"+Arrays.toString( IpPacket.UDPPacket.getPayload(b) )
             );
-            throw new UnsupportedOperationException("not sure how to handle this");
+            
+            int srcIp = IpPacket.getSourceIp(b);
+            for(Client c : clients){
+                if(c.accept(b)){
+                    return true;
+                }
+            }
+            if(clientManager.isConnectedClient(srcIp)){//if its one of the clients we care about
+                clients.add(new Client(b, router));
+                return true;
+            }
+            else{
+                return false;
+            }
         }
         else{
             throw new UnsupportedOperationException("unknown protocol:"+IpPacket.getProtocol(b));

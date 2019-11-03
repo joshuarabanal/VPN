@@ -30,11 +30,11 @@ public class DHCPServer {
             renewalLeaseTime = 60*60*12,
             rebindingLeaseTime = 60*60*21;
     
-    private RawSocket out;
+    public final RawSocket out;
     ArrayList<Integer> usedSubnets = new ArrayList<Integer>();
     
-    public DHCPServer(RawSocket outStream){
-        this.out = outStream;
+    public DHCPServer(RawSocket outStream_UDP){
+        this.out = outStream_UDP;
     }
     
     public boolean accept(byte[] b) throws IOException{
@@ -78,6 +78,15 @@ public class DHCPServer {
                 }
             }
             usedSubnets.add(requestedSubnet);
+    }
+    public boolean isConnectedClient(int ip){
+        if( (ip & subnetMask) != subnetPrefix){ return false; }//if its not on our subnet
+        int ourSubnet = (~subnetMask) & ip;
+        for(int clientSubnet : usedSubnets){
+            if(clientSubnet == ourSubnet){ return true; }
+        }
+        return false;
+        
     }
     private void sendDiscover(byte[] b, Options opts) throws IOException{
         /*Sys.out.println(

@@ -73,6 +73,18 @@ public class RawSocket {
     private native void initialize(int type, String interfaceName);
     private native int writePacket(byte[] b, int port, int ipAddress);
     
+    public void write(byte[]b ) throws IOException{
+        switch(IpPacket.getProtocol(b)){
+            case IpPacket.TCP_protocol:
+                write(b, IpPacket.TCPPacket.getDestPort(b), IpPacket.getDestIp(b));
+                return;
+            case IpPacket.UDP_protocol:
+                write(b, IpPacket.UDPPacket.getDestPort(b), IpPacket.getDestIp(b));
+                return;
+            default:
+                throw new IOException("unsupported protocol:"+IpPacket.getProtocol(b));
+        }
+    }
     public void write(byte[] b, int destinationPort, int destinationIp) throws IOException{
         int howmany = writePacket(b, destinationPort, destinationIp);
         if(howmany != b.length){

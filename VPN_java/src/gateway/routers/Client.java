@@ -6,6 +6,7 @@
 package gateway.routers;
 
 import gateway.routers.PortConnectionBuilder.ConnectionForwarder;
+import java.io.IOException;
 import java.util.ArrayList;
 import sockets.IpPacket;
 
@@ -18,12 +19,13 @@ public class Client {
     private ArrayList<OutBoundIp> outboundIp = new ArrayList<OutBoundIp>();
     private PortConnectionBuilder cb;
     
-    public Client(byte[] b, PortConnectionBuilder pcb){
+    public Client(byte[] b, PortConnectionBuilder pcb) throws IOException{
+        this.cb = pcb;
         this.clientIp = IpPacket.getSourceIp(b);
         this.accept(b);
     }
     
-    public boolean accept(byte[] b){
+    public boolean accept(byte[] b) throws IOException{
         int sourceIp = IpPacket.getSourceIp(b);
         
         if(sourceIp != clientIp ){//not sending to or from client
@@ -46,13 +48,13 @@ public class Client {
         private ArrayList<PortConnection> tcpConnections = new ArrayList<PortConnection>();
         private ArrayList<PortConnection> udpConnections = new ArrayList<PortConnection>();
 
-        public OutBoundIp(byte[]b ){
+        public OutBoundIp(byte[]b ) throws IOException{
             this.srcIp  = IpPacket.getSourceIp(b);
             this.destIp = IpPacket.getDestIp(b);
             this.accept(b, srcIp);
         }
 
-        public boolean accept(byte[] b, int sourceIp){
+        public boolean accept(byte[] b, int sourceIp) throws IOException{
             int destIp = IpPacket.getDestIp(b);
             if(
                     sourceIp != this.srcIp || destIp != this.destIp
@@ -82,10 +84,10 @@ public class Client {
         }
     }
     public  class UDP extends PortConnection{
-        private ConnectionForwarder forwarder;
-        public UDP(byte[] b){  
+        private ConnectionForwarder forwarder= cb.bind( this);
+        public UDP(byte[] b) throws IOException{  
             super(b); 
-            forwarder = cb.bind( this);
+            this.accept(b, this.clientIp, this.serverIp, this.protocol);
         }
         
         int getSrcPort(byte[] b){
@@ -94,15 +96,15 @@ public class Client {
         int getDestPort(byte[] b){
             return IpPacket.UDPPacket.getDestPort(b);
         }
-        void forwardPacket(byte[] b){
+        void forwardPacket(byte[] b) throws IOException{
             forwarder.newClientMessage(b);
         }
     }
     public class TCP extends PortConnection{
-        private final ConnectionForwarder forwarder;
-        public TCP(byte[] b){  
+        private final ConnectionForwarder forwarder= cb.bind( this);
+        public TCP(byte[] b) throws IOException{  
             super(b); 
-            forwarder = cb.bind( this);
+            this.accept(b, this.clientIp, this.serverIp, this.protocol);
         }
         
         int getSrcPort(byte[] b){
@@ -111,27 +113,26 @@ public class Client {
         int getDestPort(byte[] b){
             return IpPacket.TCPPacket.getDestPort(b);
         }
-        void forwardPacket(byte[] b){
+        void forwardPacket(byte[] b) throws IOException{
             forwarder.newClientMessage(b);
         }
     }
 
     private abstract class PortConnection {
         public final int protocol, clientPort, serverPort, clientIp, serverIp;
-        public PortConnection(byte[] b){
+        public PortConnection(byte[] b) throws IOException{
             this.protocol = IpPacket.getProtocol(b);
             this.clientPort = getSrcPort(b);
             this.serverPort = getDestPort(b);
             this.clientIp = IpPacket.getSourceIp(b);
             this.serverIp = IpPacket.getDestIp(b);
-            this.accept(b, this.clientIp, this.serverIp, this.protocol);
         }
-        abstract void forwardPacket(byte[] b);
+        abstract void forwardPacket(byte[] b) throws IOException;
 
         abstract int getSrcPort(byte[] b);
         abstract int getDestPort(byte[] b);
 
-        public boolean accept(byte[] b, int srcIp, int destIp, int protocol){
+        public boolean accept(byte[] b, int srcIp, int destIp, int protocol) throws IOException{
             if(
                     srcIp != this.clientIp || destIp != this.serverIp || protocol != this.protocol
                     ||

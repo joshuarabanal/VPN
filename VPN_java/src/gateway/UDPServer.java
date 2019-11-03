@@ -6,6 +6,7 @@
 package gateway;
 
 import dhcp.DHCPPacket;
+import dhcp.DHCPServer;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.logging.Level;
@@ -19,13 +20,21 @@ import udp.PrivateIpHandler;
  * @author root
  */
 public class UDPServer {
-    private RawSocket sock = RawSocket.initialize_UDP("eth0");
+    public final RawSocket sock;// = RawSocket.initialize_UDP("eth0");
     private int clientIp = IpPacket.ipStringToInt("192.168.1.11");
     private int serverIp = IpPacket.ipStringToInt("192.168.1.12"), forwardingIp = IpPacket.ipStringToInt("72.188.192.147");
+    public final DHCPServer dhcp ;
+    public final PrivateIpHandler privateIp;
+    
+    public UDPServer(DHCPServer dhcp, PrivateIpHandler priv){
+        this.dhcp = dhcp;
+        this.privateIp = priv;
+        sock = dhcp.out;
+    }
+    
     
     public void run(){
                 dhcp.DHCPServer dhcp = new dhcp.DHCPServer(sock);
-                PrivateIpHandler privateIp = new PrivateIpHandler(sock);
         while(true){
             try {
                 System.out.println("\n\n\n\nread loop:");
@@ -33,6 +42,7 @@ public class UDPServer {
                 byte[] b = sock.accept();
                 
                 if(dhcp.accept(b)){ continue; }//check if its a dhcp packet
+                
                 if(privateIp.accept(b)){ continue; }
                 
                 System.out.println("regular packetRecieved:"+
