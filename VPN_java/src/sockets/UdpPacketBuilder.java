@@ -6,6 +6,7 @@
 package sockets;
 
 import java.util.Arrays;
+import sockets.editable.IpPacketBuilder;
 import sockets.editable.TcpPacketBuilder;
 
 /**
@@ -80,7 +81,29 @@ public class UdpPacketBuilder {
         TcpPacketBuilder.setShort(0,6,b);
         return this;
     }
-    
+    /**
+     * 
+     * @param ip
+     * @param payload
+     * @return  [ip packet] + [udp packet] + [payload]
+     */
+    public byte[] buildWholePacket(IpPacketBuilder ip, byte[] payload){
+        byte[] b = build(
+                    ip.getSourceIp(), 
+                    ip.getDestIp(), 
+                    IpPacket_deprecated.payloadStartIndex+payload.length+payload_start_index,
+                    payload
+                );
+        return ip.build(b);
+    }
+    /**
+     * 
+     * @param sourceIp
+     * @param destIp
+     * @param totalLength
+     * @param payload
+     * @return  [udp packet] + [payload] 
+     */
     public byte[] build(int sourceIp, int destIp, int totalLength, byte[] payload){
         setLength(payload_start_index+payload.length);
         setChecksum(sourceIp, destIp, totalLength);

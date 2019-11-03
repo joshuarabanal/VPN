@@ -5,17 +5,21 @@
  */
 package gateway.routers;
 
-import java.util.ArrayList;
-import sockets.IpPacket;
+import java.io.IOException;
 
 /**
  *
  * @author root
  */
 public interface PortConnectionBuilder{
-    public ConnectionForwarder bind( Client.UDP conn);
-    public ConnectionForwarder bind(  Client.TCP conn);
+    public ConnectionForwarder bind( Client.UDP conn) throws IOException;
+    public ConnectionForwarder bind(  Client.TCP conn) throws IOException;
     public interface ConnectionForwarder{
-        public void newClientMessage(byte[] b);
+        /**
+         * 
+         * @param b [ip Header] + [UDP/TCP heade] + [Payload] 
+         * @throws IOException 
+         */
+        public void newClientMessage(byte[] b) throws IOException;
     } 
 }

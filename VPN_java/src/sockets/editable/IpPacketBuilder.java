@@ -16,6 +16,8 @@ import sockets.IpPacket_deprecated;
 public class IpPacketBuilder {
     private byte[] b;
     //public byte[] payload;
+    
+    
     public IpPacketBuilder(){
         this.b = new byte[IpPacket_deprecated.payloadStartIndex];
         b[0] = ((4<<4) + 5);
