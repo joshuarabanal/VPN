@@ -48,10 +48,11 @@ public class PrivateIpHandler {
         if(!isPrivateIp(IpPacket.getDestIp(b))){
             return false;
         }
-        if(IpPacket.getProtocol(b) == IpPacket.TCP_protocol){
-            throw new UnsupportedOperationException("cannot yet handle local tcp packets");
-        }
-        else if(IpPacket.getProtocol(b) == IpPacket.UDP_protocol){
+        if(
+                IpPacket.getProtocol(b) == IpPacket.TCP_protocol
+                ||
+                IpPacket.getProtocol(b) == IpPacket.UDP_protocol
+        ){
             System.out.println(
                     "unknown local udp packet:"+
                     "\nIpPacket:"+IpPacket.toString(b)+

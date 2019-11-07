@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import sockets.IpPacket;
 import sockets.IpPacket_deprecated;
 import sockets.TcpPacket;
 import sockets.tcp.Options;
@@ -21,6 +22,10 @@ public class TcpPacketBuilder {
     private byte[] b;
     private Options options;
     public byte[] payload;
+    public TcpPacketBuilder(byte[] IpBuffer) throws IOException{
+        this(Arrays.copyOfRange(IpBuffer, IpPacket.getIPHeaderLength(IpBuffer), IpBuffer.length), IpPacket.getSourceIp(IpBuffer), IpPacket.getDestIp(IpBuffer));
+        
+    }
     public TcpPacketBuilder(byte[] buffer, int sourceIp, int destIp) throws IOException{
         this.b = buffer;
             options = new Options(b, 20, getOptionsLength());
@@ -200,7 +205,11 @@ public class TcpPacketBuilder {
         sb.append("\npayload:").append(Arrays.toString(payload));
         return sb.toString();
     }
-    public byte[] getPacket(int sourceIp, int destIp) throws IOException{
+    public byte[] buildWholePacket(IpPacketBuilder ip) throws IOException{
+        byte[] tcp = build(ip.getSourceIp(), ip.getDestIp());
+        return ip.build(tcp);
+    }
+    public byte[] build(int sourceIp, int destIp) throws IOException{
         setChecksum(sourceIp, destIp);
         byte[] options = getOptions().toByteArray();
         

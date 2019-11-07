@@ -28,7 +28,7 @@ public class Client {
     public boolean accept(byte[] b) throws IOException{
         int sourceIp = IpPacket.getSourceIp(b);
         
-        if(sourceIp != clientIp ){//not sending to or from client
+        if(sourceIp != clientIp){//not sending to or from client
             return false;
         }
         

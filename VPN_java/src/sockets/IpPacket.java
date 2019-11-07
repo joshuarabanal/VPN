@@ -24,6 +24,36 @@ public class IpPacket {
         public static int getDestPort(byte[] b){
             return getShort(getIPHeaderLength(b)+2, b);
         }
+        public static int getSequenceNumber(byte[] b){
+            return getInt(getIPHeaderLength(b)+4, b);
+        }
+        public static int getAckNumber(byte[] b){
+            return getInt(getIPHeaderLength(b)+8, b);
+        }
+        public static int getOptionsLength(byte[] b){
+            return (((b[getIPHeaderLength(b)+12]&0xff)>>4)-5)*4;
+        }
+        public static boolean isURG(byte[] b){
+            return (b[getIPHeaderLength(b)+13]& TcpPacket.URG_flag) != 0;
+        }
+        public static boolean isACK(byte[] b){
+            return (b[getIPHeaderLength(b)+13]& TcpPacket.ACK_flag) != 0;
+        }
+        public static boolean isPSH(byte[] b){
+            return (b[getIPHeaderLength(b)+13]& TcpPacket.PSH_flag) != 0;
+        }
+        public static boolean isRST(byte[] b){
+            return (b[getIPHeaderLength(b)+13]& TcpPacket.RST_flag) != 0;
+        }
+        public static boolean isSYN(byte[] b){
+            return (b[getIPHeaderLength(b)+13]& TcpPacket.SYN_flag) != 0;
+        }
+        public static boolean isFIN(byte[] b){
+            return (b[getIPHeaderLength(b)+13]& TcpPacket.FIN_flag) != 0;
+        }
+        public static int getWindowSize(byte[] b){
+            return getShort(getIPHeaderLength(b)+14, b);
+        }
     }
     
     public static class UDPPacket{

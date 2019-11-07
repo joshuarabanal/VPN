@@ -81,7 +81,7 @@ public class TcpPacket {
             index++;//index = 20+13
         //CWR = (b[index] & 0x80) !=0;
         //ECE = (b[index] & 0x40) != 0;
-        URG = (b[index] & 0x20) != 0;
+        URG = (b[index] & URG_flag) != 0;
         ACK = (b[index] & ACK_flag) != 0;
         PSH = (b[index] & PSH_flag) != 0;
         RST = (b[index] & RST_flag) != 0;
@@ -295,7 +295,7 @@ public class TcpPacket {
             System.out.println("recieved message:\n"+message.getTCP().toString());
             System.out.println("\n\nsent response:\n"+tcpe.toString());
             
-            source.socket.write(se.build(tcpe.getPacket(se.getSourceIp(), se.getDestIp())),  tcpe.getDestPort(), se.getDestIp());
+            source.socket.write(se.build(tcpe.build(se.getSourceIp(), se.getDestIp())),  tcpe.getDestPort(), se.getDestIp());
             /**
              * PacketBuilder p = new PacketBuilder(this.sourcePort, this.destinationPort);
 

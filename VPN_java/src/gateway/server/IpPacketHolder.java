@@ -76,7 +76,7 @@ public class IpPacketHolder {
         
         
         //check for errors
-        byte[] fin = se.build(tcp.getPacket(s.sourceIpAddress, s.destinationIpAddress));
+        byte[] fin = se.build(tcp.build(s.sourceIpAddress, s.destinationIpAddress));
         if(fin.length!= s.buffer.length){
             System.out.println("fin:"+Arrays.toString(fin));
             System.out.println("s:"+Arrays.toString(s.buffer));
@@ -94,7 +94,7 @@ public class IpPacketHolder {
         se.setDestIp(forwardingIp);
         se.setSourceIp(gatewayIp);
         outStream.write(
-                se.build(tcp.getPacket(gatewayIp, forwardingIp)), 
+                se.build(tcp.build(gatewayIp, forwardingIp)), 
                 tcp.getDestPort(), 
                 se.getDestIp()
         );
@@ -110,7 +110,7 @@ public class IpPacketHolder {
         
         
         //check for errors
-        byte[] fin = se.build(tcp.getPacket(s.sourceIpAddress, s.destinationIpAddress));
+        byte[] fin = se.build(tcp.build(s.sourceIpAddress, s.destinationIpAddress));
         if(fin.length!= s.buffer.length){
             System.out.println("fin:"+Arrays.toString(fin));
             System.out.println("s:"+Arrays.toString(s.buffer));
@@ -128,7 +128,7 @@ public class IpPacketHolder {
         se.setSourceIp(serverIp);
         se.setDestIp(clientIp);
         outStream.write(
-                se.build(tcp.getPacket(serverIp,clientIp)), 
+                se.build(tcp.build(serverIp,clientIp)), 
                 s.getTCP().sourcePort, 
                 s.sourceIpAddress
         );
