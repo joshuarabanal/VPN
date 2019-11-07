@@ -8,7 +8,7 @@ echo "adding any new files"
 sudo git add -A
 echo "uploading changes "
 sudo git commit -m "from raspberry pi_PR" -a
-
+echo "git push"
 sudo git push "https://joshuarabanal:SU0798ni@github.com/joshuarabanal/VPN.git"
 
 echo "finished upload"
