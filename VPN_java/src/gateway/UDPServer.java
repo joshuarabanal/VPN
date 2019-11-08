@@ -8,6 +8,8 @@ package gateway;
 import dhcp.DHCPPacket;
 import dhcp.DHCPServer;
 import java.io.IOException;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -40,7 +42,8 @@ public class UDPServer implements Runnable{
         }
     }
     public void run(){
-                dhcp.DHCPServer dhcp = new dhcp.DHCPServer(sock);
+        
+        int ignoreIp = IpPacket.ipStringToInt("169.254.211.93");
         while(true){
             try {
                 System.out.println("\n\n\n\nUDP read loop:");
@@ -50,6 +53,12 @@ public class UDPServer implements Runnable{
                 if(dhcp.accept(b)){ continue; }//check if its a dhcp packet
                 
                 if(privateIp.accept(b)){ continue; }
+                
+                if(ignoreIp == IpPacket.getSourceIp(b)){ 
+                    System.out.println("skipping over ignore ip");
+                    continue; 
+                }
+                
                 
                 System.out.println("regular udp packetRecieved:"+
                         IpPacket.ipIntToString(IpPacket.getSourceIp(b))

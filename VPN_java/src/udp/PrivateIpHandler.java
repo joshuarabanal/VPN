@@ -26,8 +26,8 @@ public class PrivateIpHandler {
             ;
     
     private ArrayList<Client> clients = new ArrayList<Client>();
-    private LocalRouter router;
-    private DHCPServer clientManager;
+    private final LocalRouter router;
+    private final DHCPServer clientManager;
     
     public final RawSocket outTCP, outUDP;
     
@@ -61,12 +61,13 @@ public class PrivateIpHandler {
                     return true;
                 }
             }
+            
             if(clientManager.isConnectedClient(srcIp)){//if its one of the clients we care about
                 clients.add(new Client(b, router));
                 return true;
             }
             else{
-                System.out.println("refused packet:private ip handler:"+srcIp);
+                System.out.println("refused packet:udp.PrivateIpHandler:"+srcIp);
                 return false;
             }
         }

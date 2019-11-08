@@ -8,6 +8,10 @@ package dhcp;
 import dhcp.dhcpPacket.Options;
 import dhcp.dhcpPacket.Option;
 import java.io.IOException;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import sockets.RawSocket;
 import sockets.IpPacket;
@@ -21,20 +25,26 @@ import sockets.editable.IpPacketBuilder;
  */
 public class DHCPServer {
     private static final int subnetMask = IpPacket.ipStringToInt("255.255.255.0"),
-            subnetPrefix = IpPacket.ipStringToInt("192.168.1.0"),
             serverIpAddress = IpPacket.ipStringToInt("192.168.1.1"),
             serverIdentifier = IpPacket.ipStringToInt("192.168.1.1"),
             gatewayIpAddress = IpPacket.ipStringToInt("0.0.0.0"),
             broadcastAddress = IpPacket.ipStringToInt("192.168.1.101"),
+            subnetPrefix = serverIpAddress & subnetMask,
             addressLeaseTime = 60*60*24,
             renewalLeaseTime = 60*60*12,
             rebindingLeaseTime = 60*60*21;
     
     public final RawSocket out;
-    ArrayList<Integer> usedSubnets = new ArrayList<Integer>();
+    private final ArrayList<Integer> usedSubnets = new ArrayList<Integer>();
     
-    public DHCPServer(RawSocket outStream_UDP){
+    
+    public DHCPServer(RawSocket outStream_UDP) throws SocketException, UnknownHostException {
         this.out = outStream_UDP;
+        DatagramSocket socket = new DatagramSocket();
+        socket.connect(InetAddress.getByName("8.8.8.8"), 10002);
+        InetAddress inetAddress = socket.getLocalAddress();
+        int clientIp = IpPacket.ipStringToInt(inetAddress.getHostAddress());
+        
     }
     
     public boolean accept(byte[] b) throws IOException{
@@ -66,24 +76,34 @@ public class DHCPServer {
                     break;
                 }
             }
-            if(!used){ return i; }
+            if(!used){ return i+subnetPrefix; }
         }
         throw new IndexOutOfBoundsException("no available clients");
     }
     private void grabIp(int ip) throws IOException{
+        System.out.println("requesting Ip:"+IpPacket.ipIntToString(ip));
         int requestedSubnet = (~subnetMask) & ip;
+        System.out.println("requesting Ip sub:"+requestedSubnet);
             for(int clientSubnet: usedSubnets){
                 if(requestedSubnet == clientSubnet){
                     throw new IOException("address already in use:"+IpPacket.ipIntToString(ip));
                 }
             }
+            System.out.println("adding client:"+requestedSubnet);
             usedSubnets.add(requestedSubnet);
+            System.out.println("clients:"+usedSubnets);
+            
     }
     public boolean isConnectedClient(int ip){
         if( (ip & subnetMask) != subnetPrefix){ return false; }//if its not on our subnet
         int ourSubnet = (~subnetMask) & ip;
         for(int clientSubnet : usedSubnets){
             if(clientSubnet == ourSubnet){ return true; }
+        }
+        System.out.println("isnt connected client:"+ip);
+        System.out.println("connected clients:"+usedSubnets);
+        if(IpPacket.ipStringToInt("192.168.1.2") == ip){
+            throw new IndexOutOfBoundsException("this ip should be used");
         }
         return false;
         
@@ -100,7 +120,7 @@ public class DHCPServer {
         builder.initializeFromCopy(b);
         builder.setOP((byte)2);
         builder.setServer_IP_address(serverIpAddress);
-        builder.setYour_IP_address(subnetPrefix+getAvailableIp());
+        builder.setYour_IP_address(getAvailableIp());
         builder.options = buildResponseOptions(opts);
         
         //add the mandatory options
@@ -177,7 +197,7 @@ public class DHCPServer {
         builder.initializeFromCopy(b);
         builder.setOP((byte)2);
         builder.setServer_IP_address(serverIpAddress);
-        builder.setYour_IP_address(subnetPrefix+getAvailableIp());
+        builder.setYour_IP_address(requestedIp);
         builder.options = buildResponseOptions(opts);
         
         

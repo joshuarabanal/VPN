@@ -41,7 +41,7 @@ public class Client {
         }
         //if there are no destinations open for this client
         outboundIp.add(new OutBoundIp(b));
-        return false;
+        return true;
     }
     
     
@@ -53,7 +53,9 @@ public class Client {
         public OutBoundIp(byte[]b ) throws IOException{
             this.srcIp  = IpPacket.getSourceIp(b);
             this.destIp = IpPacket.getDestIp(b);
-            this.accept(b, srcIp);
+            if(!this.accept(b, srcIp)){
+                throw new IOException("failed to create outbound ip");
+            }
         }
 
         public boolean accept(byte[] b, int sourceIp) throws IOException{
@@ -72,6 +74,7 @@ public class Client {
                     }
                 }
                 tcpConnections.add(new TCP(b));
+                return true;
             }
             else if(protocol == IpPacket.UDP_protocol){
                 for(PortConnection conn: udpConnections){
@@ -80,8 +83,9 @@ public class Client {
                     }
                 }
                 udpConnections.add(new UDP(b));
+                return true;
             }
-            return false;
+            throw new IOException("unsupported protocol:"+protocol);
 
         }
     }
