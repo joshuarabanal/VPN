@@ -25,7 +25,7 @@ int makeSocket(int type, const char *interfaceName){
   //struct sockaddr_in source_socket_address, dest_socket_address;
 
     // Open the raw socket
-    int sock = socket (PF_INET, SOCK_RAW, type);
+    int sock = socket (PF_INET/*PF_UNSPEC*/, SOCK_RAW, type);
     //IPPROTO_TCP;
     if(sock == -1)
     {

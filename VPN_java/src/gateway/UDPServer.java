@@ -19,7 +19,7 @@ import udp.PrivateIpHandler;
  *
  * @author root
  */
-public class UDPServer {
+public class UDPServer implements Runnable{
     public final RawSocket sock;// = RawSocket.initialize_UDP("eth0");
     private int clientIp = IpPacket.ipStringToInt("192.168.1.11");
     private int serverIp = IpPacket.ipStringToInt("192.168.1.12"), forwardingIp = IpPacket.ipStringToInt("72.188.192.147");
@@ -32,12 +32,18 @@ public class UDPServer {
         sock = dhcp.out;
     }
     
-    
+    private Thread t;
+    public void start(){
+        if(t == null){
+            t = new Thread(this);
+            t.start();
+        }
+    }
     public void run(){
                 dhcp.DHCPServer dhcp = new dhcp.DHCPServer(sock);
         while(true){
             try {
-                System.out.println("\n\n\n\nread loop:");
+                System.out.println("\n\n\n\nUDP read loop:");
                 
                 byte[] b = sock.accept();
                 
@@ -45,7 +51,7 @@ public class UDPServer {
                 
                 if(privateIp.accept(b)){ continue; }
                 
-                System.out.println("regular packetRecieved:"+
+                System.out.println("regular udp packetRecieved:"+
                         IpPacket.ipIntToString(IpPacket.getSourceIp(b))
                         +":"+
                         IpPacket.UDPPacket.getSourcePort(b)+
@@ -59,8 +65,7 @@ public class UDPServer {
                     try{
                         System.out.println("unknonwn ip packet:"+IpPacket.toString(b));
                         System.out.println("unknown UDP packet:"+IpPacket.UDPPacket.toString(b));
-                        System.out.println("array"+Arrays.toString(Arrays.copyOfRange(b, IpPacket.UDPPacket.getPayloadStartIndex(b), b.length)
-                                )
+                        System.out.println("array"+new String(Arrays.copyOfRange(b, IpPacket.UDPPacket.getPayloadStartIndex(b), b.length))
                         );
                     }catch (IndexOutOfBoundsException e){
                         throw e;

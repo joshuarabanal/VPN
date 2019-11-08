@@ -22,13 +22,15 @@ public class Client {
     public Client(byte[] b, PortConnectionBuilder pcb) throws IOException{
         this.cb = pcb;
         this.clientIp = IpPacket.getSourceIp(b);
-        this.accept(b);
+        if(!this.accept(b)){
+            throw new IOException("failed to build client");
+        }
     }
     
     public boolean accept(byte[] b) throws IOException{
         int sourceIp = IpPacket.getSourceIp(b);
         
-        if(sourceIp != clientIp){//not sending to or from client
+        if(sourceIp != clientIp ){//not sending to or from client
             return false;
         }
         

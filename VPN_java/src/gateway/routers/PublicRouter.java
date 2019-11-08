@@ -18,6 +18,7 @@ import java.util.logging.Logger;
 import sockets.IpPacket;
 import sockets.IpPacket_deprecated;
 import sockets.RawSocket;
+import sockets.Tcp3WayHandshake;
 import sockets.UdpPacketBuilder;
 import sockets.editable.IpPacketBuilder;
 
@@ -45,7 +46,21 @@ public class PublicRouter implements PortConnectionBuilder {
         throw new UnsupportedOperationException("still working on this");
         
     }
-    
+    private class TCP implements PortConnectionBuilder.ConnectionForwarder{
+
+        @Override
+        public void newClientMessage(byte[] b) throws IOException {
+            System.out.println("new client message tcp:\n"+IpPacket.toString(b)+"/n"+IpPacket.TCPPacket.toString(b));
+            byte[] response = Tcp3WayHandshake.isHandshake(b);
+            if(response != null){
+                outTCP.write(response);
+                return;
+            }
+            
+            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        }
+        
+    }
     /**
      * udp timeout 30 seconds
      */

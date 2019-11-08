@@ -14,6 +14,18 @@ import sockets.editable.TcpPacketBuilder;
  * @author root
  */
 public class Tcp3WayHandshake {
+    /**
+     * 
+     * @param request
+     * @return response byte if this is a handshake request, and null if it is not
+     */
+    public static byte[] isHandshake(byte[] request) throws IOException{
+        if(isStep1Request(request)){
+            return sendStep2(request);
+        }
+        return null;
+    }
+    
     public static boolean isStep1Request(byte[] request){
         if(
                 IpPacket.getProtocol(request) != IpPacket.TCP_protocol//not correct protocol

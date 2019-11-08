@@ -51,7 +51,7 @@ public class TCPServer implements Runnable {
      */
     public void run(){
         while(true){
-         
+            System.out.println("\n\nTCP read loopp");
             byte[] s = null;
             try {
                 s = TCP_serverSocket.accept();
@@ -78,7 +78,7 @@ public class TCPServer implements Runnable {
         
     }
     private void logUnknownPacket(byte[] b){
-        System.out.println("regular packetRecieved:"+
+        System.out.println("regular TCP packet Recieved:"+
                 IpPacket.ipIntToString(IpPacket.getSourceIp(b))
                 +":"+
                 IpPacket.UDPPacket.getSourcePort(b)+
@@ -91,9 +91,8 @@ public class TCPServer implements Runnable {
                 
         try{
             System.out.println("unknonwn ip packet:"+IpPacket.toString(b));
-            System.out.println("unknown UDP packet:"+IpPacket.UDPPacket.toString(b));
-            System.out.println("array"+Arrays.toString(Arrays.copyOfRange(b, IpPacket.UDPPacket.getPayloadStartIndex(b), b.length)
-                    )
+            System.out.println("unknown UDP packet:"+IpPacket.TCPPacket.toString(b));
+            System.out.println("array"+new String(Arrays.copyOfRange(b, IpPacket.TCPPacket.getPayloadStartIndex(b), b.length))
             );
         }catch (IndexOutOfBoundsException e){
             throw e;

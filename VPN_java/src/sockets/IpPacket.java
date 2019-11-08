@@ -18,6 +18,7 @@ public class IpPacket {
     public static final int  ipv4HeaderVersion = 4, TCP_protocol = 6, UDP_protocol = 17; 
     
     public static class TCPPacket{
+        public static final int optionsStartIndex = 20;
         public static int getSourcePort(byte[] b){
             return getShort(getIPHeaderLength(b), b);
         }
@@ -53,6 +54,27 @@ public class IpPacket {
         }
         public static int getWindowSize(byte[] b){
             return getShort(getIPHeaderLength(b)+14, b);
+        }
+        public static int getTCPHeaderLength(byte[] b){
+            return getOptionsLength(b)+optionsStartIndex;
+        }
+        public static int getPayloadStartIndex(byte [] b){
+            return getIPHeaderLength(b)+getTCPHeaderLength(b);
+        }
+        public static String toString(byte[]b){
+            StringBuilder sb= new StringBuilder("TCP Packet:\n");
+            sb.append("sourcePort:").append(getSourcePort(b));
+            sb.append("\nDestination Port:").append(getDestPort(b));
+            sb.append("\nSequence Number:").append(getSequenceNumber(b));
+            sb.append("\nAck Number:").append(getAckNumber(b));
+            sb.append("\nWindow Size:").append(getWindowSize(b));
+            if(isURG(b)){ sb.append("\nURG:true"); }
+            if(isACK(b)){ sb.append("\nACK:true"); }
+            if(isPSH(b)){ sb.append("\nPSH:true"); }
+            if(isRST(b)){ sb.append("\nRST:true"); }
+            if(isSYN(b)){ sb.append("\nSYN:true"); }
+            if(isFIN(b)){ sb.append("\nFIN:true"); }
+            return sb.toString();
         }
     }
     

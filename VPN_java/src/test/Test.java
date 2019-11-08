@@ -26,19 +26,19 @@ public class Test {
     public static final DHCPServer dhcp = new DHCPServer(rawUDP);
     public static final PrivateIpHandler priv = new PrivateIpHandler( rawTCP, rawUDP, dhcp);
     
-    public static void main_tcp(String[] args){
+    public static void main(String[] args){
         
         System.setErr(System.out);
         System.out.println(System.getProperty("user.dir"));
         TCPServer tcps = new TCPServer(dhcp,priv);
-            tcps.start();
         UDPServer udps = new UDPServer(dhcp,priv);
-        udps.run();
+            udps.start();
+       tcps.run();
         
        
     }
     
-     public static void main(String[] args){
+     public static void mainzes(String[] args){
         
         
         System.setErr(System.out);

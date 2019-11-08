@@ -66,6 +66,13 @@ public class LocalRouter implements PortConnectionBuilder {
 
         @Override
         public void newClientMessage(byte[] buf) throws IOException{
+            System.out.println(
+                    "unknown local udp packet:"+
+                    "\n"+IpPacket.toString(buf)+
+                    "\n"+IpPacket.UDPPacket.toString(buf)+
+                    "\n"+new String( IpPacket.UDPPacket.getPayload(buf) )
+            );
+            
             if(buf == null){ firstpacket = buf; }
             byte[] payload = IpPacket.UDPPacket.getPayload(buf);
             System.out.println("sending client message to server:"+new String(payload));

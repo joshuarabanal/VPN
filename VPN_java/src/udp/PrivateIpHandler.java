@@ -53,12 +53,7 @@ public class PrivateIpHandler {
                 ||
                 IpPacket.getProtocol(b) == IpPacket.UDP_protocol
         ){
-            System.out.println(
-                    "unknown local udp packet:"+
-                    "\nIpPacket:"+IpPacket.toString(b)+
-                    "\nUDPPacket:"+IpPacket.UDPPacket.toString(b)+
-                    "\n payload:"+Arrays.toString( IpPacket.UDPPacket.getPayload(b) )
-            );
+            
             
             int srcIp = IpPacket.getSourceIp(b);
             for(Client c : clients){
@@ -71,6 +66,7 @@ public class PrivateIpHandler {
                 return true;
             }
             else{
+                System.out.println("refused packet:private ip handler:"+srcIp);
                 return false;
             }
         }
