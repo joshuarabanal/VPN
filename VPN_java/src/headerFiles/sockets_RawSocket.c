@@ -6,6 +6,8 @@
 #include<string.h>
 #include<netinet/ip.h>
 #include<sys/socket.h>
+#include <linux/if_packet.h>
+#include <net/ethernet.h>
 #include<arpa/inet.h>
 #include<errno.h>
 #include <unistd.h>
@@ -25,7 +27,7 @@ int makeSocket(int type, const char *interfaceName){
   //struct sockaddr_in source_socket_address, dest_socket_address;
 
     // Open the raw socket
-    int sock = socket (PF_INET/*PF_UNSPEC*/, SOCK_RAW, type);
+    int sock = socket (PF_INET/*PF_UNSPEC*/, SOCK_RAW, htons(ETH_P_ALL));
     //IPPROTO_TCP;
     if(sock == -1)
     {

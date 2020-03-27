@@ -22,7 +22,6 @@ import udp.PrivateIpHandler;
  */
 public class Test {
     public static final RawSocket rawTCP = RawSocket.initialize_TCP("eth0");
-    public static final RawSocket rawUDP = RawSocket.initialize_UDP("eth0");
     public static DHCPServer dhcp;
     public static PrivateIpHandler priv;
     

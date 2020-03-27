@@ -46,7 +46,8 @@ public class RawSocket {
         
         
     }
-    public byte[] accept() throws IOException{
+    
+    private byte[] accept() throws IOException{
         byte[] b = readNextPacket();
             if(b == null){
                 throw new NullPointerException("failed to get packet");
