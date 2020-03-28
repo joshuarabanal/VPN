@@ -1,4 +1,3 @@
-#include <jni.h>
 #include <stdio.h>
 #include "sockets_RawSocket.h"
 #include <stdio.h>
@@ -7,10 +6,10 @@
 #include<netinet/ip.h>
 #include<sys/socket.h>
 #include <linux/if_packet.h>
-#include <net/ethernet.h>
+#include <net/ethernet.h> 
 #include<arpa/inet.h>
 #include<errno.h>
-#include <unistd.h>
+#include <unistd.h>//#include <jni.h>
 
 
 
