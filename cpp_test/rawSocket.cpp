@@ -2,6 +2,7 @@
 #include<stdlib.h>
 #include<string.h>
 #include<netinet/ip.h>
+#include<netinet/in.h>
 #include<sys/socket.h>
 #include <linux/if_packet.h>
 #include <net/ethernet.h> 
@@ -10,6 +11,7 @@
 #include <unistd.h>
 
 #define RawSocket_type_TCP IPPROTO_TCP
+#define RawSocket_type_UDP IPPROTO_UDP
 
 class RawSocket{
 	//private
@@ -23,13 +25,14 @@ class RawSocket{
 };
 
 RawSocket::RawSocket(int type, const char interfaceName[]){
-	this->sock = socket (PF_INET, SOCK_RAW, htons(ETH_P_ALL));
+	std::cout<<"test"<<htons(ETH_P_ALL) <<" = "<<ETH_P_ALL<<"\n";
+	this->sock = socket (AF_INET, SOCK_RAW, IPPROTO_UDP);
 	if(this->sock == -1){
 		puts("socket could not be created possibly due to not requesting super user");
 		throw 1;
 	}
 	else{
-		std::cout<<"initialized socket!\n";
+		std::cout<<"initialized socket!"<<this->sock<<"\n";
 	}
 	setsockopt(this->sock, SOL_SOCKET, SO_BINDTODEVICE, interfaceName, strlen(interfaceName));
 }
