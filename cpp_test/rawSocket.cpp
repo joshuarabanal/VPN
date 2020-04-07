@@ -1,3 +1,6 @@
+#ifndef RAWSOCKET_h
+#define RAWSOCKET_h
+
 #include <iostream>
 #include<stdlib.h>
 #include<string.h>
@@ -9,6 +12,7 @@
 #include<arpa/inet.h>
 #include<errno.h>
 #include <unistd.h>
+#include "protocol/ethernetHeader.cpp"
 
 #define RawSocket_type_TCP IPPROTO_TCP
 #define RawSocket_type_UDP IPPROTO_UDP
@@ -16,12 +20,15 @@
 class RawSocket{
 	//private
 	int sock = -1;
+	struct sockaddr addr;
+	socklen_t addrLen;
 	
 	
 	//public
 	public:
 	RawSocket(int type, const char interface[]);
 	int read( char buffer[65536]);
+	int write(char buffer[65536]);
 };
 
 RawSocket::RawSocket(int type, const char interfaceName[]){
@@ -37,8 +44,24 @@ RawSocket::RawSocket(int type, const char interfaceName[]){
 	setsockopt(this->sock, SOL_SOCKET, SO_BINDTODEVICE, interfaceName, strlen(interfaceName));
 }
 int RawSocket::read(char buffer[65536]){
+       
+	int howMany = recvfrom(
+			this->sock , buffer , 65536 , 0 ,
+			&(this->addr), &(this->addrLen) 
+	);
 	
-	int howMany = recvfrom(this->sock , buffer , 65536 , 0 , NULL, NULL);
 	for(int i = howMany; i<65536; i++){ buffer[i] = 0; }
+	
 	return howMany;
 }
+int RawSocket::write(char buffer[65536] ){
+	IP::Header * ip = IP::create(buffer, "RawSocket::write,1");
+	int retu = sendto(
+			this->sock, buffer, IP::getLength(ip), 0,
+           &this->addr, this->addrLen
+   );
+   return retu;
+}
+	
+
+#endif

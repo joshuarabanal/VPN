@@ -1,45 +1,158 @@
-#include "ethernetHeader.cpp"
-#include <iostream>
-
 #ifndef UDPPacket_H
 #define UDPPacket_H
 
-struct UDPHeader{
-		unsigned int sourcePort:16;
-		unsigned int destPort:16;
-		unsigned int length:16;
-		unsigned int checksum:16;
-		char *payLoad;
-};
-namespace UDPPacket{
-	void copyVals( UDPHeader * to, UDPHeader * from){
-		memcpy(to, from, sizeof(UDPHeader));
+#include "ethernetHeader.cpp"
+#include <iostream>
+#include <bitset>
+#include "../CrashReporter.cpp"
+
+#define UDP_Port_Multicast 5353
+
+namespace UDP{
+	struct Header{
+		unsigned int sourcePort:16;//be carefull because the byte order might be off
+		unsigned int destPort:16;//be carefull because the byte order might be off
+		unsigned int length:16;//length of UDP header + payload.length
+		unsigned int checksum:16; //the checksum of the entire header+ payload
+	};
+}
+
+namespace UDP{
+	//forward declarations
+	void logValues(UDP::Header *udp);
+	int getLength(UDP::Header *src);
+	
+	namespace{
+		
+		int formatShort(int sht){
+			return ((sht&0xff)<<8)  |  ((sht&0xff00)>>8); 
+		}
+		int calcChecksum(IP::Header *ip, UDP::Header *self){
+			char temp[65536] = {0};
+			
+			unsigned char *src = (unsigned char *)ip;
+			//memcpy(temp, ip->sourceIP,4*sizeof(char));
+			temp[0] = src[12];
+			temp[1] = src[13];
+			temp[2] = src[14];
+			temp[3] = src[15];
+			
+			//memcpy(temp+4, ip->destinationIP,4*sizeof(char));
+			temp[4] = src[16];
+			temp[5] = src[17];
+			temp[6] = src[18];
+			temp[7] = src[19];
+			
+			
+			temp[8] = 0;
+			temp[8] = IPHeader_protocolUDP;
+			
+			int len = getLength(ip);
+			temp[11] = (len>>8)&0xff;
+			temp[10] = len&0xff;
+			
+			memcpy(temp+12, (char *)self, getLength(self)*sizeof(char) );
+			
+			return IPHeader_calcChecksum(temp, getLength(self) + 12);
+			
+			
+		}
+		bool checkChecksum(IP::Header *ip, UDP::Header *self){
+			int sum = calcChecksum(ip, self);
+			return  (sum == 0) || (sum == 65535);
+		}
 	}
-	void copyToResponseHeader(UDPHeader * response , UDPHeader *message){
+	int getLength(UDP::Header *src){
+		return formatShort(src->length);
+	}
+	int getSourcePort(UDP::Header *src){ return formatShort(src->sourcePort); }
+	
+	int getDestPort(UDP::Header *src){ return formatShort(src->destPort); }
+	
+	UDP::Header *createEmptyHeader(IP::Header *src){
+		return (UDP::Header *) 
+		(
+			((char *)src) + IP::getPayloadIndex(src)
+		);
+	}
+	UDP::Header *create(IP::Header * src, const char *errLog){
+		if(src->protocol != IPHeader_protocolUDP){
+			std::cout<<"UDPHeader:15";
+			throw -1;
+		}
+		UDP::Header * retu =  createEmptyHeader(src);
+		bool check = checkChecksum(
+				src,
+				retu
+			);
+		if(!check){
+			CrashReporter::logCrash((char *)src, 65536);
+			int sum = calcChecksum(src, retu);
+			IP::logValues(src);
+			std::cout<<"\n\n\n";
+			logValues(retu);
+			std::bitset<16> bits(sum);
+			std::cout<<"udp header checksum invalid at("<<errLog<<"):"<<formatShort(sum)<<":"<<bits<<"\n";
+			std::cout<<"length swapped IP:"<<formatShort(src->totalLength)<<"\n";
+			std::cout<<"length swapped UDP:"<<formatShort(retu->length)<<"\n";
+			std::cout<<"test:"<<(int)(((char*)src)[0]&0x0f)<<"\n";
+			char * read = (char *)src;
+			for(int i = 0; i<IP::getLength(src); i+=16){
+				
+					std::cout<<(int)read[i]<<","<<(int)read[i+1]
+						<<","<<(int)read[i+2]<<","<<(int)read[i+3];
+						
+					std::cout<<"\t\t"<<(int)read[i+4]<<","<<(int)read[i+5]
+								<<","<<(int)read[i+6]<<","<<(int)read[i+7];
+						
+					std::cout<<"\t\t"<<(int)read[i+8]<<","<<(int)read[i+9]
+								<<","<<(int)read[i+10]<<","<<(int)read[i+11];
+								
+					std::cout<<"\t\t"<<(int)read[i+12]<<","<<(int)read[i+13]
+								<<","<<(int)read[i+14]<<","<<(int)read[i+15]<<"\n";
+			}
+			std::cout.flush();
+			throw -2;
+		}
+		return retu;
+	}
+	
+	int payloadIndex = sizeof(UDP::Header);
+	
+	void copyVals( UDP::Header * to, UDP::Header * from){
+		memcpy(to, from, payloadIndex);
+	}
+	
+	void copyToResponseHeader(UDP::Header * response , UDP::Header *message){
 			copyVals(response, message);
 			response->sourcePort = message->destPort;
 			response->destPort = message->sourcePort;
 	}
-	void setPayload(UDPHeader *self,  char sourceIp[4], char destIp[4], char *body, int length){
-		self->payLoad = body;
+	void setChecksum(IP::Header * ip, UDP::Header *self){
+		self->checksum = 0;
+		self->checksum = calcChecksum(ip,self);
+		
+	}
+	void setPayload(UDP::Header *self, IP::Header * ip, char *body, int length){
+		memcpy(self+payloadIndex, body, length);
 		self->length = 8+length;
-		
-		uint16_t sum = self->sourcePort + self->destPort + (self->length &0xff) + ((self->length>>8)&0xff);
-		
-		uint16_t *vals = (uint16_t *)destIp;
-		sum+= vals[0] + vals[1];
-		
-		vals = (uint16_t *)sourceIp;
-		sum+= vals[0] + vals[1];
-		
-		vals = body;
-		for(int i = 0; i<length/2; i++){
-			sum+= body[i];
+		setChecksum(ip,self);
+		if(!checkChecksum(ip, self)){
+			std::cout<<"UDP failed to set own checksum:"<<self->checksum<<"\n";
+			throw -7;
 		}
-		self->checksum = ~sum;
+		
+	}
+	
+	void logValues(UDP::Header *udp){
+		std::cout<<"udp header:\n"
+		<<"sourcePort:"<< UDP::formatShort(udp->sourcePort)<<"\n"
+		<<"destPort:"<< UDP::formatShort(udp->destPort) <<"\n"
+		<<"length:"<< formatShort(udp->length) <<"\n"
+		<<"checksum:"<< udp->checksum <<"\n";
 	}
 }
-int UDPHeader_getPayloadIndex(IPHeader *tcp){
+int UDPHeader_getPayloadIndex(IP::Header *tcp){
 	int tcpIndex = IPHeader_getPayloadIndex(tcp);
 	if(tcp->protocol == IPHeader_protocolUDP){
 		return tcpIndex+ (16+16+16+16);
@@ -47,27 +160,7 @@ int UDPHeader_getPayloadIndex(IPHeader *tcp){
 	std::cout<<"error not a udp packet";
 	throw -1;
 }
-void UDPHeader_fix( UDPHeader * udp){
-	
-	int temp = udp->sourcePort;
-	udp->sourcePort = ((temp&0xff)<<8) | ((temp>>8)&0xff);
-	
-	temp = udp->destPort;
-	udp->destPort = ((temp&0xff)<<8) | ((temp>>8)&0xff);
-	
-	temp = udp->length;
-	udp->length = ((temp&0xff)<<8) | ((temp>>8)&0xff);
-	
-	temp = udp->checksum;
-	udp->checksum = ((temp&0xff)<<8) | ((temp>>8)&0xff);
-	
-}
 
-void UPDHeader_log(UDPHeader * udp){
-	std::cout<<"udp header:\n"
-		<<"sourcePort:"<< udp->sourcePort<<"\n"
-		<<"destPort:"<< udp->destPort <<"\n"
-		<<"length:"<< udp->length <<"\n"
-		<<"checksum:"<< udp->checksum <<"\n";
-}
+
+
 #endif

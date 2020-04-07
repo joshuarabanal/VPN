@@ -1,126 +1,223 @@
+#ifndef DHCP_SERVR_h
+#define DHCP_SERVER_h
+
 #include "../protocol/ethernetHeader.cpp"
 #include "../protocol/UDPHeader.cpp"
 #include "../protocol/DHCPHeader.cpp"
 #include <iostream>
 #include <string.h>
+#include <unistd.h>
+#include <fstream>//delete after debugging
 
-#define DHCP_Server_clientIP  IPPacket::createIpAddress(192, 168, 2,2)
-#define DHCP_Server_SubnetMask  IPPacket::createIpAddress(192, 168, 2,0)
-#define DHCP_Server_serverIP  IPPacket::createIpAddress(192, 168, 1,34)
+#define DHCP_Server_clientIP  IP::createIpAddress(192, 168, 2,2)
+#define DHCP_Server_SubnetMask  IP::createIpAddress(192, 168, 2,0)
+#define DHCP_Server_serverIP  IP::createIpAddress(192, 168, 1,12)
 #define DHCP_SERVER_AddrLeaseTime  (60*60*24)
 
-namespace Server{
-	
-	void replyToDiscover(char *read, char *write){
-		IPHeader * ip_in = (IPHeader *)read;
-		UDPHeader * udp_in = (UDPHeader *)(read + UDPHeader_getPayloadIndex(ip_in));
-		DHCP::Header *dhcp_in = (DHCP::Header *)udp_in->payLoad;
-		DHCP::Option DHCP_new_OptionsArray(dhcp_in, options_in);//macro allocated new options array named options
-		
-		
-		
-		
-		DHCP::Header *returnDHCP = {0};
-		DHCP::memCpy(returnDHCP, dhcp_in);
-        returnDHCP->OPCode = DHCP::OPCodeTypes::offer;
-        //returnDHCP->hardwareType = dhcp_in->hardwareType;
-        //returnDHCP->hardwareAddressLength = dhcp_in->hardwareAddressLength;
-        //returnDHCP->hops = dhcp_in->hops;
-        //returnDHCP->transactionId = dhcp_in->transactionId;
-        //returnDHCP->seconds = dhcp_in->seconds;
-        //returnDHCP->flags = dhcp_in->flags;
-        //returnDHCP->clientIpAddress = dhcp_in->clientIpAddress;
-        returnDHCP->yourIpAddress = DHCP_Server_clientIP;
-        returnDHCP->serverIpAddress = DHCP_Server_serverIP;
-        //returnDHCP->gatewayIpAddress = dhcp_in->gatewayIpAddress;
-        memcpy(
-			returnDHCP->clientHardwareAddress,
-			dhcp_in->clientHardwareAddress,
-			16*sizeof(char)
-        );
-        
-        memcpy(
-			returnDHCP->ServerName,
-			dhcp_in->ServerName,
-			64*sizeof(char)
-        );
-        
-        memcpy(
-			returnDHCP->bootFileName,
-			dhcp_in->bootFileName,
-			128*sizeof(char)
-        );
-        //returnDHCP->magicCookie = dhcp_in->magicCookie;
-        //returnDHCP->gatewayIpAddress = dhcp_in->gatewayIpAddress;
-        
-        DHCP::Option options_out[6];
-        
-        //configure message type
-        DHCP::OPTIONS::Message::create(options_out, DHCP::OPTIONS::Message::types::OFFER);
-        
-        //options[1] : subnetMask
-        DHCP::OPTIONS::SubnetMask::create(options_out+1, DHCP_Server_SubnetMask);
-        
-        //options[2] = Router
-        long vals[1] = {DHCP_Server_serverIP};
-        DHCP::OPTIONS::Router::create(options_out+2, vals, 1);
-        
-        //options[3] = LeaseTime
-        DHCP::OPTIONS::LeaseTime::create(options_out+3, DHCP_SERVER_AddrLeaseTime);
-        
-        //options[4] = ServerIdentifier
-        DHCP::OPTIONS::ServerId::create(options_out+4, DHCP_Server_serverIP);
-        
-        //options[5] = DNSServer
-        long dns[2] = {
-              IPPacket::createIpAddress(8,8,8,8),
-              IPPacket::createIpAddress(8,8,4,4)
-		};
-        DHCP::OPTIONS::DNS::create(options_out+5, dns, 2);
-        
-        
-        
-        IPHeader * ip_out = (IPHeader *)write;
-        IPPacket::copyToResponseHeader(ip_out, ip_in);
-        
-        UDPHeader *udp_out = (UDPHeader *)(ip_out + IPHeader_getPayloadIndex(ip_out));
-        UDPPacket::copyToResponseHeader(udp_out, udp_in);
-		UDPPacket::setChecksum(ip_out->sourceIP, ip_out->destIp, returnDHCP, DHCP::getLengthInBytes(options_out, 6)) ;
-        
-        
-        IPPacket::setPayload(udp_out, udp_out->length);
-        
-        /**
-            
-        byte[] retu = builder.build();//dhcp packet
-        retu = udpe.build(ipe.getSourceIp(), ipe.getDestIp(), IpPacket_deprecated.payloadStartIndex+UdpPacketBuilder.payload_start_index+retu.length,retu );
-        retu = ipe.build(retu);
-        out.write(retu, udpe.getDestPort(), ipe.getDestIp());
-        
-        
-        **/
-	}
-	void replyToRequest(char *bytes){}
 
-	bool handleMessage(char *packet, char *responsePacket){
-		IPHeader * ip = (IPHeader *)packet;
-		UDPHeader * udp = (UDPHeader *)(packet + UDPHeader_getPayloadIndex(ip));
-		DHCP::Header *dhcp = (DHCP::Header *)udp->payLoad;
-		DHCP::Option DHCP_new_OptionsArray(dhcp, options);//macro allocated new options array named options
+
+namespace DHCP::Server{
+	
+	namespace{//private functions
+		void checkReturnVals(char *pac){
+			IP::Header *ip =  IP::create(pac,"DHCP::Server::check return vals");
+				IP::logValues(ip);
+			UDP::Header * udp = UDP::create(ip,"DHCP::Server::check return vals,2");
+				UDP::logValues(udp);
+			DHCP::Header *dhcp = DHCP::create(udp);
+				DHCP::logValues(dhcp);
+		}
+		void replyToDiscover(char *read, char *write){
+			std::cout<<"DHCPServer:reply to discover16\n";std::cout.flush();
+			//create the input headers
+			IP::Header * ip_in = IP::create(read, "DHCP::SERVER::replyToDiscover,2");
+			UDP::Header * udp_in = UDP::create(ip_in, "DHCP::SERVER::replyToDiscover,1");
+			DHCP::Header *dhcp_in =  DHCP::create(udp_in);
+			
+			std::cout<<"DHCPSERVER:25\n";std::cout.flush();
+			//create the out put headers
+			IP::Header * ip_out = IP::createEmptyHeader(write);;
+				IP::copyToResponseHeader(ip_out, ip_in);
+				IP::setSourceIPAddress(ip_out, DHCP_Server_serverIP);
+			UDP::Header *udp_out = UDP::createEmptyHeader(ip_out);
+				UDP::copyToResponseHeader(udp_out, udp_in);
+				
+			DHCP::Header *dhcp_out =  DHCP::create(udp_out);
+				DHCP::memCpy(dhcp_out, dhcp_in);
+			std::cout<<"DHCPSERVER:28\n";std::cout.flush();
 		
-		switch(options[DHCP::getOptionIndexByType(options,DHCP::OPTIONS::types::message_type)].type){
+			
+			
+			
+			//DHCP::Header *returnDHCP = {0};
+			//DHCP::memCpy(returnDHCP, dhcp_in);
+			dhcp_out->OPCode = DHCP::OPCodeTypes::offer;
+			dhcp_out->yourIpAddress = DHCP_Server_clientIP;
+			dhcp_out->serverIpAddress = DHCP_Server_serverIP;
+			memcpy(
+					dhcp_out->clientHardwareAddress,
+					dhcp_in->clientHardwareAddress,
+					sizeof(DHCP::Header::clientHardwareAddress)
+			);
+			
+			memcpy(
+					dhcp_out->ServerName,
+					dhcp_in->ServerName,
+					sizeof(DHCP::Header::ServerName)
+			);
+			
+			memcpy(
+					dhcp_out->bootFileName,
+					dhcp_in->bootFileName,
+					sizeof(DHCP::Header::bootFileName)
+			);
+			
+			DHCP::Option options_out[6];
+			
+			//configure message type
+			DHCP::OPTIONS::Message::create(options_out, DHCP::OPTIONS::Message::types::OFFER);
+			
+			//options[1] : subnetMask
+			DHCP::OPTIONS::SubnetMask::create(options_out+1, DHCP_Server_SubnetMask);
+			
+			//options[2] = Router
+			unsigned long vals[1] = {DHCP_Server_serverIP};
+			DHCP::OPTIONS::Router::create(options_out+2, vals, 1);
+			
+			//options[3] = LeaseTime
+			DHCP::OPTIONS::LeaseTime::create(options_out+3, DHCP_SERVER_AddrLeaseTime);
+			
+			//options[4] = ServerIdentifier
+			DHCP::OPTIONS::ServerId::create(options_out+4, DHCP_Server_serverIP);
+			
+			//options[5] = DNSServer
+			unsigned long dns[2] = {
+			      IP::createIpAddress(8,8,8,8),
+			      IP::createIpAddress(8,8,4,4)
+				};
+			DHCP::OPTIONS::DNS::create(options_out+5, dns, 2);
+			
+			DHCP::setOptions(dhcp_out, options_out, 6);
+			
+			
+			UDP::setPayload(
+				udp_out, 
+				ip_out,  
+				(char * )dhcp_out, 
+				DHCP::getLengthInBytes(options_out, 6)
+			) ;
+			
+			
+			IP::setPayload(ip_out, (char *)udp_out, udp_out->length);
+			
+			if(!IP::checkChecksum(ip_out)){
+				std::cout<<"checksum not setting correct:DHCPServer:115\n";
+				std::cout<<"checksum:"<<ip_out->checksum<<"\n";
+				ip_out->checksum = 0;
+				std::cout<<"zeroes checksum:"<<ip_out->checksum<<"\n";
+				IP::setChecksum(ip_out);
+				std::cout<<"checksum after 2nd try:"<<ip_out->checksum<<"\n";
+				throw -6;
+			}
+			if(DEBUG == true){
+				std::ofstream file; 
+				file.open("/home/pi/Downloads/packet_discover.txt");
+				file.write(read, 65536);
+				file.close();
+				
+				file.open("/home/pi/Downloads/packet_offer.txt");
+				file.write(write, 65536);
+				file.close();
+			}
+		
+		}
+		
+		void replyToRequest(char *read, char *write){
+			std::cout<<"reply to request\n";
+			//create the input headers
+			IP::Header * ip_in = IP::create(read, "DHCP::SERVER::replyToRequest,2");
+			UDP::Header * udp_in = UDP::create(ip_in, "DHCP::SERVER::replyToRequest,1");
+			DHCP::Header *dhcp_in =  DHCP::create(udp_in);
+			
+			std::cout<<"DHCPSERVER:114\n";std::cout.flush();
+			//create the out put headers
+			IP::Header * ip_out = (IP::Header *)write;
+				IP::copyToResponseHeader(ip_out, ip_in);
+				IP::setDestinationIp(ip_out, ip_in->destinationIP);
+				IP::setSourceIPAddress(ip_out, DHCP_Server_serverIP);
+			UDP::Header *udp_out = UDP::create(ip_out, "DHCP::SERVER::replyToRequest,2");
+				UDP::copyToResponseHeader(udp_out, udp_in);
+				
+			DHCP::Header *dhcp_out =  DHCP::create(udp_out);
+				DHCP::memCpy(dhcp_out, dhcp_in);
+			std::cout<<"DHCPSERVER:124\n";std::cout.flush();
+		
+			std::ifstream file; 
+			file.open("/home/pi/Downloads/packet_request.txt");
+			file.read(read, 65536);
+			file.close();
+			throw -1;
+		
+		}
+	}
+	
+	
+	bool handleMessage(char *packet, char *responsePacket){
+		std::cout<<"DHCPServer:104\n";std::cout.flush();
+		IP::Header * ip = IP::create(packet, "DHCP::SERVER::handleMessage,1");
+		if(ip->protocol != IPHeader_protocolUDP){
+			std::cout<<"not a udp request"<<ip->protocol;
+			return false;
+		}
+		UDP::Header * udp = UDP::create(ip, "DHCP::SERVER::handle message,1");
+		if(UDP::getSourcePort(udp) != DHCP_clientPort || UDP::getDestPort(udp) != DHCP_serverPort){
+			std::cout<<"not a DHCP request\n"<<"sourcePort:"<<UDP::getSourcePort(udp)<<"\n";
+			return false;
+		}
+		DHCP::Header *dhcp = DHCP::create(udp);
+		
+		try{ DHCP::checkValidity(dhcp); }
+		catch(int err){
+			std::cout<<"\n\n\n";
+			IP::logValues(ip);
+			std::cout<<"\n\n\n";
+			UDP::logValues(udp);
+			std::cout<<"\n\n\n";
+			std::cout<<"handle message:106\n";
+			std::cout.flush();
+			throw err;
+		}
+		
+		//DHCP::Option DHCP_new_OptionsArray(dhcp, options);//macro allocated new options array named options
+		
+		std::cout<<"DHCPServer:149\n";std::cout.flush();
+		
+		DHCP::Option * message_type = DHCP::OPTIONS::getByType(dhcp, DHCP::OPTIONS::types::message_type);
+		if(message_type == NULL){
+			std::cout<<"null message type\n"<<"DHCPServer:153\n"; std::cout.flush();
+			DHCP::logValues(dhcp);
+			throw -1;
+		}
+		
+		
+		std::cout<<"DHCPServer:158\n";std::cout.flush();
+		switch(message_type->data[0]){
 			case DHCP::OPCodeTypes::discover:
 				replyToDiscover(packet,responsePacket );
+				checkReturnVals(responsePacket);
 				return true;
 			case DHCP::OPCodeTypes::request:
-				replyToRequest(packet);
-				return true;
+				replyToRequest(packet, responsePacket);
+				checkReturnVals(responsePacket);
+				return false;//TODO fix this
 			default:
 				std::cout<<"unknown option type for dhcp:"
-						<< (options[getOptionIndexByType(options,DHCP::OPTIONS::types::message_type)].type);
+						<< message_type->type;
+						std::cout.flush();
 				throw -1;
 		}
 		return false;
 		
 	}
 }
+#endif

@@ -4,3 +4,4 @@
 /VPN_java/nbproject/private/
 /VPN_java/build/
 /VPN_java/dist/
+*.o
