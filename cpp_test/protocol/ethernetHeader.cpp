@@ -75,13 +75,13 @@ namespace IP{
 	
 	unsigned long createIpAddress(char one, char two, char three, char four){
 		return 
-			((one&0xff)<<24) 
+			((four&0xff)<<24) 
 			| 
-			((two&0xff)<<16) 
+			((three&0xff)<<16) 
 			| 
-			((three&0xff)<<8) 
+			((two&0xff)<<8) 
 			| 
-			(four&0xff);
+			(one&0xff);
 	}
 	
 	void setSourceIPAddress(IP::Header * self, long val){
@@ -112,21 +112,14 @@ namespace IP{
 		return src == given;
 	}
 	void parseLongIpAddress(long ip,  char retu[4]){
-		retu[0] = (ip>>24)&0xff;
-		retu[1] = (ip>>16)&0xff;
-		retu[2] = (ip>>8)&0xff;
-		retu[3] = (ip&0xff);
+		retu[3] = (ip>>24)&0xff;
+		retu[2] = (ip>>16)&0xff;
+		retu[1] = (ip>>8)&0xff;
+		retu[0] = (ip&0xff);
 	}
 	
 	long IpAddressToLong(unsigned char ip[4]){
-		return 
-		(((long)ip[0])<<24)
-		|
-		(((long)ip[1])<<16)
-		|
-		(((long)ip[2])<<8)
-		|
-		(((long)ip[3]));
+		return createIpAddress(ip[0], ip[1], ip[2], ip[3]);
 	}
 	
 	void copyVals( IP::Header * to, IP::Header * from){
