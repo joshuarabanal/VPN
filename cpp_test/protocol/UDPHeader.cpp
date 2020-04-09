@@ -28,19 +28,19 @@ namespace UDP{
 			return ((sht&0xff)<<8)  |  ((sht&0xff00)>>8); 
 		}
 		int calcChecksum(IP::Header *ip, UDP::Header *self){
-			char temp[65536] = {0};
+			char temp[0xffff] = {0};
 			
 			unsigned char *ipin = ip->sourceIP;
-			temp[0] = ipin[1];
-			temp[1] = ipin[0];
-			temp[2] = ipin[3];
-			temp[3] = ipin[2];
+			temp[0] = ipin[0];
+			temp[1] = ipin[1];
+			temp[2] = ipin[2];
+			temp[3] = ipin[3];
 			
 			unsigned char *ipout = ip->destinationIP;
-			temp[4] = ipout[1];
-			temp[5] = ipout[0];
-			temp[6] = ipout[3];
-			temp[7] = ipout[2];
+			temp[4] = ipout[0];
+			temp[5] = ipout[1];
+			temp[6] = ipout[2];
+			temp[7] = ipout[3];
 			
 			
 			temp[8] = 0;
@@ -59,7 +59,7 @@ namespace UDP{
 				temp[12+i] = tempe[i];
 			}
 			
-			return IPHeader_calcChecksum(temp, 65536 );
+			return IPHeader_calcChecksum(temp,13+len);
 			
 			
 		}

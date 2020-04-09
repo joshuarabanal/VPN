@@ -27,7 +27,7 @@ void logPacket(char *pack);
 
 int main () { 
 	
-	bool fromfile = false;
+	bool fromfile = true;
 	
 	CrashReporter::create();
 	
