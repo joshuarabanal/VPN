@@ -112,6 +112,9 @@ namespace DHCP::Server{
 			
 			DHCP::setOptions(dhcp_out, options_out, 6);
 			
+			std::cout<<"\n\n\nloging test packet before memcpy:";
+			DHCP::logValues(DHCP::create(udp_out, "DHCP::server::reply to discover57"));
+			
 			
 			UDP::setPayload(
 				udp_out, 

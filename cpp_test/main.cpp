@@ -22,12 +22,14 @@ void logPacket(char *pack);
 
 int main () { 
 	
+	bool fromfile = true;
+	
 	CrashReporter::create();
 	
 	std::cout << "Output sentence 1\n";
 	RawSocket* sock;
 	try{
-		sock = new RawSocket(RawSocket_type_UDP, "eth0");
+		if(!fromfile)sock = new RawSocket(RawSocket_type_UDP, "eth0");
 	}
 	catch(int err){
 		std::cout<<"error initializing socket:"<<err<<"\n";
@@ -44,19 +46,20 @@ int main () {
 		memset(read, 0x00, 65536);
 		memset(write, 0x00, 65536);
 		
-		sock->read(read);
-		//readFile("/home/pi/Documents/github/VPN/testData/Crash.txt", read,65536);
+		if(!fromfile)sock->read(read);
+		else readFile("/home/pi/Documents/github/VPN/testData/packet_discover.txt", read,65536);
 		
 		
 			
 		
 		if(readEvent(read, write)){ 
-			sock->write(write);
+			if(!fromfile)sock->write(write);
 			logPacket(write); 
 		}
 		else{
 			//
 		}
+		if(fromfile)break;
 	}
 	
 	return 0;

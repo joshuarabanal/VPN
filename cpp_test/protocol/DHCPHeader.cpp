@@ -84,7 +84,7 @@ namespace DHCP{
 		if(!isMagicCookieValid(retu)){
 			DHCP::logValues(retu);
 			std::cout<<"invalid dhcp header\n";
-			std::cout<<"stack hint:"<<error;
+			std::cout<<"stack hint:"<<error<<"\n";
 			std::cout.flush();
 			throw 15;
 		}
