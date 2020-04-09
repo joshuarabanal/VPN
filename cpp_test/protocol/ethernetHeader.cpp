@@ -35,7 +35,6 @@ namespace IP{
 };
 bool IPHeader_checkChecksum(char *array, int length);
 int IPHeader_calcChecksum(char * array, int length);
-int IPHeader_getPayloadIndex(IP::Header *h);
 
 namespace IP{
 	
@@ -71,7 +70,7 @@ namespace IP{
 		return retu;
 	}
 	
-	int getPayloadIndex(IP::Header *h){ return IPHeader_getPayloadIndex(h); }
+	int getPayloadIndex(IP::Header *h){ return ((h->headerLengthIn32bit)*4); }
 	
 	unsigned long createIpAddress(char one, char two, char three, char four){
 		return 
@@ -123,7 +122,7 @@ namespace IP{
 	}
 	
 	void copyVals( IP::Header * to, IP::Header * from){
-		memcpy(to, from, IPHeader_getPayloadIndex(from));
+		memcpy(to, from, IP::getPayloadIndex(from));
 	}
 	
 	void copyToResponseHeader(IP::Header * response , IP::Header *message){
@@ -145,8 +144,11 @@ namespace IP{
 	}
 	
 	void setPayload(IP::Header * self, char * payload, int payloadLength){
-		char *self_payload = (char *)(self+ getPayloadIndex(self));
+		char *self_payload = ((char *)self)+ getPayloadIndex(self);
 		memcpy(self_payload, payload, payloadLength);
+		
+		int len = payloadLength + IP::getPayloadIndex(self);
+		self->totalLength = formatShort(len);
 		setChecksum(self);
 	}
 	
@@ -194,8 +196,5 @@ bool IPHeader_checkChecksum(char *array, int length){
 	return (sum == 0) || (sum == 0xffff);
 }
 
-int IPHeader_getPayloadIndex(IP::Header *h){
-	return ((h->headerLengthIn32bit)*4);
-}
 
 #endif

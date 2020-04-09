@@ -112,30 +112,16 @@ namespace DHCP::Server{
 			
 			DHCP::setOptions(dhcp_out, options_out, 6);
 			
-			std::cout<<"\n\n\nloging test packet before memcpy:";
-			DHCP::logValues(DHCP::create(udp_out, "DHCP::server::reply to discover57"));
 			
 			
 			UDP::setPayload(
 				udp_out, 
 				ip_out,  
 				(char * )dhcp_out, 
-				DHCP::getTotalHeaderLength(dhcp_out, options_out, 6)
+				DHCP::getTotalHeaderLength(dhcp_out)
 			) ;
+			IP::setPayload(ip_out, (char *)udp_out, UDP::getLength(udp_out));
 			
-			std::cout<<"\n\n\nloging test packet:";
-			DHCP::logValues(DHCP::create(udp_out, "DHCP::server::reply to discover58"));
-			
-			IP::setPayload(ip_out, (char *)udp_out, udp_out->length);
-			std::cout<<"\n\n\nloging test packet2:";
-			DHCP::logValues(
-				DHCP::create(
-					UDP::create(
-						ip_out,"DHCP::server::reply to discover,8"
-					),
-					"DHCP::server::reply to discover,9"
-				)
-			);
 			
 			
 			if(!IP::checkChecksum(ip_out)){

@@ -40,6 +40,8 @@ namespace DHCP{
 	void logValues(struct Header * self);
 	
 	void checkValidity(struct Header *self);
+	
+	int getTotalHeaderLength(DHCP::Header *self);
 }
 
 #include "ethernetHeader.cpp"
@@ -135,7 +137,7 @@ namespace DHCP{
 		}
 		return totalLength ;
 	}
-	int getTotalHeaderLength(DHCP::Header *self, DHCP::Option * options, int optionsLength){
+	int getTotalHeaderLength(DHCP::Header *self){
 		
 		int optionsLengths = 0;
 		char * optchar = ((char *)self) +sizeof(DHCP::Header);

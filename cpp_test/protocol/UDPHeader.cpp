@@ -161,7 +161,7 @@ namespace UDP{
 	}
 }
 int UDPHeader_getPayloadIndex(IP::Header *tcp){
-	int tcpIndex = IPHeader_getPayloadIndex(tcp);
+	int tcpIndex = IP::getPayloadIndex(tcp);
 	if(tcp->protocol == IPHeader_protocolUDP){
 		return tcpIndex+ (16+16+16+16);
 	}

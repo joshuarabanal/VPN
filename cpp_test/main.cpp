@@ -10,7 +10,12 @@
 #include "CrashReporter.cpp"
 
 //debugging
-
+/*
+ *use to debug output text files:
+ *   	https://tomeko.net/online_tools/file_to_hex.php?lang=en 
+ * use to view packets and debug them: 
+ * 		https://hpd.gasmi.net/
+ */
 
 
 //forward declarations

@@ -252,6 +252,7 @@ namespace DHCP::OPTIONS{
 		void logValuesFromHeader(DHCP::Header * src){
 			//std::cout<<"log values from header\n"; std::cout.flush();
 			char *bytes = ((char *)src) +DHCP::optionsIndex;
+			int ptr = (int)bytes;
 			//std::cout<<"log values from header\n"; std::cout.flush();
 			DHCP::Option * retu = (DHCP::Option *) bytes;
 			//std::cout<<"log values from header\n"; std::cout.flush();
@@ -260,13 +261,19 @@ namespace DHCP::OPTIONS{
 				
 				std::cout<<"type:"<<retu->type; std::cout.flush();
 				logValues(retu);
+				bytes++;//one for type field
+				bytes++;//one for length field
 				
 				if(retu->type == types::end || retu->type == 0){
+					int ptr2 = (int)bytes;
+					if(ptr2-ptr != DHCP::getTotalHeaderLength(src)-DHCP::optionsIndex){
+						std::cout<<"incorect length:"<<(ptr2-ptr)<<","<<( DHCP::getTotalHeaderLength(src)-DHCP::optionsIndex)<<"\n";
+						std::cout.flush();
+						throw -8;
+					}
 					return;
 				}
 				
-				bytes++;//one for type field
-				bytes++;//one for length field
 				bytes+= retu->length; //one for length
 				retu = (DHCP::Option *) bytes;
 			}
