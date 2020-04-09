@@ -177,9 +177,10 @@ namespace DHCP::Server{
 			std::cout<<"DHCPSERVER:124\n";std::cout.flush();
 		
 			std::ifstream file; 
-			file.open("/home/pi/Downloads/packet_request.txt");
+			file.open("/home/pi/Documents/github/VPN/testData/packet_request.txt");
 			file.read(read, 65536);
 			file.close();
+			std::cout<<"dont know what to do after this\n";
 			throw -1;
 		
 		}
