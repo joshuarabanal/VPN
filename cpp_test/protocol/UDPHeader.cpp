@@ -142,7 +142,7 @@ namespace UDP{
 	}
 	void setPayload(UDP::Header *self, IP::Header * ip, char *body, int length){
 		memcpy(self+payloadIndex, body, length);
-		self->length = formatShort(8+length);
+		self->length = formatShort(payloadIndex+length);
 		setChecksum(ip,self);
 		if(!checkChecksum(ip, self)){
 			std::cout<<"UDP failed to set own checksum:"<<self->checksum<<"\n";

@@ -28,13 +28,14 @@ namespace DHCP::Server{
 				
 				ip =  IP::create(pac,"DHCP::Server::check return vals");
 				udp = UDP::create(ip,"DHCP::Server::check return vals,2");
-				dhcp = DHCP::create(udp);
+				dhcp = DHCP::create(udp,"DHCP::SERVER::check return vals,3");
 				
 			}catch( int err){
 				
 				IP::logValues(ip);
 				UDP::logValues(udp);
 				DHCP::logValues(dhcp);
+				throw err;
 				
 			}
 				
@@ -44,7 +45,7 @@ namespace DHCP::Server{
 			//create the input headers
 			IP::Header * ip_in = IP::create(read, "DHCP::SERVER::replyToDiscover,2");
 			UDP::Header * udp_in = UDP::create(ip_in, "DHCP::SERVER::replyToDiscover,1");
-			DHCP::Header *dhcp_in =  DHCP::create(udp_in);
+			DHCP::Header *dhcp_in =  DHCP::create(udp_in,"DHCP::SERVER::replyToDiscover,3" );
 			
 			std::cout<<"DHCPSERVER:25\n";std::cout.flush();
 			//create the out put headers
@@ -54,7 +55,7 @@ namespace DHCP::Server{
 			UDP::Header *udp_out = UDP::createEmptyHeader(ip_out);
 				UDP::copyToResponseHeader(udp_out, udp_in);
 				
-			DHCP::Header *dhcp_out =  DHCP::create(udp_out);
+			DHCP::Header *dhcp_out =  DHCP::createEmptyHeader(udp_out);
 				DHCP::memCpy(dhcp_out, dhcp_in);
 			std::cout<<"DHCPSERVER:28\n";std::cout.flush();
 		
@@ -119,7 +120,19 @@ namespace DHCP::Server{
 				DHCP::getTotalHeaderLength(dhcp_out, options_out, 6)
 			) ;
 			
+			std::cout<<"\n\n\nloging test packet:";
+			DHCP::logValues(DHCP::create(udp_out, "DHCP::server::reply to discover58"));
+			
 			IP::setPayload(ip_out, (char *)udp_out, udp_out->length);
+			std::cout<<"\n\n\nloging test packet2:";
+			DHCP::logValues(
+				DHCP::create(
+					UDP::create(
+						ip_out,"DHCP::server::reply to discover,8"
+					),
+					"DHCP::server::reply to discover,9"
+				)
+			);
 			
 			
 			if(!IP::checkChecksum(ip_out)){
@@ -161,7 +174,7 @@ namespace DHCP::Server{
 			//create the input headers
 			IP::Header * ip_in = IP::create(read, "DHCP::SERVER::replyToRequest,2");
 			UDP::Header * udp_in = UDP::create(ip_in, "DHCP::SERVER::replyToRequest,1");
-			DHCP::Header *dhcp_in =  DHCP::create(udp_in);
+			DHCP::Header *dhcp_in =  DHCP::create(udp_in, "DHCP::SERVER::replyToRequest,3");
 			
 			std::cout<<"DHCPSERVER:114\n";std::cout.flush();
 			//create the out put headers
@@ -172,7 +185,7 @@ namespace DHCP::Server{
 			UDP::Header *udp_out = UDP::create(ip_out, "DHCP::SERVER::replyToRequest,2");
 				UDP::copyToResponseHeader(udp_out, udp_in);
 				
-			DHCP::Header *dhcp_out =  DHCP::create(udp_out);
+			DHCP::Header *dhcp_out =  DHCP::create(udp_out, "DHCP::SERVER::replyToRequest,5");
 				DHCP::memCpy(dhcp_out, dhcp_in);
 			std::cout<<"DHCPSERVER:124\n";std::cout.flush();
 		
@@ -199,7 +212,7 @@ namespace DHCP::Server{
 			std::cout<<"not a DHCP request\n"<<"sourcePort:"<<UDP::getSourcePort(udp)<<"\n";
 			return false;
 		}
-		DHCP::Header *dhcp = DHCP::create(udp);
+		DHCP::Header *dhcp = DHCP::create(udp, "DHCP::SERVER::handle message,2");
 		
 		try{ DHCP::checkValidity(dhcp); }
 		catch(int err){

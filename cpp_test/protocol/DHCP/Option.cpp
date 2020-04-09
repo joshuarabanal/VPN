@@ -237,24 +237,28 @@ namespace DHCP::OPTIONS{
 					return;
 				
 				default: 
+					std::cout<<"unknown type:"<<option->type<<"\n";std::cout.flush();
 					char data[256] = {0};
 					memcpy(data, option->data, option->length);
-					std::cout<<"type:"<<option->type;
-					std::cout<<", length:"<<(int)option->length;
-					std::cout<<", data-string:"<<data;
-					std::cout<<", data-int:"<<(int)option->data[0];
-					std::cout<<"\n";
+					std::cout<<"type:"<<option->type; std::cout.flush();
+					std::cout<<", length:"<<(int)option->length;  std::cout.flush();
+					std::cout<<", data-string:"<<data; std::cout.flush();
+					std::cout<<", data-int:"<<(int)option->data[0]; std::cout.flush();
+					std::cout<<"\n"; std::cout.flush();
 			}
 			
 		}
 		
 		void logValuesFromHeader(DHCP::Header * src){
+			//std::cout<<"log values from header\n"; std::cout.flush();
 			char *bytes = ((char *)src) +DHCP::optionsIndex;
+			//std::cout<<"log values from header\n"; std::cout.flush();
 			DHCP::Option * retu = (DHCP::Option *) bytes;
+			//std::cout<<"log values from header\n"; std::cout.flush();
 			
 			for(int i = 0; i<100; i++){
 				
-				std::cout<<"type:"<<retu->type;
+				std::cout<<"type:"<<retu->type; std::cout.flush();
 				logValues(retu);
 				
 				if(retu->type == types::end || retu->type == 0){

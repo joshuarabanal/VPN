@@ -68,7 +68,7 @@ void logPacket(char * pack){
 	UDP::Header *udp = UDP::create(ip, "main::logPacket,1");
 		std::cout<<"udp Packet returned:\n";
 		UDP::logValues(udp);
-	DHCP::Header *dhcp = DHCP::create(udp);
+	DHCP::Header *dhcp = DHCP::create(udp,"main log acket 2");
 		std::cout<<"dhcp Packet returned:\n";
 		DHCP::logValues(dhcp);
 }
@@ -96,7 +96,7 @@ bool readEvent(char *in, char *out){
 		
 		if(sourcePort == DHCP_clientPort && destPort == DHCP_serverPort){
 			
-			DHCP::Header *dhcp_in =  DHCP::create(udp_in);
+			DHCP::Header *dhcp_in =  DHCP::create(udp_in,"meain:main");
 			
 			if(DHCP::Server::handleMessage(in, out)){
 				return true;
