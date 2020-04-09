@@ -12,6 +12,7 @@
 #define DHCP_Server_clientIP  IP::createIpAddress(192, 168, 1,100)
 #define DHCP_Server_SubnetMask  IP::createIpAddress(192, 168, 1,0)
 #define DHCP_Server_serverIP  IP::createIpAddress(192, 168, 1,12)
+#define DHCP_Server_broadcastIp  IP::createIpAddress(255, 255, 255, 255)
 #define DHCP_SERVER_AddrLeaseTime  (60*60*24)
 
 
@@ -54,6 +55,7 @@ namespace DHCP::Server{
 			IP::Header * ip_out = IP::createEmptyHeader(write);;
 				IP::copyToResponseHeader(ip_out, ip_in);
 				IP::setSourceIPAddress(ip_out, DHCP_Server_serverIP);
+				IP::setDestinationIPAddress(ip_out, DHCP_Server_broadcastIp);
 			UDP::Header *udp_out = UDP::createEmptyHeader(ip_out);
 				UDP::copyToResponseHeader(udp_out, udp_in);
 				

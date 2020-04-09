@@ -74,13 +74,13 @@ namespace IP{
 	
 	unsigned long createIpAddress(char one, char two, char three, char four){
 		return 
-			((four&0xff)<<24) 
+			((one&0xff)<<24) 
 			| 
-			((three&0xff)<<16) 
+			((two&0xff)<<16) 
 			| 
-			((two&0xff)<<8) 
+			((three&0xff)<<8) 
 			| 
-			(one&0xff);
+			(four&0xff);
 	}
 	
 	void setSourceIPAddress(IP::Header * self, long val){
@@ -91,7 +91,14 @@ namespace IP{
 		self->sourceIP[2] = ip[2];
 		self->sourceIP[3] = ip[3];
 	}
-	
+	void setDestinationIPAddress(IP::Header *self, long val){
+		char ip[4];
+		parseLongIpAddress(val, ip);
+		self->destinationIP[0] = ip[0];
+		self->destinationIP[1] = ip[1];
+		self->destinationIP[2] = ip[2];
+		self->destinationIP[3] = ip[3];
+	}
 	void setDestinationIp(IP::Header *self, unsigned char ip[4]){
 		self->destinationIP[0] = ip[0];
 		self->destinationIP[1] = ip[1];
@@ -111,11 +118,12 @@ namespace IP{
 		return src == given;
 	}
 	void parseLongIpAddress(long ip,  char retu[4]){
-		retu[3] = (ip>>24)&0xff;
-		retu[2] = (ip>>16)&0xff;
-		retu[1] = (ip>>8)&0xff;
-		retu[0] = (ip&0xff);
+		retu[0] = (ip>>24)&0xff;
+		retu[1] = (ip>>16)&0xff;
+		retu[2] = (ip>>8)&0xff;
+		retu[3] = (ip&0xff);
 	}
+	
 	
 	long IpAddressToLong(unsigned char ip[4]){
 		return createIpAddress(ip[0], ip[1], ip[2], ip[3]);

@@ -99,7 +99,18 @@ namespace DHCP::OPTIONS{
 		void create(DHCP::Option * val, unsigned long values[], int length){
 			val->type = DHCP::OPTIONS::types::router;
 			val->length = length*4;
-			memcpy(val->data, values, length*4);
+			
+			char *arry = val->data;
+			for(int i = 0; i+3<length*4; i+=4){
+				char ip[4] = {0};
+				IP::parseLongIpAddress(values[i/4], ip);
+				arry[0] = ip[0];
+				arry[1] = ip[1];
+				arry[2] = ip[2];
+				arry[3] = ip[3];
+				arry += 4;
+			}
+			//memcpy(val->data, values, length*4);
 		}
 		void logValues(Option * val){
 			std::cout<<"Router:\n";
