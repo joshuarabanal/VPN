@@ -146,11 +146,11 @@ namespace DHCP::Server{
 			if(DEBUG == true){
 				std::ofstream file; 
 				file.open("/home/pi/Documents/github/VPN/testData/packet_discover.txt");
-				file.write(read, 65536);
+				file.write(read,IP::getLength(ip_in) );
 				file.close();
 				
 				file.open("/home/pi/Documents/github/VPN/testData/packet_offer.txt");
-				file.write(write, 65536);
+				file.write(write, IP::getLength(ip_out));
 				file.close();
 			}
 		
