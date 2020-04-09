@@ -9,9 +9,9 @@
 #include <unistd.h>
 #include <fstream>//delete after debugging
 
-#define DHCP_Server_clientIP  IP::createIpAddress(192, 168, 2,2)
+#define DHCP_Server_clientIP  IP::createIpAddress(192, 168, 1,100)
 #define DHCP_Server_SubnetMask  IP::createIpAddress(192, 168, 1,0)
-#define DHCP_Server_serverIP  IP::createIpAddress(192, 168, 1,100)
+#define DHCP_Server_serverIP  IP::createIpAddress(192, 168, 1,12)
 #define DHCP_SERVER_AddrLeaseTime  (60*60*24)
 
 
@@ -35,6 +35,8 @@ namespace DHCP::Server{
 				IP::logValues(ip);
 				UDP::logValues(udp);
 				DHCP::logValues(dhcp);
+				std::cout<<"failed to create properly formatted packet\nDHCP::server::check return vals\n";
+				std::cout.flush();
 				throw err;
 				
 			}
