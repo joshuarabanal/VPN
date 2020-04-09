@@ -10,8 +10,8 @@
 #include <fstream>//delete after debugging
 
 #define DHCP_Server_clientIP  IP::createIpAddress(192, 168, 2,2)
-#define DHCP_Server_SubnetMask  IP::createIpAddress(192, 168, 2,0)
-#define DHCP_Server_serverIP  IP::createIpAddress(192, 168, 1,12)
+#define DHCP_Server_SubnetMask  IP::createIpAddress(192, 168, 1,0)
+#define DHCP_Server_serverIP  IP::createIpAddress(192, 168, 1,100)
 #define DHCP_SERVER_AddrLeaseTime  (60*60*24)
 
 
@@ -20,12 +20,24 @@ namespace DHCP::Server{
 	
 	namespace{//private functions
 		void checkReturnVals(char *pac){
-			IP::Header *ip =  IP::create(pac,"DHCP::Server::check return vals");
+			IP::Header *ip = NULL;
+			UDP::Header * udp = NULL;
+			DHCP::Header *dhcp = NULL;
+			
+			try{
+				
+				ip =  IP::create(pac,"DHCP::Server::check return vals");
+				udp = UDP::create(ip,"DHCP::Server::check return vals,2");
+				dhcp = DHCP::create(udp);
+				
+			}catch( int err){
+				
 				IP::logValues(ip);
-			UDP::Header * udp = UDP::create(ip,"DHCP::Server::check return vals,2");
 				UDP::logValues(udp);
-			DHCP::Header *dhcp = DHCP::create(udp);
 				DHCP::logValues(dhcp);
+				
+			}
+				
 		}
 		void replyToDiscover(char *read, char *write){
 			std::cout<<"DHCPServer:reply to discover16\n";std::cout.flush();
@@ -107,8 +119,8 @@ namespace DHCP::Server{
 				DHCP::getLengthInBytes(options_out, 6)
 			) ;
 			
-			
 			IP::setPayload(ip_out, (char *)udp_out, udp_out->length);
+			
 			
 			if(!IP::checkChecksum(ip_out)){
 				std::cout<<"checksum not setting correct:DHCPServer:115\n";
@@ -118,6 +130,18 @@ namespace DHCP::Server{
 				IP::setChecksum(ip_out);
 				std::cout<<"checksum after 2nd try:"<<ip_out->checksum<<"\n";
 				throw -6;
+			}
+			if(!UDP::checkChecksum(ip_out, udp_out)){
+				std::cout<<"checksum not setting correct:DHCPServer:122\n";
+				std::cout<<"checksum:"<<udp_out->checksum<<"\n";
+				ip_out->checksum = 0;
+				std::cout<<"zeroes checksum:"<<ip_out->checksum<<"\n";
+				UDP::setChecksum(ip_out, udp_out);
+				std::cout<<"checksum after 2nd try:"<<ip_out->checksum<<"\n";
+				std::cout.flush();
+				IP::logValues(ip_out);
+				UDP::logValues(udp_out);
+				throw -8;
 			}
 			if(DEBUG == true){
 				std::ofstream file; 

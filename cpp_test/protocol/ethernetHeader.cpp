@@ -21,8 +21,7 @@ namespace IP{
 		unsigned int typeOfService:8;
 		unsigned int totalLength:16;//length of payload and header
 		unsigned int identification:16;
-		unsigned int flags:3;
-		unsigned int fragOffset:13;
+		unsigned int allFlags:16;
 		unsigned int timeToLive:8;
 		unsigned int protocol:8;//see define directives at top of page to see the protocol values
 		unsigned int checksum:16;//calculated only using the ip header data
@@ -100,7 +99,18 @@ namespace IP{
 		self->destinationIP[2] = ip[2];
 		self->destinationIP[3] = ip[3];
 	}
-	
+	bool isSrcIp(IP::Header *self, int ip0, int ip1, int ip2, int ip3){
+		long given = createIpAddress(ip0, ip1, ip2, ip3);
+		unsigned char *sip = self->sourceIP;
+		long src = createIpAddress(sip[0], sip[1], sip[2], sip[3]);
+		return src == given;
+	}
+	bool isDestIp(IP::Header *self, int ip0, int ip1, int ip2, int ip3){
+		long given = createIpAddress(ip0, ip1, ip2, ip3);
+		unsigned char *sip = self->destinationIP;
+		long src = createIpAddress(sip[0], sip[1], sip[2], sip[3]);
+		return src == given;
+	}
 	void parseLongIpAddress(long ip,  char retu[4]){
 		retu[0] = (ip>>24)&0xff;
 		retu[1] = (ip>>16)&0xff;
@@ -154,8 +164,7 @@ namespace IP{
 		<<"typeOfService:"<<h->typeOfService<<"\n"
 		<<"totalLength:"<<getLength(h)<<"\n"
 		<<"identification:"<<h->identification<<"\n"
-		<<"flags:"<<h->flags<<"\n"
-		<<"fragOffset:"<<h->fragOffset<<"\n"
+		<<"flags:"<<h->allFlags<<"\n"
 		<<"timeToLive:"<<h->timeToLive<<"\n"
 		<<"protocol:"<<h->protocol<<"\n"
 		<<"checksum:"<<h->checksum<<"\n"
@@ -174,6 +183,7 @@ namespace IP{
 }
 
 
+
 int IPHeader_calcChecksum(char * array, int length){
 	uint32_t sum = 0;
 	for(int i = 0; i+1<length; i+=2){
@@ -183,36 +193,13 @@ int IPHeader_calcChecksum(char * array, int length){
 			(   array[i+1]   &  0xff    );
 		sum+=temp;
 	}
-	std::cout<<"full:"<<sum<<", left:"<< ((sum>>16)&0xffff) <<", right:"<<(sum&0xffff);
 	unsigned long retu = (sum&0xffff) + ((sum>>16)&0xffff);
-	std::cout<<"becomes:"<<retu<<"=>"<<((~retu)&0xffff)<<"\n";
 	return IP::formatShort((~retu)&0xffff);
 }
 bool IPHeader_checkChecksum(char *array, int length){
 	int sum = IPHeader_calcChecksum(array, length);
-	return (sum == 0);
+	return (sum == 0) || (sum == 0xffff);
 }
-void IPHeader_log_deprecated(IP::Header * h){
-	std::cout<<"Ip header:\n"
-		<<"version:"<<h->version<<"\n"
-		<<"headerLengthIn32bit:"<<h->headerLengthIn32bit<<"\n"
-		<<"typeOfService:"<<h->typeOfService<<"\n"
-		<<"totalLength:"<<h->totalLength<<"\n"
-		<<"identification:"<<h->identification<<"\n"
-		<<"flags:"<<h->flags<<"\n"
-		<<"fragOffset:"<<h->fragOffset<<"\n"
-		<<"timeToLive:"<<h->timeToLive<<"\n"
-		<<"protocol:"<<h->protocol<<"\n"
-		<<"checksum:"<<h->checksum<<"\n"
-		
-		
-		<<"sourceIP:"<<((int)h->sourceIP[0])<<","<<((int)h->sourceIP[1])<<","<<((int)h->sourceIP[2])<<","<<((int)h->sourceIP[3])<<"\n"
-		
-		<<"destinationIP:"<<((int)h->destinationIP[0])<<","<<((int)h->destinationIP[1])<<","<<((int)h->destinationIP[2])<<","<<((int)h->destinationIP[3])<<"\n"
-		;
-}
-
-
 
 int IPHeader_getPayloadIndex(IP::Header *h){
 	return ((h->headerLengthIn32bit)*4);

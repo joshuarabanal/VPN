@@ -30,37 +30,44 @@ namespace UDP{
 		int calcChecksum(IP::Header *ip, UDP::Header *self){
 			char temp[65536] = {0};
 			
-			unsigned char *src = (unsigned char *)ip;
-			//memcpy(temp, ip->sourceIP,4*sizeof(char));
-			temp[0] = src[12];
-			temp[1] = src[13];
-			temp[2] = src[14];
-			temp[3] = src[15];
+			unsigned char *ipin = ip->sourceIP;
+			temp[0] = ipin[1];
+			temp[1] = ipin[0];
+			temp[2] = ipin[3];
+			temp[3] = ipin[2];
 			
-			//memcpy(temp+4, ip->destinationIP,4*sizeof(char));
-			temp[4] = src[16];
-			temp[5] = src[17];
-			temp[6] = src[18];
-			temp[7] = src[19];
+			unsigned char *ipout = ip->destinationIP;
+			temp[4] = ipout[1];
+			temp[5] = ipout[0];
+			temp[6] = ipout[3];
+			temp[7] = ipout[2];
 			
 			
 			temp[8] = 0;
-			temp[8] = IPHeader_protocolUDP;
+			temp[9] = ip->protocol;
 			
-			int len = getLength(ip);
-			temp[11] = (len>>8)&0xff;
-			temp[10] = len&0xff;
 			
-			memcpy(temp+12, (char *)self, getLength(self)*sizeof(char) );
+			int len = UDP::getLength(self);
 			
-			return IPHeader_calcChecksum(temp, getLength(self) + 12);
+			temp[10] = (len>>8)&0xff;
+			temp[11] = len&0xff;
+			
+			
+			
+			char *tempe = (char *)self;
+			for(int i = 0; i<len;i++){
+				temp[12+i] = tempe[i];
+			}
+			
+			return IPHeader_calcChecksum(temp, 65536 );
 			
 			
 		}
-		bool checkChecksum(IP::Header *ip, UDP::Header *self){
+		
+	}
+	bool checkChecksum(IP::Header *ip, UDP::Header *self){
 			int sum = calcChecksum(ip, self);
-			return  (sum == 0) || (sum == 65535);
-		}
+			return  (sum == 0) || (sum == 0xffff);
 	}
 	int getLength(UDP::Header *src){
 		return formatShort(src->length);
@@ -81,10 +88,7 @@ namespace UDP{
 			throw -1;
 		}
 		UDP::Header * retu =  createEmptyHeader(src);
-		bool check = checkChecksum(
-				src,
-				retu
-			);
+		bool check = checkChecksum(src,retu);
 		if(!check){
 			CrashReporter::logCrash((char *)src, 65536);
 			int sum = calcChecksum(src, retu);
@@ -131,11 +135,14 @@ namespace UDP{
 	void setChecksum(IP::Header * ip, UDP::Header *self){
 		self->checksum = 0;
 		self->checksum = calcChecksum(ip,self);
-		
+		if(!UDP::checkChecksum(ip, self)){
+			std::cout<<"failed to set own checksum\n"; std::cout.flush();
+			throw -4;
+		}
 	}
 	void setPayload(UDP::Header *self, IP::Header * ip, char *body, int length){
 		memcpy(self+payloadIndex, body, length);
-		self->length = 8+length;
+		self->length = formatShort(8+length);
 		setChecksum(ip,self);
 		if(!checkChecksum(ip, self)){
 			std::cout<<"UDP failed to set own checksum:"<<self->checksum<<"\n";
