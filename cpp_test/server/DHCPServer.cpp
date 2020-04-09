@@ -145,11 +145,11 @@ namespace DHCP::Server{
 			}
 			if(DEBUG == true){
 				std::ofstream file; 
-				file.open("/home/pi/Downloads/packet_discover.txt");
+				file.open("/home/pi/Documents/github/VPN/testData/packet_discover.txt");
 				file.write(read, 65536);
 				file.close();
 				
-				file.open("/home/pi/Downloads/packet_offer.txt");
+				file.open("/home/pi/Documents/github/VPN/testData/packet_offer.txt");
 				file.write(write, 65536);
 				file.close();
 			}
