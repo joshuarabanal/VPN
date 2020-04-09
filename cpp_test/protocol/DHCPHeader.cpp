@@ -85,14 +85,17 @@ namespace DHCP{
 			opt_out[1] = 0;
 		}
 	}
-	
-	int getLengthInBytes(DHCP::Option * options, int optionsLength){
+	int getOptionsLengthInBytes(DHCP::Option * options, int optionsLength){
 		int totalLength = 0;
 		for(int i = 0; i<optionsLength; i++){
 			totalLength += 2 + options[i].length;
 		}
 		return totalLength ;
 	}
+	int getTotalHeaderLength(DHCP::Header *self, DHCP::Option * options, int optionsLength){
+		return getOptionsLengthInBytes(options, optionsLength) + sizeof(DHCP::Header);
+	}
+	
 	
 	
 	void memCpy(Header *to, Header *from){

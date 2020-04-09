@@ -116,7 +116,7 @@ namespace DHCP::Server{
 				udp_out, 
 				ip_out,  
 				(char * )dhcp_out, 
-				DHCP::getLengthInBytes(options_out, 6)
+				DHCP::getTotalHeaderLength(dhcp_out, options_out, 6)
 			) ;
 			
 			IP::setPayload(ip_out, (char *)udp_out, udp_out->length);
