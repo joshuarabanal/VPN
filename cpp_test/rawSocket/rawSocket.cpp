@@ -101,7 +101,14 @@ void RawSocket::createSendSockAddr(
 }
 
 int RawSocket::write(char buffer[0xffff],int bufferLength, unsigned char destMacAddr[6] ){
-   
+   if(
+		destMacAddr[0] == 0 && destMacAddr[1] == 0 && destMacAddr[2] == 0 
+		&& destMacAddr[3] == 0 && destMacAddr[4] == 0 && destMacAddr[5] == 0 
+	){
+	   std::cout<<"invalid destination mac 00.00.00.00.00.00\n";
+	   std::cout.flush();
+	   throw -87;
+   }
    sockaddr_ll outMeta = {0}; 
    this->createSendSockAddr(&outMeta,destMacAddr);
 	std::cout<<"attempting to send packet\n"; std::cout.flush();

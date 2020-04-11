@@ -30,7 +30,7 @@ void logPacket(char *pack);
 
 int main () { 
 	
-	bool fromfile = false;
+	bool fromfile = true;
 	
 	CrashReporter::create();
 	
@@ -59,7 +59,7 @@ int main () {
 		
 		try{
 			if(!fromfile)sock->read(read);
-			else readFile("/home/pi/Documents/github/VPN/testData/packet_discover.txt", read,65536);
+			else readFile("/home/pi/Documents/github/VPN/testData/lastFullPacket_recieved.txt", read,65536);
 			
 			Eth::Header * eth_in = Eth::create(read);
 			char * readData = Eth::getPayload(eth_in);
@@ -75,6 +75,8 @@ int main () {
 				if(!fromfile){
 					sock->write(write, length, eth_out->destinationMac);
 				}
+				
+				//logging details
 				logPacket(writeData); 
 				IP::Header *ip_in = IP::create(readData,"main:about to log the final data");
 				int length_in = IP::getLength(ip_in) + sizeof(Eth::Header);
