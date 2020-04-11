@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include <iostream>
-#include <string.h>
+#include <string.h> 
 #include <bitset>
 
 #define IPHeader_protocolUDP 17
@@ -16,8 +16,8 @@ namespace IP{
  * wikipedia page of ipv4 explains this well 
  **/
 	struct Header{
-		unsigned int headerLengthIn32bit : 4;//ipv4 = 4
-		unsigned int version :4;//number of 32bits in the header, if there are no options, then the length is 5
+		unsigned int headerLengthIn32bit : 4; //number of 32bits in the header, if there are no options, then the length is 5
+		unsigned int version :4;//ipv4 = 4
 		unsigned int typeOfService:8;
 		unsigned int totalLength:16;//length of payload and header
 		unsigned int identification:16;
@@ -59,12 +59,18 @@ namespace IP{
 	IP::Header * create(char * bytes, const char *log){
 		IP::Header *retu =  createEmptyHeader(bytes);
 		bool check = IPHeader_checkChecksum(bytes, getPayloadIndex(retu));
+		if(retu->version != 4){
+			std::cout<<"IP Header is invalid!\n helpful log:"<<log<<"\n";
+			std::cout.flush();
+			throw -69;
+		}
 		if(!check){
 			logValues(retu);
 			int sum = IPHeader_calcChecksum(bytes, getPayloadIndex(retu));
 			std::bitset<16> bits(sum);
 			std::cout<<"Ip checksum:"<<sum<<"\n";
 			std::cout<<"IpHeader checksum failed at: "<<log<<"\nsum bits:"<<bits<<"\n";
+			std::cout.flush();
 			throw -2;
 		}
 		return retu;

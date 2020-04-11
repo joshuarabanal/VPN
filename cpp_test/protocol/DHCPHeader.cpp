@@ -44,7 +44,7 @@ namespace DHCP{
 	int getTotalHeaderLength(DHCP::Header *self);
 }
 
-#include "ethernetHeader.cpp"
+#include "IpHeader.cpp"
 #include "UDPHeader.cpp"
 #include <iostream>
 #include <string.h>

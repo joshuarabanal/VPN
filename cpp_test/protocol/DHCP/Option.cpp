@@ -32,7 +32,7 @@ namespace DHCP{
 }
 
 
-#include "../ethernetHeader.cpp"
+#include "../IpHeader.cpp"
 #include "../DHCPHeader.cpp"
 #include <string>
 

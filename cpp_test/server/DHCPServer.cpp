@@ -1,7 +1,7 @@
 #ifndef DHCP_SERVR_h
 #define DHCP_SERVER_h
 
-#include "../protocol/ethernetHeader.cpp"
+#include "../protocol/IpHeader.cpp"
 #include "../protocol/UDPHeader.cpp"
 #include "../protocol/DHCPHeader.cpp"
 #include <iostream>
@@ -43,7 +43,8 @@ namespace DHCP::Server{
 			}
 				
 		}
-		void replyToDiscover(char *read, char *write){
+	}
+void replyToRequest(char *read, char *write){
 			std::cout<<"DHCPServer:reply to discover16\n";std::cout.flush();
 			//create the input headers
 			IP::Header * ip_in = IP::create(read, "DHCP::SERVER::replyToDiscover,2");
@@ -162,34 +163,123 @@ namespace DHCP::Server{
 		
 		}
 		
-		void replyToRequest(char *read, char *write){
-			std::cout<<"reply to request\n";
-			//create the input headers
-			IP::Header * ip_in = IP::create(read, "DHCP::SERVER::replyToRequest,2");
-			UDP::Header * udp_in = UDP::create(ip_in, "DHCP::SERVER::replyToRequest,1");
-			DHCP::Header *dhcp_in =  DHCP::create(udp_in, "DHCP::SERVER::replyToRequest,3");
+	void replyToDiscover(char *read, char *write){
+		std::cout<<"DHCPServer:reply to discover16\n";std::cout.flush();
+		//create the input headers
+		IP::Header * ip_in = IP::create(read, "DHCP::SERVER::replyToDiscover,2");
+		UDP::Header * udp_in = UDP::create(ip_in, "DHCP::SERVER::replyToDiscover,1");
+		DHCP::Header *dhcp_in =  DHCP::create(udp_in,"DHCP::SERVER::replyToDiscover,3" );
+		
+		std::cout<<"DHCPSERVER:25\n";std::cout.flush();
+		//create the out put headers
+		IP::Header * ip_out = IP::createEmptyHeader(write);
+			IP::copyToResponseHeader(ip_out, ip_in);
+			IP::setDestinationIp(ip_out, ip_in->destinationIP);
+			IP::setSourceIPAddress(ip_out, DHCP_Server_serverIP);
+		UDP::Header *udp_out = UDP::createEmptyHeader(ip_out);
+			UDP::copyToResponseHeader(udp_out, udp_in);
 			
-			std::cout<<"DHCPSERVER:114\n";std::cout.flush();
-			//create the out put headers
-			IP::Header * ip_out = (IP::Header *)write;
-				IP::copyToResponseHeader(ip_out, ip_in);
-				IP::setDestinationIp(ip_out, ip_in->destinationIP);
-				IP::setSourceIPAddress(ip_out, DHCP_Server_serverIP);
-			UDP::Header *udp_out = UDP::create(ip_out, "DHCP::SERVER::replyToRequest,2");
-				UDP::copyToResponseHeader(udp_out, udp_in);
-				
-			DHCP::Header *dhcp_out =  DHCP::create(udp_out, "DHCP::SERVER::replyToRequest,5");
-				DHCP::memCpy(dhcp_out, dhcp_in);
-			std::cout<<"DHCPSERVER:124\n";std::cout.flush();
+		DHCP::Header *dhcp_out =  DHCP::createEmptyHeader(udp_out);
+			DHCP::memCpy(dhcp_out, dhcp_in);
+		std::cout<<"DHCPSERVER:28\n";std::cout.flush();
+
 		
-			std::ifstream file; 
-			file.open("/home/pi/Documents/github/VPN/testData/packet_request.txt");
-			file.read(read, 65536);
-			file.close();
-			std::cout<<"dont know what to do after this\n";
-			throw -1;
 		
+		
+		//DHCP::Header *returnDHCP = {0};
+		//DHCP::memCpy(returnDHCP, dhcp_in);
+		dhcp_out->OPCode = DHCP::OPCodeTypes::offer;
+		dhcp_out->yourIpAddress = DHCP_Server_clientIP;
+		dhcp_out->serverIpAddress = DHCP_Server_serverIP;
+		memcpy(
+				dhcp_out->clientHardwareAddress,
+				dhcp_in->clientHardwareAddress,
+				sizeof(DHCP::Header::clientHardwareAddress)
+		);
+		
+		memcpy(
+				dhcp_out->ServerName,
+				dhcp_in->ServerName,
+				sizeof(DHCP::Header::ServerName)
+		);
+		
+		memcpy(
+				dhcp_out->bootFileName,
+				dhcp_in->bootFileName,
+				sizeof(DHCP::Header::bootFileName)
+		);
+		
+		DHCP::Option options_out[6];
+		
+		//configure message type
+		DHCP::OPTIONS::Message::create(options_out, DHCP::OPTIONS::Message::types::OFFER);
+		
+		//options[1] : subnetMask
+		DHCP::OPTIONS::SubnetMask::create(options_out+1, DHCP_Server_SubnetMask);
+		
+		//options[2] = Router
+		unsigned long vals[1] = {DHCP_Server_serverIP};
+		DHCP::OPTIONS::Router::create(options_out+2, vals, 1);
+		
+		//options[3] = LeaseTime
+		DHCP::OPTIONS::LeaseTime::create(options_out+3, DHCP_SERVER_AddrLeaseTime);
+		
+		//options[4] = ServerIdentifier
+		DHCP::OPTIONS::ServerId::create(options_out+4, DHCP_Server_serverIP);
+		
+		//options[5] = DNSServer
+		unsigned long dns[2] = {
+			  IP::createIpAddress(8,8,8,8),
+			  IP::createIpAddress(8,8,4,4)
+			};
+		DHCP::OPTIONS::DNS::create(options_out+5, dns, 2);
+		
+		DHCP::setOptions(dhcp_out, options_out, 6);
+		
+		
+		
+		UDP::setPayload(
+			udp_out, 
+			ip_out,  
+			(char * )dhcp_out, 
+			DHCP::getTotalHeaderLength(dhcp_out)
+		) ;
+		IP::setPayload(ip_out, (char *)udp_out, UDP::getLength(udp_out));
+		
+		
+		
+		if(!IP::checkChecksum(ip_out)){
+			std::cout<<"checksum not setting correct:DHCPServer:115\n";
+			std::cout<<"checksum:"<<ip_out->checksum<<"\n";
+			ip_out->checksum = 0;
+			std::cout<<"zeroes checksum:"<<ip_out->checksum<<"\n";
+			IP::setChecksum(ip_out);
+			std::cout<<"checksum after 2nd try:"<<ip_out->checksum<<"\n";
+			throw -6;
 		}
+		if(!UDP::checkChecksum(ip_out, udp_out)){
+			std::cout<<"checksum not setting correct:DHCPServer:122\n";
+			std::cout<<"checksum:"<<udp_out->checksum<<"\n";
+			ip_out->checksum = 0;
+			std::cout<<"zeroes checksum:"<<ip_out->checksum<<"\n";
+			UDP::setChecksum(ip_out, udp_out);
+			std::cout<<"checksum after 2nd try:"<<ip_out->checksum<<"\n";
+			std::cout.flush();
+			IP::logValues(ip_out);
+			UDP::logValues(udp_out);
+			throw -8;
+		}
+		if(DEBUG == true){
+			std::ofstream file; 
+			file.open("/home/pi/Documents/github/VPN/testData/packet_discover.txt");
+			file.write(read,IP::getLength(ip_in) );
+			file.close();
+			
+			file.open("/home/pi/Documents/github/VPN/testData/packet_offer.txt");
+			file.write(write, IP::getLength(ip_out));
+			file.close();
+		}
+
 	}
 	
 	

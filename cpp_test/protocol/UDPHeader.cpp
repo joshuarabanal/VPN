@@ -1,7 +1,7 @@
 #ifndef UDPPacket_H
 #define UDPPacket_H
 
-#include "ethernetHeader.cpp"
+#include "IpHeader.cpp"
 #include <iostream>
 #include <bitset>
 #include "../CrashReporter.cpp"

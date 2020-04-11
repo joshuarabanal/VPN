@@ -2,12 +2,14 @@
 
 #include <stdint.h>
 #include <iostream>
-#include "rawSocket.cpp"
-#include "protocol/ethernetHeader.cpp"
+#include "protocol/IpHeader.cpp"
 #include "protocol/UDPHeader.cpp"
 #include "server/DHCPServer.cpp"
 #include <fstream>
 #include "CrashReporter.cpp"
+#include "rawSocket/rawSocket.cpp"
+#include "rawSocket/rawSocketMetaData.cpp"
+#include "protocol/EthHeader.cpp"
 
 //debugging
 /*
@@ -15,6 +17,7 @@
  *   	https://tomeko.net/online_tools/file_to_hex.php?lang=en 
  * use to view packets and debug them: 
  * 		https://hpd.gasmi.net/
+ * 		http://packetor.com/
  */
 
 
@@ -27,14 +30,17 @@ void logPacket(char *pack);
 
 int main () { 
 	
-	bool fromfile = true;
+	bool fromfile = false;
 	
 	CrashReporter::create();
 	
 	std::cout << "Output sentence 1\n";
 	RawSocket* sock;
 	try{
-		if(!fromfile)sock = new RawSocket(RawSocket_type_UDP, "eth0");
+		if(!fromfile){
+			sock = new RawSocket( "eth0");
+			
+		}
 	}
 	catch(int err){
 		std::cout<<"error initializing socket:"<<err<<"\n";
@@ -51,24 +57,48 @@ int main () {
 		memset(read, 0x00, 65536);
 		memset(write, 0x00, 65536);
 		
-		if(!fromfile)sock->read(read);
-		else readFile("/home/pi/Documents/github/VPN/testData/packet_discover.txt", read,65536);
-		
-		
+		try{
+			if(!fromfile)sock->read(read);
+			else readFile("/home/pi/Documents/github/VPN/testData/packet_discover.txt", read,65536);
 			
-		
-		if(readEvent(read, write)){ 
-			if(!fromfile)sock->write(write);
-			logPacket(write); 
+			Eth::Header * eth_in = Eth::create(read);
+			char * readData = Eth::getPayload(eth_in);
+			Eth::Header * eth_out = Eth::create(write);
+				Eth::createResponseHeader(eth_out, eth_in);
+			char *writeData = Eth::getPayload(eth_out);
+			
+				
+			
+			if(readEvent(readData, writeData)){ 
+				IP::Header *ip_out = IP::create(writeData, "main:about to send data");
+				int length = IP::getLength(ip_out) + sizeof(Eth::Header);
+				if(!fromfile){
+					sock->write(write, length, eth_out->destinationMac);
+				}
+				logPacket(writeData); 
+				writeFile("/home/pi/Documents/github/VPN/testData/lastFullPacket.txt",write, length);
+				std::cout<<"\n\n\n\n\n";
+			}
+			else{
+				//
+			}
+			if(fromfile)break;
 		}
-		else{
-			//
+		catch(int err){
+			std::cout<<"eth size:"<<sizeof(Eth::Header)<<"\n";
+			std::cout<<"logging incoming data:\n";
+			for(int i = 0; i<100;i+=8){
+				std::cout<<(int)read[i]<<","<<(int)read[i+1]<<","<<(int)read[i+2]<<","<<(int)read[i+3]
+					<<","<<(int)read[i+4]<<","<<(int)read[i+5]<<","<<(int)read[i+6]<<","<<(int)read[i+7]<<"\n";
+			}
+			std::cout.flush();
+			throw err;
 		}
-		if(fromfile)break;
 	}
 	
 	return 0;
 }
+
 void logPacket(char * pack){
 	IP::Header * ip = IP::create(pack, "main::logPacket,1");
 		std::cout<<"Ip Packet returned:\n";
@@ -80,18 +110,12 @@ void logPacket(char * pack){
 		std::cout<<"dhcp Packet returned:\n";
 		DHCP::logValues(dhcp);
 }
+
 bool readEvent(char *in, char *out){
-	std::cout<<"\n\n\n\n\n";
 	
 	IP::Header * ip_in = IP::create(in, "main::readEvent,1");
 	
-	if(ip_in->protocol == IPHeader_protocolUDP  && 
-		(
-			IP::isSrcIp(ip_in, 255,255,255,255) || 
-			IP::isSrcIp(ip_in, 192,168,1,12) || 
-			IP::isSrcIp(ip_in, 0,0,0,0) 
-		)
-	){
+	if(ip_in->protocol == IPHeader_protocolUDP ){
 		UDP::Header *udp_in = NULL;
 		try{
 		udp_in = UDP::create(ip_in, "Main::readEvent,2");
@@ -117,10 +141,17 @@ bool readEvent(char *in, char *out){
 			std::cout<<"\n\nignoring multicast requests\n\n\n";
 			return false;//ignore multicast requests
 		}
+		else if( destPort == 1900){
+			std::cout<<"\n\nignoring UPnP requests\n\n\n";
+			return false;//ignore multicast requests
+		}
 		
 		std::cout<<"failed to read udp packet request\n";
 		UDP::logValues(udp_in);
 		
+	}
+	else if(ip_in->protocol == IPHeader_protocolTCP){
+		return false;
 	}
 	else{
 		std::cout<<"skipped packet\n";
@@ -137,14 +168,13 @@ bool readEvent(char *in, char *out){
 	
 }
 
-
-
 void readFile(const char name[], char*buffer, int length){
 	std::ifstream file; 
 	file.open(name);
 	file.read(buffer, length);
 	file.close();
 }
+
 void writeFile(const char name[], char *buffer, int length){
 	std::ofstream file; 
 	file.open(name);
