@@ -53,14 +53,14 @@ int main () {
 	unsigned char defaultMac[6] = {0};
 	sock->getMacAddress(defaultMac);
 	
-	std::cout<<"starting main loop"; std::cout.flush();
+	std::cout<<"starting main loop\n"; std::cout.flush();
 	while(true){
 		memset(read, 0x00, 65536);
 		memset(write, 0x00, 65536);
 		
 		try{
 			if(!fromfile)sock->read(read);
-			else readFile("/home/pi/Documents/github/VPN/testData/lastFullPacket_recieved.txt", read,65536);
+			else readFile("/home/pi/Documents/github/VPN/testData/packet_request.txt", read,65536);
 			
 			Eth::Header * eth_in = Eth::create(read);
 			char * readData = Eth::getPayload(eth_in);
@@ -82,9 +82,28 @@ int main () {
 				logPacket(write); 
 				
 				IP::Header *ip_in = IP::create(readData,"main:about to log the final data");
+				UDP::Header *udp_in = UDP::create(ip_in,"main:about to log the final data");
+				DHCP::Header *dhcp_in = DHCP::create(udp_in,"main:about to log the final data");
+				
 				int length_in = IP::getLength(ip_in) + sizeof(Eth::Header);
-				writeFile("/home/pi/Documents/github/VPN/testData/lastFullPacket_sent.txt",write, length);
-				writeFile("/home/pi/Documents/github/VPN/testData/lastFullPacket_recieved.txt",read, length_in);
+				
+				const char *readpath = "/home/pi/Documents/github/VPN/testData/lastFullPacket_sent.txt";
+				const char *writepath = "/home/pi/Documents/github/VPN/testData/lastFullPacket_recieved.txt";
+				
+				switch(dhcp_in->OPCode){
+					case DHCP::OPCodeTypes::discover:
+						readpath = "/home/pi/Documents/github/VPN/testData/packet_discover.txt";
+						writepath = "/home/pi/Documents/github/VPN/testData/packet_offer.txt";
+						break;
+					case DHCP::OPCodeTypes::request:
+						readpath = "/home/pi/Documents/github/VPN/testData/packet_request.txt";
+						writepath = "/home/pi/Documents/github/VPN/testData/packet_acknowledge.txt";
+						break;
+				}
+				
+				writeFile(readpath,write, length);
+				writeFile(writepath,read, length_in);
+				
 				std::cout<<"\n\n\n\n\n";
 			}
 			else{

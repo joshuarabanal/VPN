@@ -51,9 +51,11 @@ void replyToRequest(char *read, char *write){
 			UDP::Header * udp_in = UDP::create(ip_in, "DHCP::SERVER::replyToRequest,1");
 			DHCP::Header *dhcp_in =  DHCP::create(udp_in,"DHCP::SERVER::replyToRequest,3" );
 			
+			
+			
 			std::cout<<"DHCPSERVER::replyToRequest:25\n";std::cout.flush();
 			//create the out put headers
-			IP::Header * ip_out = IP::createEmptyHeader(write);;
+			IP::Header * ip_out = IP::createEmptyHeader(write);
 				IP::copyToResponseHeader(ip_out, ip_in);
 				IP::setSourceIPAddress(ip_out, DHCP_Server_serverIP);
 				IP::setDestinationIPAddress(ip_out, DHCP_Server_broadcastIp);
@@ -150,16 +152,7 @@ void replyToRequest(char *read, char *write){
 				UDP::logValues(udp_out);
 				throw -8;
 			}
-			if(DEBUG == true){
-				std::ofstream file; 
-				file.open("/home/pi/Documents/github/VPN/testData/packet_request.txt");
-				file.write(read,IP::getLength(ip_in) );
-				file.close();
-				
-				file.open("/home/pi/Documents/github/VPN/testData/packet_acknowledge.txt");
-				file.write(write, IP::getLength(ip_out));
-				file.close();
-			}
+			
 			
 			
 		
