@@ -153,7 +153,7 @@ namespace DHCP::OPTIONS{
 			
 		}
 		void logValues(Option * val){
-			std::cout<<"Router:\n";
+			std::cout<<"DNS:\n";
 			for(int i =0; i<val->length/4; i+=4){
 				std::cout<<"IP:"<< (int)(val->data[i]) << ", "<< (int)(val->data[i+1]) << ", "
 				 << (int)(val->data[i+2]) << ", "<< (int)(val->data[i+3]) <<"\n";

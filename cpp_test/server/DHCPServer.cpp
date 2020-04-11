@@ -10,7 +10,7 @@
 #include <fstream>//delete after debugging
 
 #define DHCP_Server_clientIP  IP::createIpAddress(192, 168, 1,100)
-#define DHCP_Server_SubnetMask  IP::createIpAddress(192, 168, 1,0)
+#define DHCP_Server_SubnetMask  IP::createIpAddress(255, 255, 255,0)
 #define DHCP_Server_serverIP  IP::createIpAddress(192, 168, 1,12)
 #define DHCP_Server_broadcastIp  IP::createIpAddress(255, 255, 255, 255)
 #define DHCP_SERVER_AddrLeaseTime  (60*60*24)
@@ -45,13 +45,13 @@ namespace DHCP::Server{
 		}
 	}
 void replyToRequest(char *read, char *write){
-			std::cout<<"DHCPServer:reply to discover16\n";std::cout.flush();
+			std::cout<<"DHCPServer:replyToRequest\n";std::cout.flush();
 			//create the input headers
-			IP::Header * ip_in = IP::create(read, "DHCP::SERVER::replyToDiscover,2");
-			UDP::Header * udp_in = UDP::create(ip_in, "DHCP::SERVER::replyToDiscover,1");
-			DHCP::Header *dhcp_in =  DHCP::create(udp_in,"DHCP::SERVER::replyToDiscover,3" );
+			IP::Header * ip_in = IP::create(read, "DHCP::SERVER::replyToRequest,2");
+			UDP::Header * udp_in = UDP::create(ip_in, "DHCP::SERVER::replyToRequest,1");
+			DHCP::Header *dhcp_in =  DHCP::create(udp_in,"DHCP::SERVER::replyToRequest,3" );
 			
-			std::cout<<"DHCPSERVER:25\n";std::cout.flush();
+			std::cout<<"DHCPSERVER::replyToRequest:25\n";std::cout.flush();
 			//create the out put headers
 			IP::Header * ip_out = IP::createEmptyHeader(write);;
 				IP::copyToResponseHeader(ip_out, ip_in);
@@ -62,14 +62,14 @@ void replyToRequest(char *read, char *write){
 				
 			DHCP::Header *dhcp_out =  DHCP::createEmptyHeader(udp_out);
 				DHCP::memCpy(dhcp_out, dhcp_in);
-			std::cout<<"DHCPSERVER:28\n";std::cout.flush();
+			std::cout<<"DHCPSERVER:replyToRequest:28\n";std::cout.flush();
 		
 			
 			
 			
 			//DHCP::Header *returnDHCP = {0};
 			//DHCP::memCpy(returnDHCP, dhcp_in);
-			dhcp_out->OPCode = DHCP::OPCodeTypes::offer;
+			dhcp_out->OPCode = DHCP::OPCodeTypes::acknowledge;
 			dhcp_out->yourIpAddress = DHCP_Server_clientIP;
 			dhcp_out->serverIpAddress = DHCP_Server_serverIP;
 			memcpy(
@@ -93,7 +93,7 @@ void replyToRequest(char *read, char *write){
 			DHCP::Option options_out[6];
 			
 			//configure message type
-			DHCP::OPTIONS::Message::create(options_out, DHCP::OPTIONS::Message::types::OFFER);
+			DHCP::OPTIONS::Message::create(options_out, DHCP::OPTIONS::Message::types::ACK);
 			
 			//options[1] : subnetMask
 			DHCP::OPTIONS::SubnetMask::create(options_out+1, DHCP_Server_SubnetMask);
@@ -152,14 +152,16 @@ void replyToRequest(char *read, char *write){
 			}
 			if(DEBUG == true){
 				std::ofstream file; 
-				file.open("/home/pi/Documents/github/VPN/testData/packet_discover.txt");
+				file.open("/home/pi/Documents/github/VPN/testData/packet_request.txt");
 				file.write(read,IP::getLength(ip_in) );
 				file.close();
 				
-				file.open("/home/pi/Documents/github/VPN/testData/packet_offer.txt");
+				file.open("/home/pi/Documents/github/VPN/testData/packet_acknowledge.txt");
 				file.write(write, IP::getLength(ip_out));
 				file.close();
 			}
+			
+			
 		
 		}
 		
@@ -330,10 +332,11 @@ void replyToRequest(char *read, char *write){
 			case DHCP::OPCodeTypes::request:
 				replyToRequest(packet, responsePacket);
 				checkReturnVals(responsePacket);
-				return false;//TODO fix this
+				return true;
 			default:
 				std::cout<<"unknown option type for dhcp:"
 						<< message_type->type;
+					DHCP::logValues(dhcp);
 						std::cout.flush();
 				throw -1;
 		}

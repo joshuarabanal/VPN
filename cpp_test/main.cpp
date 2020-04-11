@@ -30,7 +30,7 @@ void logPacket(char *pack);
 
 int main () { 
 	
-	bool fromfile = true;
+	bool fromfile = false;
 	bool shouldSocket = true;
 	
 	CrashReporter::create();
@@ -38,8 +38,8 @@ int main () {
 	std::cout << "Output sentence 1\n";
 	RawSocket* sock;
 	try{
-		if(shouldSocket){
-			sock = new RawSocket( "eth0\0");
+		if(!fromfile || shouldSocket){
+			sock = new RawSocket( "eth0");
 			
 		}
 	}
@@ -50,11 +50,10 @@ int main () {
 	char read[65536] = {0};
 	char write[65536] = {0};
 	
-	std::cout<<"about to get default:\n"; std::cout.flush();
 	unsigned char defaultMac[6] = {0};
 	sock->getMacAddress(defaultMac);
 	
-	std::cout<<"starting main loop";
+	std::cout<<"starting main loop"; std::cout.flush();
 	while(true){
 		memset(read, 0x00, 65536);
 		memset(write, 0x00, 65536);
@@ -158,6 +157,7 @@ bool readEvent(char *in, char *out){
 			std::cout<<"\n\nignoring UPnP requests\n\n\n";
 			return false;//ignore multicast requests
 		}
+		
 		
 		std::cout<<"failed to read udp packet request\n";
 		UDP::logValues(udp_in);

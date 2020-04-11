@@ -30,8 +30,8 @@ namespace DHCP{
 		offer = 2,
 		request = 3,
 		decline = 4,
-		pack = 5,
-		npack = 6,
+		acknowledge = 5,
+		nack = 6,
 		release = 7,
 	};
 	
