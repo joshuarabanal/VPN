@@ -76,7 +76,10 @@ int main () {
 					sock->write(write, length, eth_out->destinationMac);
 				}
 				logPacket(writeData); 
-				writeFile("/home/pi/Documents/github/VPN/testData/lastFullPacket.txt",write, length);
+				IP::Header *ip_in = IP::create(readData,"main:about to log the final data");
+				int length_in = IP::getLength(ip_in) + sizeof(Eth::Header);
+				writeFile("/home/pi/Documents/github/VPN/testData/lastFullPacket_sent.txt",write, length);
+				writeFile("/home/pi/Documents/github/VPN/testData/lastFullPacket_recieved.txt",read, length_in);
 				std::cout<<"\n\n\n\n\n";
 			}
 			else{
