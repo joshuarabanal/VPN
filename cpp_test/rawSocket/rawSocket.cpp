@@ -34,11 +34,14 @@ class RawSocket{
 	RawSocket(const char interface[]);
 	int read( char buffer[65536]);
 	int write(char buffer[65536], int bufferLength, unsigned char destinationMacAddress[6]);
+	void getMacAddress(unsigned char return_mac_address[6]);
 };
 
 RawSocket::RawSocket(const char interfaceName[]){
 	strcpy(this->interfaceName, interfaceName);
+	std::cout<<"interface mane set:"<<this->interfaceName<<"\n";
 	std::cout<<"test"<<htons(ETH_P_ALL) <<" = "<<ETH_P_ALL<<"\n";
+	std::cout.flush();
 	//this->sock = socket (AF_INET, SOCK_RAW, IPPROTO_UDP);
 	this->sock =socket(AF_PACKET,SOCK_RAW,htons(ETH_P_IP));//when we call ETH_P_ALL we can get non IP packets
 	if(this->sock == -1){
@@ -136,5 +139,8 @@ int RawSocket::write(char buffer[0xffff],int bufferLength, unsigned char destMac
    return send_len;
 }
 	
+void RawSocket::getMacAddress(unsigned char retu[6]){
+	Raw::getMacAddress(this->sock, this->interfaceName, retu);
+}
 
 #endif

@@ -15,20 +15,20 @@ namespace Raw{
       strcpy(ifreq_ip->ifr_name,interfaceName);//giving name of Interface
       if(ioctl(socket,requestType,ifreq_ip)<0) //getting IP Address
       {
-        std::cout<<"error obtaining ip address for the specified interfave:"<<interfaceName<<"\n";
+        std::cout<<"error obtaining data for the specified interfave:"<<interfaceName<<"\n";
         throw -45;
       }
       
     }
   }
-  char *getIpAddress(int socket, const char *interfaceName, char *retu){
+  unsigned char *getIpAddress(int socket, const char *interfaceName, unsigned char retu[6]){
     struct ifreq data;
     getInterfaceData(interfaceName,socket, SIOCGIFADDR, &data);
     memcpy(retu, data.ifr_addr.sa_data, sizeof(char)*4 );
     return retu;
   }
   
-  char *getMacAddress(int socket, const char *interfaceName, char *retu){
+  unsigned char *getMacAddress(int socket, const char *interfaceName, unsigned char *retu){
     struct ifreq data;
     getInterfaceData(interfaceName,socket, SIOCGIFHWADDR, &data);
     memcpy(retu, data.ifr_addr.sa_data, sizeof(char)*6 );

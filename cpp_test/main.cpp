@@ -31,14 +31,15 @@ void logPacket(char *pack);
 int main () { 
 	
 	bool fromfile = true;
+	bool shouldSocket = true;
 	
 	CrashReporter::create();
 	
 	std::cout << "Output sentence 1\n";
 	RawSocket* sock;
 	try{
-		if(!fromfile){
-			sock = new RawSocket( "eth0");
+		if(shouldSocket){
+			sock = new RawSocket( "eth0\0");
 			
 		}
 	}
@@ -49,10 +50,11 @@ int main () {
 	char read[65536] = {0};
 	char write[65536] = {0};
 	
+	std::cout<<"about to get default:\n"; std::cout.flush();
+	unsigned char defaultMac[6] = {0};
+	sock->getMacAddress(defaultMac);
 	
-	
-	
-	
+	std::cout<<"starting main loop";
 	while(true){
 		memset(read, 0x00, 65536);
 		memset(write, 0x00, 65536);
@@ -65,6 +67,7 @@ int main () {
 			char * readData = Eth::getPayload(eth_in);
 			Eth::Header * eth_out = Eth::create(write);
 				Eth::createResponseHeader(eth_out, eth_in);
+				Eth::setSourceMac(eth_out, defaultMac);
 			char *writeData = Eth::getPayload(eth_out);
 			
 				
@@ -77,7 +80,8 @@ int main () {
 				}
 				
 				//logging details
-				logPacket(writeData); 
+				logPacket(write); 
+				
 				IP::Header *ip_in = IP::create(readData,"main:about to log the final data");
 				int length_in = IP::getLength(ip_in) + sizeof(Eth::Header);
 				writeFile("/home/pi/Documents/github/VPN/testData/lastFullPacket_sent.txt",write, length);
@@ -105,7 +109,11 @@ int main () {
 }
 
 void logPacket(char * pack){
-	IP::Header * ip = IP::create(pack, "main::logPacket,1");
+	Eth::Header * eth = Eth::create(pack);
+		std::cout<<"eth packet returned:\n";
+		Eth::logValues(eth);
+		
+	IP::Header * ip = IP::create(Eth::getPayload(eth), "main::logPacket,1");
 		std::cout<<"Ip Packet returned:\n";
 		IP::logValues(ip);
 	UDP::Header *udp = UDP::create(ip, "main::logPacket,1");

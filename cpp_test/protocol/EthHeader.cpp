@@ -1,5 +1,7 @@
 
 #include <net/ethernet.h> 
+#include <iostream>
+#include "../rawSocket/rawSocketMetaData.cpp"
 
 namespace Eth{
 	struct Header{
@@ -10,26 +12,37 @@ namespace Eth{
 	Eth::Header *create(char *src){
 		return (Eth::Header *) (src);
 	}
-	void createResponseHeader(Eth::Header *destination, Eth::Header *source){
-		unsigned char *dest_dest = destination->destinationMac;
-		unsigned char *source_source = source->sourceMac;
-			dest_dest[0] = source_source[0];
-			dest_dest[1] = source_source[1];
-			dest_dest[2] = source_source[2];
-			dest_dest[3] = source_source[3];
-			dest_dest[4] = source_source[4];
-			dest_dest[5] = source_source[5];
-			
-			
-		unsigned char *des_source = destination->sourceMac;
-		unsigned char *source_dest = source->destinationMac;
-			des_source[0] = source_dest[0];
-			des_source[1] = source_dest[1];
-			des_source[2] = source_dest[2];
-			des_source[3] = source_dest[3];
-			des_source[4] = source_dest[4];
-			des_source[5] = source_dest[5];
+	void setSourceMac(Header *src, unsigned char mac[6]){
+		unsigned char * us = src->sourceMac;
+			us[0] = mac[0];
+			us[1] = mac[1];
+			us[2] = mac[2];
+			us[3] = mac[3];
+			us[4] = mac[4];
+			us[5] = mac[5];
+	}
+	void setDefaultSourceMac(Header *src, int socket, const char *interfaceName){
+		unsigned char mac[6] = {0};
+		Raw::getMacAddress(socket, interfaceName, mac);
+		setSourceMac(src, mac);
 		
+	}
+	void setDestinationMac(Header *src, unsigned char mac[6]){
+		unsigned char * us = src->destinationMac;
+			us[0] = mac[0];
+			us[1] = mac[1];
+			us[2] = mac[2];
+			us[3] = mac[3];
+			us[4] = mac[4];
+			us[5] = mac[5];
+	}
+	
+	void createResponseHeader(Eth::Header *destination, Eth::Header *source){
+		unsigned char *source_source = source->sourceMac;
+		setDestinationMac(destination, source_source);
+			
+		unsigned char *source_dest = source->destinationMac;
+		setSourceMac(destination, source_dest);
 		
 		destination -> type = source->type;
 	}
@@ -37,5 +50,20 @@ namespace Eth{
 		return (
 			((char*)src) + sizeof(Eth::Header)
 		);
+	}
+	void logValues(Header *src){
+		std::cout<<"logging the ethernet header:\n";
+		std::cout<<"dest mac:";
+		
+		unsigned char *arry  = src->destinationMac;
+		for(int i = 0; i<6; i++){ std::cout<<(int)arry[i]<<","; }
+		std::cout<<"\n";
+		
+		std::cout<<"source mac:";
+		arry  = src->sourceMac;
+		for(int i = 0; i<6; i++){ std::cout<<(int)arry[i]<<","; }
+		std::cout<<"\n";
+		
+		std::cout<<"payload type:"<<src->type<<"\n";
 	}
 }
