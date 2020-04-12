@@ -81,13 +81,13 @@ namespace IP{
 	
 	unsigned long createIpAddress(char one, char two, char three, char four){
 		return 
-			((one&0xff)<<24) 
+			((four&0xff)<<24) 
 			| 
-			((two&0xff)<<16) 
+			((three&0xff)<<16) 
 			| 
-			((three&0xff)<<8) 
+			((two&0xff)<<8) 
 			| 
-			(four&0xff);
+			(one&0xff);
 	}
 	
 	void setSourceIPAddress(IP::Header * self, long val){
