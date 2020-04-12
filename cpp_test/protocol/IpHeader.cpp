@@ -25,8 +25,8 @@ namespace IP{
 		unsigned int timeToLive:8;
 		unsigned int protocol:8;//see define directives at top of page to see the protocol values
 		unsigned int checksum:16;//calculated only using the ip header data
-		unsigned char sourceIP[4];
-		unsigned char destinationIP[4];
+		unsigned long sourceIP:32;
+		unsigned long destinationIP:32;
 		
 		char *optionsStart;
 		//int32_t crc;
@@ -42,6 +42,7 @@ namespace IP{
 	int getPayloadIndex(IP::Header *h);
 	int getLength(IP::Header *h);
 	void logValues(IP::Header * h);
+	long IpAddressToLong(unsigned char ip[4]);
 	
 	
 	
@@ -90,39 +91,52 @@ namespace IP{
 	}
 	
 	void setSourceIPAddress(IP::Header * self, long val){
+		self->sourceIP = val;
+		/*
 		char ip[4];
 		parseLongIpAddress(val, ip);
 		self->sourceIP[0] = ip[0];
 		self->sourceIP[1] = ip[1];
 		self->sourceIP[2] = ip[2];
 		self->sourceIP[3] = ip[3];
+		* */
 	}
+	
 	void setDestinationIPAddress(IP::Header *self, long val){
+		self->destinationIP = val;
+		/*
 		char ip[4];
 		parseLongIpAddress(val, ip);
 		self->destinationIP[0] = ip[0];
 		self->destinationIP[1] = ip[1];
 		self->destinationIP[2] = ip[2];
 		self->destinationIP[3] = ip[3];
+		*/
 	}
+	
 	void setDestinationIp(IP::Header *self, unsigned char ip[4]){
+	
+		unsigned long ipv4 = IP::IpAddressToLong(ip);
+		/*
 		self->destinationIP[0] = ip[0];
 		self->destinationIP[1] = ip[1];
 		self->destinationIP[2] = ip[2];
 		self->destinationIP[3] = ip[3];
+		* */
+		self->destinationIP = ipv4;
 	}
+	
 	bool isSrcIp(IP::Header *self, int ip0, int ip1, int ip2, int ip3){
-		long given = createIpAddress(ip0, ip1, ip2, ip3);
-		unsigned char *sip = self->sourceIP;
-		long src = createIpAddress(sip[0], sip[1], sip[2], sip[3]);
-		return src == given;
+		unsigned long given = createIpAddress(ip0, ip1, ip2, ip3);
+		unsigned long sip = self->sourceIP;
+		return sip == given;
 	}
 	bool isDestIp(IP::Header *self, int ip0, int ip1, int ip2, int ip3){
-		long given = createIpAddress(ip0, ip1, ip2, ip3);
-		unsigned char *sip = self->destinationIP;
-		long src = createIpAddress(sip[0], sip[1], sip[2], sip[3]);
-		return src == given;
+		unsigned long given = createIpAddress(ip0, ip1, ip2, ip3);
+		unsigned long dip = self->destinationIP;
+		return dip == given;
 	}
+	
 	void parseLongIpAddress(long ip,  char retu[4]){
 		retu[0] = (ip>>24)&0xff;
 		retu[1] = (ip>>16)&0xff;
@@ -141,13 +155,16 @@ namespace IP{
 	
 	void copyToResponseHeader(IP::Header * response , IP::Header *message){
 			copyVals(response, message);
-			memcpy(response->sourceIP,message->destinationIP, 4);
-			memcpy(response->destinationIP,message->sourceIP, 4);
+			response->sourceIP = message->destinationIP;
+			//memcpy(response->sourceIP,message->destinationIP, 4);
+			response->destinationIP = message->sourceIP;
+			//memcpy(response->destinationIP,message->sourceIP, 4);
 	}
 	
 	bool checkChecksum(IP::Header *self){
 		return IPHeader_checkChecksum((char *)self, getPayloadIndex(self));
 	}
+	
 	void setChecksum(IP::Header * self){
 		char *self_payload = (char *)(self);
 		int headerLength = getPayloadIndex(self);
@@ -179,10 +196,15 @@ namespace IP{
 		<<"checksum:"<<h->checksum<<"\n"
 		
 		
-		<<"sourceIP:"<<((int)h->sourceIP[0])<<","<<((int)h->sourceIP[1])<<","<<((int)h->sourceIP[2])<<","<<((int)h->sourceIP[3])<<"\n"
+		<<"sourceIP:"<<((int)(h->sourceIP&0xff))
+				<<","<<((int)((h->sourceIP>>8)&0xff))
+				<<","<<((int) ((h->sourceIP>>16)&0xff))
+				<<","<<((int)((h->sourceIP>>24)&0xff))<<"\n"
 		
-		<<"destinationIP:"<<((int)h->destinationIP[0])<<","<<((int)h->destinationIP[1])<<","<<((int)h->destinationIP[2])<<","<<((int)h->destinationIP[3])<<"\n"
-		;
+		<<"destinationIP:"<<((int)(h->destinationIP&0xff))
+				<<","<<((int)((h->destinationIP>>8)&0xff))
+				<<","<<((int) ((h->destinationIP>>16)&0xff))
+				<<","<<((int)((h->destinationIP>>24)&0xff))<<"\n";
 	}
 	
 	int getLength(IP::Header *h){

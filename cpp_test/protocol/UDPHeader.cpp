@@ -30,17 +30,17 @@ namespace UDP{
 		int calcChecksum(IP::Header *ip, UDP::Header *self){
 			char temp[0xffff] = {0};
 			
-			unsigned char *ipin = ip->sourceIP;
-			temp[0] = ipin[0];
-			temp[1] = ipin[1];
-			temp[2] = ipin[2];
-			temp[3] = ipin[3];
+			unsigned long ipin = ip->sourceIP;
+			temp[0] = (ipin>>24)&0xff;
+			temp[1] = (ipin>>16)&0xff;
+			temp[2] = (ipin>>8)&0xff;
+			temp[3] = (ipin)&0xff;
 			
-			unsigned char *ipout = ip->destinationIP;
-			temp[4] = ipout[0];
-			temp[5] = ipout[1];
-			temp[6] = ipout[2];
-			temp[7] = ipout[3];
+			unsigned long ipout = ip->destinationIP;
+			temp[4] = (ipout>>24)&0xff;
+			temp[5] = (ipout>>16)&0xff;
+			temp[6] = (ipout>>8)&0xff;
+			temp[7] = (ipout)&0xff;
 			
 			
 			temp[8] = 0;

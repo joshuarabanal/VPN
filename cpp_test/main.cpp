@@ -30,7 +30,7 @@ void logPacket(char *pack);
 
 int main () { 
 	
-	bool fromfile = false;
+	bool fromfile = true;
 	bool shouldSocket = true;
 	
 	CrashReporter::create();
@@ -60,7 +60,7 @@ int main () {
 		
 		try{
 			if(!fromfile)sock->read(read);
-			else readFile("/home/pi/Documents/github/VPN/testData/packet_request.txt", read,65536);
+			else readFile("/home/pi/Documents/github/VPN/testData/packet_discover.txt", read,65536);
 			
 			Eth::Header * eth_in = Eth::create(read);
 			char * readData = Eth::getPayload(eth_in);

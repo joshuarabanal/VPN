@@ -32,7 +32,6 @@ namespace DHCP::Server{
 				dhcp = DHCP::create(udp,"DHCP::SERVER::check return vals,3");
 				
 			}catch( int err){
-				
 				IP::logValues(ip);
 				UDP::logValues(udp);
 				DHCP::logValues(dhcp);
@@ -169,7 +168,7 @@ void replyToRequest(char *read, char *write){
 		//create the out put headers
 		IP::Header * ip_out = IP::createEmptyHeader(write);
 			IP::copyToResponseHeader(ip_out, ip_in);
-			IP::setDestinationIp(ip_out, ip_in->destinationIP);
+			IP::setDestinationIPAddress(ip_out, ip_in->destinationIP);
 			IP::setSourceIPAddress(ip_out, DHCP_Server_serverIP);
 		UDP::Header *udp_out = UDP::createEmptyHeader(ip_out);
 			UDP::copyToResponseHeader(udp_out, udp_in);
