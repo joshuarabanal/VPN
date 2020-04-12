@@ -30,7 +30,7 @@ void logPacket(char *pack);
 
 int main () { 
 	
-	bool fromfile = true;
+	bool fromfile = false;
 	bool shouldSocket = true;
 	
 	CrashReporter::create();
@@ -98,6 +98,8 @@ int main () {
 					case DHCP::OPCodeTypes::request:
 						readpath = "/home/pi/Documents/github/VPN/testData/packet_request.txt";
 						writepath = "/home/pi/Documents/github/VPN/testData/packet_acknowledge.txt";
+						break;
+					default: std::cout<<"unknown op code fr dhcp\n"; 
 						break;
 				}
 				
