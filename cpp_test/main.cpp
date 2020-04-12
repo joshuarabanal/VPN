@@ -30,7 +30,7 @@ void logPacket(char *pack);
 
 int main () { 
 	
-	bool fromfile = false;
+	bool fromfile = true;
 	bool shouldSocket = true;
 	
 	CrashReporter::create();
