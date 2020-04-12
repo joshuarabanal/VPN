@@ -73,9 +73,10 @@ int main () {
 			
 			if(readEvent(readData, writeData)){ 
 				IP::Header *ip_out = IP::create(writeData, "main:about to send data");
-				int length = IP::getLength(ip_out) + sizeof(Eth::Header);
+				int length_out = IP::getLength(ip_out) + sizeof(Eth::Header);
+				
 				if(!fromfile){
-					sock->write(write, length, eth_out->destinationMac);
+					sock->write(write, length_out, eth_out->destinationMac);
 				}
 				
 				//logging details
@@ -84,8 +85,8 @@ int main () {
 				IP::Header *ip_in = IP::create(readData,"main:about to log the final data");
 				UDP::Header *udp_in = UDP::create(ip_in,"main:about to log the final data");
 				DHCP::Header *dhcp_in = DHCP::create(udp_in,"main:about to log the final data");
-				
 				int length_in = IP::getLength(ip_in) + sizeof(Eth::Header);
+				
 				
 				const char *readpath = "/home/pi/Documents/github/VPN/testData/lastFullPacket_sent.txt";
 				const char *writepath = "/home/pi/Documents/github/VPN/testData/lastFullPacket_recieved.txt";
@@ -103,8 +104,8 @@ int main () {
 						break;
 				}
 				
-				writeFile(readpath,write, length);
-				writeFile(writepath,read, length_in);
+				writeFile( readpath, read, length_in );
+				writeFile( writepath, write, length_out );
 				
 				std::cout<<"\n\n\n\n\n";
 			}
@@ -147,6 +148,11 @@ void logPacket(char * pack){
 bool readEvent(char *in, char *out){
 	
 	IP::Header * ip_in = IP::create(in, "main::readEvent,1");
+	
+	if(IP::isDestIp(ip_in, 224,0,0,252)){
+		std::cout<<"skipped multicast packet\n";
+		return false;
+	}
 	
 	if(ip_in->protocol == IPHeader_protocolUDP ){
 		UDP::Header *udp_in = NULL;
