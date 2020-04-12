@@ -30,7 +30,7 @@ void logPacket(char *pack);
 
 int main () { 
 	
-	bool fromfile = true;
+	bool fromfile = false;
 	bool shouldSocket = true;
 	
 	CrashReporter::create();
@@ -85,18 +85,19 @@ int main () {
 				IP::Header *ip_in = IP::create(readData,"main:about to log the final data");
 				UDP::Header *udp_in = UDP::create(ip_in,"main:about to log the final data");
 				DHCP::Header *dhcp_in = DHCP::create(udp_in,"main:about to log the final data");
+				DHCP::Option * message_type_in = DHCP::OPTIONS::getByType(dhcp_in, DHCP::OPTIONS::types::message_type);
 				int length_in = IP::getLength(ip_in) + sizeof(Eth::Header);
 				
 				
 				const char *readpath = "/home/pi/Documents/github/VPN/testData/lastFullPacket_sent.txt";
 				const char *writepath = "/home/pi/Documents/github/VPN/testData/lastFullPacket_recieved.txt";
 				
-				switch(dhcp_in->OPCode){
-					case DHCP::OPCodeTypes::discover:
+				switch(message_type_in->data[0]){
+					case DHCP::OPTIONS::Message::types::DISCOVER:
 						readpath = "/home/pi/Documents/github/VPN/testData/packet_discover.txt";
 						writepath = "/home/pi/Documents/github/VPN/testData/packet_offer.txt";
 						break;
-					case DHCP::OPCodeTypes::request:
+					case DHCP::OPTIONS::Message::types::REQUEST:
 						readpath = "/home/pi/Documents/github/VPN/testData/packet_request.txt";
 						writepath = "/home/pi/Documents/github/VPN/testData/packet_acknowledge.txt";
 						break;

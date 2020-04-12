@@ -1,4 +1,7 @@
-
+/**
+ * use this file to debug format:
+ * http://www.tcpipguide.com/free/t_DHCPMessageFormat.htm
+ */
 #ifndef DHCP_h
 #define DHCP_h
 
@@ -26,13 +29,8 @@ namespace DHCP{
 	};
 	
 	enum OPCodeTypes{
-		 discover = 1,
-		offer = 2,
-		request = 3,
-		decline = 4,
-		acknowledge = 5,
-		nack = 6,
-		release = 7,
+		 request = 1,
+		 reply = 2
 	};
 	
 	int optionsIndex = sizeof(Header);
@@ -93,7 +91,6 @@ namespace DHCP{
 		return retu;
 	}
 	
-	
 	void setOptions(Header * self, DHCP::Option * options, int optLength){
 		//char magicCookie[4];//always the same value: 0x63, 0x82, 0x53, 0x63
 		self->magicCookie[0] = 0x63;
@@ -137,6 +134,7 @@ namespace DHCP{
 		}
 		return totalLength ;
 	}
+	
 	int getTotalHeaderLength(DHCP::Header *self){
 		
 		int optionsLengths = 0;
@@ -157,8 +155,6 @@ namespace DHCP{
 		std::cout<<"\n";
 		return optionsLengths + sizeof(DHCP::Header);
 	}
-	
-	
 	
 	void memCpy(Header *to, Header *from){
 		memcpy(to, from,sizeof(Header));

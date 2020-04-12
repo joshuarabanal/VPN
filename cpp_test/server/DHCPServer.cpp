@@ -70,7 +70,7 @@ void replyToRequest(char *read, char *write){
 			
 			//DHCP::Header *returnDHCP = {0};
 			//DHCP::memCpy(returnDHCP, dhcp_in);
-			dhcp_out->OPCode = DHCP::OPCodeTypes::acknowledge;
+			dhcp_out->OPCode = DHCP::OPCodeTypes::reply;
 			dhcp_out->yourIpAddress = DHCP_Server_clientIP;
 			dhcp_out->serverIpAddress = DHCP_Server_serverIP;
 			memcpy(
@@ -182,7 +182,7 @@ void replyToRequest(char *read, char *write){
 		
 		//DHCP::Header *returnDHCP = {0};
 		//DHCP::memCpy(returnDHCP, dhcp_in);
-		dhcp_out->OPCode = DHCP::OPCodeTypes::offer;
+		dhcp_out->OPCode = DHCP::OPCodeTypes::reply;
 		dhcp_out->yourIpAddress = DHCP_Server_clientIP;
 		dhcp_out->serverIpAddress = DHCP_Server_serverIP;
 		memcpy(
@@ -317,11 +317,11 @@ void replyToRequest(char *read, char *write){
 		
 		std::cout<<"DHCPServer:158\n";std::cout.flush();
 		switch(message_type->data[0]){
-			case DHCP::OPCodeTypes::discover:
+			case DHCP::OPTIONS::Message::types::DISCOVER:
 				replyToDiscover(packet,responsePacket );
 				checkReturnVals(responsePacket);
 				return true;
-			case DHCP::OPCodeTypes::request:
+			case DHCP::OPTIONS::Message::types::REQUEST:
 				replyToRequest(packet, responsePacket);
 				checkReturnVals(responsePacket);
 				return true;
