@@ -85,7 +85,8 @@ namespace DHCP::OPTIONS{
 		void create(DHCP::Option *val, long mask){
 			val->type = DHCP::OPTIONS::types::subnet_mask;
 			val->length = 4;
-			IP::parseLongIpAddress( mask, val->data);
+			unsigned long *addresses = (unsigned long *)val->data;
+			addresses[0] = mask;
 		}
 		void logValues(Option * val){
 			std::cout<<"SubnetMask:";
@@ -100,15 +101,9 @@ namespace DHCP::OPTIONS{
 			val->type = DHCP::OPTIONS::types::router;
 			val->length = length*4;
 			
-			char *arry = val->data;
-			for(int i = 0; i+3<length*4; i+=4){
-				char ip[4] = {0};
-				IP::parseLongIpAddress(values[i/4], ip);
-				arry[0] = ip[0];
-				arry[1] = ip[1];
-				arry[2] = ip[2];
-				arry[3] = ip[3];
-				arry += 4;
+			unsigned long *addresses = (unsigned long *)val->data;
+			for(int i = 0; i<length; i++){
+				addresses[i] = values[i];
 			}
 			//memcpy(val->data, values, length*4);
 		}

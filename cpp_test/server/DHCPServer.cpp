@@ -20,14 +20,11 @@
 namespace DHCP::Server{
 	
 	namespace{//private functions
-		void checkReturnVals(char *pac){
-			IP::Header *ip = NULL;
+		void checkReturnVals(IP::Header *ip){
 			UDP::Header * udp = NULL;
 			DHCP::Header *dhcp = NULL;
 			
 			try{
-				
-				ip =  IP::create(pac,"DHCP::Server::check return vals");
 				udp = UDP::create(ip,"DHCP::Server::check return vals,2");
 				dhcp = DHCP::create(udp,"DHCP::SERVER::check return vals,3");
 				
@@ -43,10 +40,9 @@ namespace DHCP::Server{
 				
 		}
 	}
-void replyToRequest(char *read, char *write){
+void replyToRequest(IP::Header *ip_in, IP::Header *ip_out){
 			std::cout<<"DHCPServer:replyToRequest\n";std::cout.flush();
 			//create the input headers
-			IP::Header * ip_in = IP::create(read, "DHCP::SERVER::replyToRequest,2");
 			UDP::Header * udp_in = UDP::create(ip_in, "DHCP::SERVER::replyToRequest,1");
 			DHCP::Header *dhcp_in =  DHCP::create(udp_in,"DHCP::SERVER::replyToRequest,3" );
 			
@@ -54,7 +50,6 @@ void replyToRequest(char *read, char *write){
 			
 			std::cout<<"DHCPSERVER::replyToRequest:25\n";std::cout.flush();
 			//create the out put headers
-			IP::Header * ip_out = IP::createEmptyHeader(write);
 				IP::copyToResponseHeader(ip_out, ip_in);
 				IP::setSourceIPAddress(ip_out, DHCP_Server_serverIP);
 				IP::setDestinationIPAddress(ip_out, DHCP_Server_broadcastIp);
@@ -157,16 +152,14 @@ void replyToRequest(char *read, char *write){
 		
 		}
 		
-	void replyToDiscover(char *read, char *write){
+	void replyToDiscover(IP::Header *ip_in, IP::Header *ip_out){
 		std::cout<<"DHCPServer:reply to discover16\n";std::cout.flush();
 		//create the input headers
-		IP::Header * ip_in = IP::create(read, "DHCP::SERVER::replyToDiscover,2");
 		UDP::Header * udp_in = UDP::create(ip_in, "DHCP::SERVER::replyToDiscover,1");
 		DHCP::Header *dhcp_in =  DHCP::create(udp_in,"DHCP::SERVER::replyToDiscover,3" );
 		
 		std::cout<<"DHCPSERVER:25\n";std::cout.flush();
 		//create the out put headers
-		IP::Header * ip_out = IP::createEmptyHeader(write);
 			IP::copyToResponseHeader(ip_out, ip_in);
 			IP::setDestinationIPAddress(ip_out, ip_in->destinationIP);
 			IP::setSourceIPAddress(ip_out, DHCP_Server_serverIP);
@@ -263,28 +256,18 @@ void replyToRequest(char *read, char *write){
 			UDP::logValues(udp_out);
 			throw -8;
 		}
-		if(DEBUG == true){
-			std::ofstream file; 
-			file.open("/home/pi/Documents/github/VPN/testData/packet_discover.txt");
-			file.write(read,IP::getLength(ip_in) );
-			file.close();
-			
-			file.open("/home/pi/Documents/github/VPN/testData/packet_offer.txt");
-			file.write(write, IP::getLength(ip_out));
-			file.close();
-		}
 
 	}
 	
 	
-	bool handleMessage(char *packet, char *responsePacket){
+	bool handleMessage(IP::Header *ip_in, IP::Header *ip_out){
 		std::cout<<"DHCPServer:104\n";std::cout.flush();
-		IP::Header * ip = IP::create(packet, "DHCP::SERVER::handleMessage,1");
-		if(ip->protocol != IPHeader_protocolUDP){
-			std::cout<<"not a udp request"<<ip->protocol;
+		if(ip_in->protocol != IPHeader_protocolUDP){
+			std::cout<<"not a udp request"<<ip_in->protocol;
 			return false;
 		}
-		UDP::Header * udp = UDP::create(ip, "DHCP::SERVER::handle message,1");
+		
+		UDP::Header * udp = UDP::create(ip_in, "DHCP::SERVER::handle message,1");
 		if(UDP::getSourcePort(udp) != DHCP_clientPort || UDP::getDestPort(udp) != DHCP_serverPort){
 			std::cout<<"not a DHCP request\n"<<"sourcePort:"<<UDP::getSourcePort(udp)<<"\n";
 			return false;
@@ -294,7 +277,7 @@ void replyToRequest(char *read, char *write){
 		try{ DHCP::checkValidity(dhcp); }
 		catch(int err){
 			std::cout<<"\n\n\n";
-			IP::logValues(ip);
+			IP::logValues(ip_in);
 			std::cout<<"\n\n\n";
 			UDP::logValues(udp);
 			std::cout<<"\n\n\n";
@@ -318,12 +301,12 @@ void replyToRequest(char *read, char *write){
 		std::cout<<"DHCPServer:158\n";std::cout.flush();
 		switch(message_type->data[0]){
 			case DHCP::OPTIONS::Message::types::DISCOVER:
-				replyToDiscover(packet,responsePacket );
-				checkReturnVals(responsePacket);
+				replyToDiscover(ip_in,ip_out );
+				checkReturnVals(ip_out);
 				return true;
 			case DHCP::OPTIONS::Message::types::REQUEST:
-				replyToRequest(packet, responsePacket);
-				checkReturnVals(responsePacket);
+				replyToRequest(ip_in, ip_out);
+				checkReturnVals(ip_out);
 				return true;
 			default:
 				std::cout<<"unknown option type for dhcp:"
