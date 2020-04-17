@@ -65,9 +65,29 @@ void WifiAdapterServer::start(){
 	return;
 	
 }
+
+void WifiAdapterServer::logPacket(Eth::Header * data){
+	Eth::logValues(data);
+	IP::Header * ip = IP::create(Eth::getPayload(eth_in), "wifi adapter:logPacket");
+	IP::logValues(ip);
+	if(ip_in->protocol == IPHeader_protocolUDP ){
+		UDP::Header *udp = UDP::create(ip, "wifi adapter : log packet");
+		UDP::logValues(udp);
+	}
+	if(ip_in->protocol == IPHeader_protocolTCP ){
+		TCP::Header *udp = TCP::create(ip, "wifi adapter : log packet");
+		TCP::logValues(udp);
+	}
+}
+
 void WifiAdapterServer::logPackets(char *in, char *out){
+	std::cout<<"loggining in packet:\n";
+	logPacket(Eth::create(in));
+	std::cout<<"loggining out packet:\n";
+	logPacket(Eth::create(out));
 	
 }
+
 bool WifiAdapterServer::routerMessage(IP::Header *in, IP::Header *out){
 	return false;
 }
