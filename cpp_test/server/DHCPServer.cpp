@@ -122,7 +122,7 @@ void replyToRequest(IP::Header *ip_in, IP::Header *ip_out){
 				(char * )dhcp_out, 
 				DHCP::getTotalHeaderLength(dhcp_out)
 			) ;
-			IP::setPayload(ip_out, (char *)udp_out, UDP::getLength(udp_out));
+			IP::setPayload(ip_out, (char *)udp_out, UDP::getTotalLength(udp_out));
 			
 			
 			
@@ -232,7 +232,7 @@ void replyToRequest(IP::Header *ip_in, IP::Header *ip_out){
 			(char * )dhcp_out, 
 			DHCP::getTotalHeaderLength(dhcp_out)
 		) ;
-		IP::setPayload(ip_out, (char *)udp_out, UDP::getLength(udp_out));
+		IP::setPayload(ip_out, (char *)udp_out, UDP::getTotalLength(udp_out));
 		
 		
 		

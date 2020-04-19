@@ -1,3 +1,5 @@
+#ifndef ETH__HEADER_t
+#define ETH__HEADER_t
 
 #include <net/ethernet.h> 
 #include <iostream>
@@ -68,3 +70,6 @@ namespace Eth{
 		std::cout<<"payload type:"<<src->type<<"\n";
 	}
 }
+
+
+#endif

@@ -7,6 +7,7 @@
 #include "../server/DHCPServer.cpp"
 #include "../server/TCPServer.cpp"
 #include "../util/LinkedList.cpp"
+#include "../server/udp/Connection.cpp"
 
 class WifiAdapterServer{
 	//RawSocket * wifi = new RawSocket("wlan0");
@@ -112,12 +113,23 @@ bool WifiAdapterServer::routerMessage(
 	
 	if(ip_in->protocol == IP::protocol::UDP ){
 		UDP::Header *udp = UDP::create(ip_in, "WifiAdapterServer::routerMessage1");
-		if(udp->destPort == UDP::CommonPorts::DNS){//handle a dns packet
+		if(UDP::getDestPort(udp) == UDP::CommonPorts::DNS){//handle a dns packet
 			if( IP::isDestIp(ip_in,8,8,8,8) || IP::isDestIp(ip_in, 8,8,4,4) ){
-				
+				FileIO::writeLogFile(
+						"WifiAdapter/dnsLookup.txt", 
+						(char*)eth_in, 
+						IP::getTotalLength(ip_in)+Eth::HeaderLength
+				);
+				UDP::server::Connection * conn = new UDP::server::Connection(eth_in, this->ethernet);
+				conn->start();
+				std::cout<<"got desired log files\n";
+				std::cout.flush();
+				throw -96;
 			}
+			std::cout<<"dns packet found\n";
 		}
 		std::cout<<"currently unable to handle UDP Packets\n";
+		std::cout<<"not dns port:"<<UDP::CommonPorts::DNS<<"\n";
 		IP::logValues(ip_in);
 		UDP::logValues(udp);
 		FileIO::writeLogFile(

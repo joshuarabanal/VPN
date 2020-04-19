@@ -26,7 +26,7 @@ namespace UDP{
 	}
 	//forward declarations
 	void logValues(UDP::Header *udp);
-	int getLength(UDP::Header *src);
+	int getTotalLength(UDP::Header *src);
 	
 	namespace{
 		
@@ -51,7 +51,7 @@ namespace UDP{
 			temp[9] = ip->protocol;
 			
 			
-			int len = UDP::getLength(self);
+			int len = UDP::getTotalLength(self);
 			
 			temp[10] = (len>>8)&0xff;
 			temp[11] = len&0xff;
