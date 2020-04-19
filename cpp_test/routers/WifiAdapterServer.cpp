@@ -5,14 +5,18 @@
 #include "../protocol/IpHeader.cpp"
 #include "../protocol/UDPHeader.cpp"
 #include "../server/DHCPServer.cpp"
+#include "../server/TCPServer.cpp"
+#include "../util/LinkedList.cpp"
 
 class WifiAdapterServer{
-	RawSocket * wifi = new RawSocket("wlan0");
+	//RawSocket * wifi = new RawSocket("wlan0");
+	TCP::Server *tcpConnections = new TCP::Server();
 	RawSocket * ethernet = new RawSocket("eth0");
 	
 	bool dhcpMessage(IP::Header *in, IP::Header *out);
 	bool routerMessage(IP::Header *readData, IP::Header *writeData);
 	void logPackets(char *in, char* out);
+	void logPacket(Eth::Header *out);
 	
 	public:
 	void start();
@@ -29,6 +33,7 @@ void WifiAdapterServer::start(){
 	unsigned char defaultMac[6] = {0};
 	this->ethernet->getMacAddress(defaultMac);
 	
+	std::cout<<"starting wifi adapter server\n";
 	while(true){
 		memset(read, 0x00, 65536);
 		memset(write, 0x00, 65536);
@@ -39,11 +44,17 @@ void WifiAdapterServer::start(){
 			
 			Eth::Header * eth_in = Eth::create(read);
 			IP::Header * ip_in = IP::create(Eth::getPayload(eth_in), "wifi adapter:run");
+			if( IP::isSrcIp(ip_in, 192,168,1,13) ){
+				continue;
+			}
+			else if( IP::isSrcIp(ip_in, 192,168,1,12) ){
+				continue;
+			}
 			
 			Eth::Header * eth_out = Eth::create(write);
 				Eth::createResponseHeader(eth_out, eth_in);
 				Eth::setSourceMac(eth_out, defaultMac);
-			IP::Header *ip_out = IP::create(Eth::getPayload(eth_out), "wfi adapter:run 2");
+			IP::Header *ip_out = IP::createEmptyHeader( Eth::getPayload(eth_out) );
 			
 			if(this->dhcpMessage(ip_in, ip_out)){
 				int length_out = IP::getLength(ip_out) + sizeof(Eth::Header);
@@ -52,9 +63,9 @@ void WifiAdapterServer::start(){
 			else if(this->routerMessage(ip_in, ip_out)){
 				this->logPackets(read,write);
 			}
-			
-			
-			else break;
+			else {
+				continue;
+			}
 		}
 		catch(int err){
 			this->logPackets(read, write);
@@ -68,15 +79,15 @@ void WifiAdapterServer::start(){
 
 void WifiAdapterServer::logPacket(Eth::Header * data){
 	Eth::logValues(data);
-	IP::Header * ip = IP::create(Eth::getPayload(eth_in), "wifi adapter:logPacket");
+	IP::Header * ip = IP::create(Eth::getPayload(data), "wifi adapter:logPacket");
 	IP::logValues(ip);
-	if(ip_in->protocol == IPHeader_protocolUDP ){
+	if(ip->protocol == IPHeader_protocolUDP ){
 		UDP::Header *udp = UDP::create(ip, "wifi adapter : log packet");
 		UDP::logValues(udp);
 	}
-	if(ip_in->protocol == IPHeader_protocolTCP ){
-		TCP::Header *udp = TCP::create(ip, "wifi adapter : log packet");
-		TCP::logValues(udp);
+	if(ip->protocol == IPHeader_protocolTCP ){
+		TCP::Header *tcp = TCP::create(ip, "wifi adapter : log packet");
+		TCP::logValues(tcp);
 	}
 }
 
@@ -89,6 +100,30 @@ void WifiAdapterServer::logPackets(char *in, char *out){
 }
 
 bool WifiAdapterServer::routerMessage(IP::Header *in, IP::Header *out){
+	if(in->sourceIP != DHCP::Server::clientIP){
+		return false;
+	}
+	
+	if(in->protocol == IPHeader_protocolUDP ){
+		std::cout<<"currently unable to handle UDP Packets\n";
+		IP::logValues(in);
+		UDP::Header *udp = UDP::create(in, "WifiAdapterServer::routerMessage1");
+		UDP::logValues(udp);
+		FileIO::writeLogFile(
+				"WifiAdapter_error_udp.txt", 
+				(char*)in, 
+				IP::getTotalLength(in)
+		);
+		return false;
+	}
+	else if(in->protocol == IPHeader_protocolTCP ){
+		IP::logValues(in);
+		TCP::Header *tcp_in = TCP::create(in, "WifiAdapterServer::routerMessage1");
+		TCP::Header *tcp_out = TCP::createEmptyHeader(out);
+		(this->tcpConnections)->handlePacket(in, tcp_in, out, tcp_out);
+		std::cout.flush();
+		 throw -24;
+	}
 	return false;
 }
 
@@ -127,11 +162,6 @@ bool WifiAdapterServer::dhcpMessage(IP::Header *ip_in, IP::Header *ip_out){
 			return false;// ignore multimedia requests
 		}
 		
-		
-		std::cout<<"failed to read udp packet request\n";
-		UDP::logValues(udp_in);
-		
-	
 	
 		return false;
 	

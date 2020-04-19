@@ -1,5 +1,10 @@
 
 
+#ifndef TCP__HEADER_T
+#define TCP__HEADER_T
+
+#include "IpHeader.cpp"
+
 namespace TCP{
 	struct Header{
 		int sourcePort:16;
@@ -20,7 +25,106 @@ namespace TCP{
 		unsigned int windowSize:16;//specifies the number of window size units[c] that the sender of this segment is currently willing to receive.
 		int checksum :16;
 		int urgentPointer:16;
-		char *optionsStartHere;
 		
+	};
+	
+	int getHeaderSize(Header *self){ return self->dataoffset * 4; }
+		
+	long getTotalLength(IP::Header *parent, Header *self){	return IP::getPayloadLength(parent);	}
+	int getPayloadLength(IP::Header *parent, Header *self){ return getTotalLength(parent, self) - getHeaderSize(self); }
+	
+	namespace {
+		uint16_t calcChecksum(IP::Header *ip, Header *self){
+			char temp[0xffff] = {0};
+			
+			unsigned long ipin = ip->sourceIP;
+			temp[0] = (ipin)& 0xff;
+			temp[1] = (ipin>>8)&0xff;
+			temp[2] = (ipin>>16)&0xff;
+			temp[3] = (ipin>>24)&0xff;;
+			
+			unsigned long ipout = ip->destinationIP;
+			temp[4] = (ipout)&0xff;
+			temp[5] = (ipout>>8)&0xff;
+			temp[6] = (ipout>>16)&0xff;
+			temp[7] = (ipout>>24)&0xff;
+			
+			
+			temp[8] = 0;
+			temp[9] = ip->protocol;
+			
+			
+			int len = getTotalLength(ip, self);
+			
+			temp[10] = (len>>8)&0xff;
+			temp[11] = len&0xff;
+			
+			
+			
+			char *tempe = (char *)self;
+			for(int i = 0; i<len;i++){
+				temp[12+i] = tempe[i];
+			}
+			
+			return IPHeader_calcChecksum(temp,13+len);
+		}
 	}
+	
+	void logValues(TCP::Header *src){
+		std::cout << "sourcPort:"<<NetworkEndian::formatShort(src->sourcePort);
+		std::cout << "\ndestPort:"<<NetworkEndian::formatShort(src->destPort);
+		std::cout << "\n\tsequence:"<<NetworkEndian::formatLong(src->sequenceNumber);
+		std::cout << "\n\t acknowlegementNumber:"<<NetworkEndian::formatLong(src->acknowlegementNumber);
+		std::cout << "\n\t header size in bytes:"<<(4*src->dataoffset);
+		std::cout << "\n\t concealment:"<<src->NS;
+		std::cout << "\n\t congestion window reduced:"<<src->CWR;
+		std::cout << "\n\t ECE:"<<src->ECE;
+		std::cout << "\n\t URGent field significant:"<<src->URG;
+		std::cout << "\n\t acknowledgement field significant:"<<src->ACK;
+		std::cout << "\n\t PUSH:"<<src->PSH;
+		std::cout << "\n\t reset:"<<src->RST;
+		std::cout << "\n\t SYNC:"<<src->SYN;
+		std::cout << "\n\t Close Connection:"<<src->FIN;
+		std::cout << "windowSize:"<<NetworkEndian::formatShort(src->windowSize);
+		std::cout << "checksum:"<<NetworkEndian::formatShort(src->checksum);
+		std::cout << "urgentPointer:"<<NetworkEndian::formatShort(src->urgentPointer);
+	}
+	
+	long getACK(Header *self){ return NetworkEndian::formatLong(self->acknowlegementNumber); }
+	void setACK(Header *self, long ack){ self->acknowlegementNumber = NetworkEndian::formatLong(ack); }
+	
+	long getSEQ(Header *self){ return NetworkEndian::formatLong(self->sequenceNumber); }
+	void setSEQ(Header *self, long seq){ self->sequenceNumber = NetworkEndian::formatLong(seq); }
+	
+	long getWindowSize(Header *self){ return NetworkEndian::formatShort(self->windowSize); }
+	void setWindowSize(Header *self, long val){ self->windowSize = NetworkEndian::formatShort(val); }
+	
+	
+	
+	void setChecksum(IP::Header *parent, Header *self){
+		self->checksum = 0;
+		self->checksum = ~calcChecksum(parent, self);
+	}
+
+	TCP::Header *createEmptyHeader(IP::Header *src){
+		return (TCP::Header *) 
+		(
+			((char *)src) + IP::getPayloadIndex(src)
+		);
+	}
+	TCP::Header *create(IP::Header *src, const char *error){
+		TCP::Header *retu = createEmptyHeader(src);
+		long sum = calcChecksum(src, retu);
+		if(sum != 0 && sum != 0xffff){
+			std::cout<<"checksum invalid:"<<sum<<"\n logging packet:\n";
+			logValues(retu);
+			throw 76;
+		}
+		return retu;
+	}
+	
+
 }
+
+
+#endif

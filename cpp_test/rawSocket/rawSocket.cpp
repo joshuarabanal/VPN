@@ -40,18 +40,25 @@ class RawSocket{
 RawSocket::RawSocket(const char interfaceName[]){
 	strcpy(this->interfaceName, interfaceName);
 	std::cout<<"interface mane set:"<<this->interfaceName<<"\n";
-	std::cout<<"test"<<htons(ETH_P_ALL) <<" = "<<ETH_P_ALL<<"\n";
-	std::cout.flush();
-	//this->sock = socket (AF_INET, SOCK_RAW, IPPROTO_UDP);
+	
 	this->sock =socket(AF_PACKET,SOCK_RAW,htons(ETH_P_IP));//when we call ETH_P_ALL we can get non IP packets
 	if(this->sock == -1){
 		puts("socket could not be created possibly due to not requesting super user");
 		throw 1;
 	}
 	else{
-		std::cout<<"initialized socket!"<<this->sock<<"\n";
+		std::cout<<"initialized socket:"<<this->sock<<"\n";
 	}
-	setsockopt(this->sock, SOL_SOCKET, SO_BINDTODEVICE, interfaceName, strlen(interfaceName));
+	int valueSet = setsockopt(this->sock, SOL_SOCKET, SO_BINDTODEVICE, interfaceName, strlen(interfaceName));
+	if(valueSet != 0){
+		std::cout<<"failed to set sockopt for "<<interfaceName<<" strlen="<<strlen(interfaceName)<<"\n";
+		std::cout<<"error message:"<<strerror(errno)<<"\n";
+		std::cout.flush();
+		throw 78;
+	}
+	else{
+		std::cout<<"bound socket to interface:"<<interfaceName<<" strlen="<<strlen(interfaceName)<<"\n";
+	}
 }
 
 int RawSocket::read(char buffer[65536]){

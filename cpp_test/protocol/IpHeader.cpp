@@ -36,23 +36,29 @@ namespace IP{
 bool IPHeader_checkChecksum(char *array, int length);
 int IPHeader_calcChecksum(char * array, int length);
 
+namespace NetworkEndian{
+		int formatShort(int sht){
+			return ((sht&0xff)<<8)  |  ((sht&0xff00)>>8); 
+		}
+		long formatLong(long lng){
+			long one  = formatShort(lng & 0xffff);
+			long two =  formatShort( (lng>>16)&0xffff );
+			return (one<<16) | two; 
+		}
+}
+
 namespace IP{
 	
 	void parseLongIpAddress(long ip, char retu[4]);
 	int getPayloadIndex(IP::Header *h);
-	int getLength(IP::Header *h);
 	void logValues(IP::Header * h);
 	long IpAddressToLong(unsigned char ip[4]);
 	
-	
-	
-		namespace {
-		
-		int formatShort(int sht){
-			return ((sht&0xff)<<8)  |  ((sht&0xff00)>>8); 
-		}
-		
-	}
+	/** @return header length + payloadLength **/
+	int getLength(IP::Header *h){	return NetworkEndian::formatShort(h->totalLength);	}
+	int getTotalLength(IP::Header *self){ return getLength(self); }
+	int getHeaderSize(IP::Header *self){ return ((self->headerLengthIn32bit)*4); }
+	int getPayloadLength(IP::Header *self){ return getLength(self) - getPayloadIndex(self);  }
 	
 	IP::Header * createEmptyHeader(char *bytes){
 		return (IP::Header *) bytes;
@@ -77,7 +83,8 @@ namespace IP{
 		return retu;
 	}
 	
-	int getPayloadIndex(IP::Header *h){ return ((h->headerLengthIn32bit)*4); }
+	
+	int getPayloadIndex(IP::Header *h){ return getHeaderSize(h); }
 	
 	unsigned long createIpAddress(char one, char two, char three, char four){
 		return 
@@ -90,39 +97,12 @@ namespace IP{
 			(one&0xff);
 	}
 	
-	void setSourceIPAddress(IP::Header * self, long val){
-		self->sourceIP = val;
-		/*
-		char ip[4];
-		parseLongIpAddress(val, ip);
-		self->sourceIP[0] = ip[0];
-		self->sourceIP[1] = ip[1];
-		self->sourceIP[2] = ip[2];
-		self->sourceIP[3] = ip[3];
-		* */
-	}
+	void setSourceIPAddress(IP::Header * self, long val){ self->sourceIP = val; }
 	
-	void setDestinationIPAddress(IP::Header *self, long val){
-		self->destinationIP = val;
-		/*
-		char ip[4];
-		parseLongIpAddress(val, ip);
-		self->destinationIP[0] = ip[0];
-		self->destinationIP[1] = ip[1];
-		self->destinationIP[2] = ip[2];
-		self->destinationIP[3] = ip[3];
-		*/
-	}
+	void setDestinationIPAddress(IP::Header *self, long val){	self->destinationIP = val;	}
 	
 	void setDestinationIp(IP::Header *self, unsigned char ip[4]){
-	
 		unsigned long ipv4 = IP::IpAddressToLong(ip);
-		/*
-		self->destinationIP[0] = ip[0];
-		self->destinationIP[1] = ip[1];
-		self->destinationIP[2] = ip[2];
-		self->destinationIP[3] = ip[3];
-		* */
 		self->destinationIP = ipv4;
 	}
 	
@@ -131,6 +111,7 @@ namespace IP{
 		unsigned long sip = self->sourceIP;
 		return sip == given;
 	}
+	
 	bool isDestIp(IP::Header *self, int ip0, int ip1, int ip2, int ip3){
 		unsigned long given = createIpAddress(ip0, ip1, ip2, ip3);
 		unsigned long dip = self->destinationIP;
@@ -144,10 +125,7 @@ namespace IP{
 		retu[3] = (ip&0xff);
 	}
 	
-	
-	long IpAddressToLong(unsigned char ip[4]){
-		return createIpAddress(ip[0], ip[1], ip[2], ip[3]);
-	}
+	long IpAddressToLong(unsigned char ip[4]){	return createIpAddress(ip[0], ip[1], ip[2], ip[3]);	}
 	
 	void copyVals( IP::Header * to, IP::Header * from){
 		memcpy(to, from, IP::getPayloadIndex(from));
@@ -156,9 +134,7 @@ namespace IP{
 	void copyToResponseHeader(IP::Header * response , IP::Header *message){
 			copyVals(response, message);
 			response->sourceIP = message->destinationIP;
-			//memcpy(response->sourceIP,message->destinationIP, 4);
 			response->destinationIP = message->sourceIP;
-			//memcpy(response->destinationIP,message->sourceIP, 4);
 	}
 	
 	bool checkChecksum(IP::Header *self){
@@ -179,7 +155,7 @@ namespace IP{
 		memcpy(self_payload, payload, payloadLength);
 		
 		int len = payloadLength + IP::getPayloadIndex(self);
-		self->totalLength = formatShort(len);
+		self->totalLength = NetworkEndian::formatShort(len);
 		setChecksum(self);
 	}
 	
@@ -207,10 +183,7 @@ namespace IP{
 				<<","<<((int)((h->destinationIP>>24)&0xff))<<"\n";
 	}
 	
-	int getLength(IP::Header *h){
-		return formatShort(h->totalLength);
-	}
-
+	
 }
 
 
@@ -225,7 +198,7 @@ int IPHeader_calcChecksum(char * array, int length){
 		sum+=temp;
 	}
 	unsigned long retu = (sum&0xffff) + ((sum>>16)&0xffff);
-	return IP::formatShort((~retu)&0xffff);
+	return NetworkEndian::formatShort((~retu)&0xffff);
 }
 bool IPHeader_checkChecksum(char *array, int length){
 	int sum = IPHeader_calcChecksum(array, length);

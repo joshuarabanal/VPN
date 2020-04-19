@@ -24,9 +24,7 @@ namespace UDP{
 	
 	namespace{
 		
-		int formatShort(int sht){
-			return ((sht&0xff)<<8)  |  ((sht&0xff00)>>8); 
-		}
+		
 		int calcChecksum(IP::Header *ip, UDP::Header *self){
 			char temp[0xffff] = {0};
 			
@@ -70,11 +68,11 @@ namespace UDP{
 			return  (sum == 0) || (sum == 0xffff);
 	}
 	int getLength(UDP::Header *src){
-		return formatShort(src->length);
+		return NetworkEndian::formatShort(src->length);
 	}
-	int getSourcePort(UDP::Header *src){ return formatShort(src->sourcePort); }
+	int getSourcePort(UDP::Header *src){ return NetworkEndian::formatShort(src->sourcePort); }
 	
-	int getDestPort(UDP::Header *src){ return formatShort(src->destPort); }
+	int getDestPort(UDP::Header *src){ return NetworkEndian::formatShort(src->destPort); }
 	
 	UDP::Header *createEmptyHeader(IP::Header *src){
 		return (UDP::Header *) 
@@ -96,9 +94,9 @@ namespace UDP{
 			std::cout<<"\n\n\n";
 			logValues(retu);
 			std::bitset<16> bits(sum);
-			std::cout<<"udp header checksum invalid at("<<errLog<<"):"<<formatShort(sum)<<":"<<bits<<"\n";
-			std::cout<<"length swapped IP:"<<formatShort(src->totalLength)<<"\n";
-			std::cout<<"length swapped UDP:"<<formatShort(retu->length)<<"\n";
+			std::cout<<"udp header checksum invalid at("<<errLog<<"):"<<NetworkEndian::formatShort(sum)<<":"<<bits<<"\n";
+			std::cout<<"length swapped IP:"<<NetworkEndian::formatShort(src->totalLength)<<"\n";
+			std::cout<<"length swapped UDP:"<<NetworkEndian::formatShort(retu->length)<<"\n";
 			std::cout<<"test:"<<(int)(((char*)src)[0]&0x0f)<<"\n";
 			char * read = (char *)src;
 			for(int i = 0; i<IP::getLength(src); i+=16){
@@ -143,7 +141,7 @@ namespace UDP{
 	void setPayload(UDP::Header *self, IP::Header * ip, char *body, int length){
 		char *udpChar = (char *)self;
 		memcpy(udpChar+payloadIndex, body, length);
-		self->length = formatShort(payloadIndex+length);
+		self->length = NetworkEndian::formatShort(payloadIndex+length);
 		setChecksum(ip,self);
 		if(!checkChecksum(ip, self)){
 			std::cout<<"UDP failed to set own checksum:"<<self->checksum<<"\n";
@@ -154,9 +152,9 @@ namespace UDP{
 	
 	void logValues(UDP::Header *udp){
 		std::cout<<"udp header:\n"
-		<<"sourcePort:"<< UDP::formatShort(udp->sourcePort)<<"\n"
-		<<"destPort:"<< UDP::formatShort(udp->destPort) <<"\n"
-		<<"length:"<< formatShort(udp->length) <<"\n"
+		<<"sourcePort:"<< NetworkEndian::formatShort(udp->sourcePort)<<"\n"
+		<<"destPort:"<< NetworkEndian::formatShort(udp->destPort) <<"\n"
+		<<"length:"<< NetworkEndian::formatShort(udp->length) <<"\n"
 		<<"checksum:"<< udp->checksum <<"\n";
 	}
 }

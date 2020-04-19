@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include <iostream>
+#include "protocol/EthHeader.cpp"
 #include "protocol/IpHeader.cpp"
 #include "protocol/UDPHeader.cpp"
 #include "server/DHCPServer.cpp"
@@ -9,7 +10,7 @@
 #include "CrashReporter.cpp"
 #include "rawSocket/rawSocket.cpp"
 #include "rawSocket/rawSocketMetaData.cpp"
-#include "protocol/EthHeader.cpp"
+#include "util/file.cpp"
 
 //debugging
 /*
@@ -22,9 +23,7 @@
 
 
 //forward declarations
-bool readEvent( char *in, char *out);
-void writeFile(const char *name, char *buffer, int length);
-void readFile(const char name[], char*buffer, int length);
+	bool readEvent( IP::Header *in, IP::Header *out);
 void logPacket(char *pack);
 
 
@@ -37,11 +36,9 @@ int main () {
 	
 	std::cout << "Output sentence 1\n";
 	RawSocket* sock;
-	Router *router;
 	try{
 		if(!fromfile || shouldSocket){
 			sock = new RawSocket( "eth0");
-			router = new Router("wlan0");
 			
 		}
 	}
@@ -62,7 +59,7 @@ int main () {
 		
 		try{
 			if(!fromfile)sock->read(read);
-			else readFile("/home/pi/Documents/github/VPN/testData/packet_discover.txt", read,65536);
+			else FileIO::readFile("/home/pi/Documents/github/VPN/testData/packet_discover.txt", read,65536);
 			
 			Eth::Header * eth_in = Eth::create(read);
 			char * readData = Eth::getPayload(eth_in);
@@ -71,10 +68,12 @@ int main () {
 				Eth::setSourceMac(eth_out, defaultMac);
 			char *writeData = Eth::getPayload(eth_out);
 			
+				IP::Header *ip_in =  IP::create(readData, "main readc");
+				IP::Header *ip_out = IP::createEmptyHeader(writeData);
+			
 				
 			
-			if(readEvent(readData, writeData)){ 
-				IP::Header *ip_out = IP::create(writeData, "main:about to send data");
+			if(readEvent(ip_in, ip_out)){ 
 				int length_out = IP::getLength(ip_out) + sizeof(Eth::Header);
 				
 				if(!fromfile){
@@ -107,8 +106,8 @@ int main () {
 						break;
 				}
 				
-				writeFile( readpath, read, length_in );
-				writeFile( writepath, write, length_out );
+				FileIO::writeFile( readpath, read, length_in );
+				FileIO::writeFile( writepath, write, length_out );
 				
 				std::cout<<"\n\n\n\n\n";
 			}
@@ -148,13 +147,10 @@ void logPacket(char * pack){
 		DHCP::logValues(dhcp);
 }
 
-bool readEvent(char *in, char *out){
+bool readEvent(IP::Header *ip_in, IP::Header *ip_out){
 	
-	IP::Header * ip_in = IP::create(in, "main::readEvent,1");
 	
-	if(ip_in->sourceIP == DHCP_Server_clientIP){
-		
-	}
+	
 	
 	if(IP::isDestIp(ip_in, 224,0,0,252)){
 		std::cout<<"skipped multicast packet\n";
@@ -176,7 +172,7 @@ bool readEvent(char *in, char *out){
 			
 			DHCP::Header *dhcp_in =  DHCP::create(udp_in,"meain:main");
 			
-			if(DHCP::Server::handleMessage(in, out)){
+			if(DHCP::Server::handleMessage(ip_in, ip_out)){
 				return true;
 			}
 			std::cout<<"dhcp failed to reply to request\n";

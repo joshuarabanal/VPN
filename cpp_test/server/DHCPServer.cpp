@@ -9,7 +9,7 @@
 #include <unistd.h>
 #include <fstream>//delete after debugging
 
-#define DHCP_Server_clientIP  IP::createIpAddress(192, 168, 1,100)
+//#define DHCP_Server_clientIP  IP::createIpAddress(192, 168, 1,100)
 #define DHCP_Server_SubnetMask  IP::createIpAddress(255, 255, 255,0)
 #define DHCP_Server_serverIP  IP::createIpAddress(192, 168, 1,12)
 #define DHCP_Server_broadcastIp  IP::createIpAddress(255, 255, 255, 255)
@@ -18,6 +18,7 @@
 
 
 namespace DHCP::Server{
+	const unsigned long clientIP = IP::createIpAddress(192, 168, 1,100);
 	
 	namespace{//private functions
 		void checkReturnVals(IP::Header *ip){
@@ -66,7 +67,7 @@ void replyToRequest(IP::Header *ip_in, IP::Header *ip_out){
 			//DHCP::Header *returnDHCP = {0};
 			//DHCP::memCpy(returnDHCP, dhcp_in);
 			dhcp_out->OPCode = DHCP::OPCodeTypes::reply;
-			dhcp_out->yourIpAddress = DHCP_Server_clientIP;
+			dhcp_out->yourIpAddress = DHCP::Server::clientIP;
 			dhcp_out->serverIpAddress = DHCP_Server_serverIP;
 			memcpy(
 					dhcp_out->clientHardwareAddress,
@@ -176,7 +177,7 @@ void replyToRequest(IP::Header *ip_in, IP::Header *ip_out){
 		//DHCP::Header *returnDHCP = {0};
 		//DHCP::memCpy(returnDHCP, dhcp_in);
 		dhcp_out->OPCode = DHCP::OPCodeTypes::reply;
-		dhcp_out->yourIpAddress = DHCP_Server_clientIP;
+		dhcp_out->yourIpAddress = DHCP::Server::clientIP;
 		dhcp_out->serverIpAddress = DHCP_Server_serverIP;
 		memcpy(
 				dhcp_out->clientHardwareAddress,
