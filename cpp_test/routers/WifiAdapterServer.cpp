@@ -65,7 +65,7 @@ void WifiAdapterServer::start(){
 				this->ethernet->write(write, length_out, eth_out->destinationMac);
 			}	
 			else if(this->routerMessage(eth_in,ip_in, eth_out, ip_out)){
-				this->logPackets(read,write);
+				continue;
 			}
 			else {
 				continue;
@@ -122,9 +122,19 @@ bool WifiAdapterServer::routerMessage(
 				);
 				UDP::server::Connection * conn = new UDP::server::Connection(eth_in, this->ethernet);
 				conn->start();
-				std::cout<<"got desired log files\n";
+				delete conn;
+				std::cout<<"new dns packet forwarded\n";
+				return true;
+			}
+			else{
+				std::cout<<"unable to handle dns packet\n";
+				FileIO::writeLogFile(
+						"WifiAdapter/internalDNSlookup.txt", 
+						(char*)eth_in, 
+						IP::getTotalLength(ip_in)+Eth::HeaderLength
+				);
 				std::cout.flush();
-				throw -96;
+				throw -59;
 			}
 			std::cout<<"dns packet found\n";
 		}

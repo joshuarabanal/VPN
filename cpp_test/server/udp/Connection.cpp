@@ -26,8 +26,10 @@ namespace UDP::server{
 		public:
 		Connection(Eth::Header *in, RawSocket *responseSocket);
 		void start();
+		
 	};
 	
+
 	Connection::Connection(Eth::Header *in, RawSocket *responseSocket){
 		this->responseSocket = responseSocket;
 		
@@ -47,23 +49,22 @@ namespace UDP::server{
 	}
 	
 	void Connection::start(){
-		std::cout<<"connsection : start\n";
+		
+		//forward the packet to the internet
 		this->forwardSocket->sendTo(
 			this->udpPayload, this->udpPayloadLength, 
 			this->serverPort, this->serverIP
 		);
 		
 		
-		
-		std::cout<<"connsection : start = sent packet\n";
+		//recieve the internets response
 		char buffer[0xffff] = {0};
 		int howMany = this->forwardSocket->recieveFrom(buffer, 0xffff,this->serverPort, this->serverIP );
 		
 		
-		std::cout<<"connsection : start = recieved packet\n";
 		char retuChar[0xffff] = {0};
 		
-		
+		//create the final response packet
 				unsigned char ourMac[6] = {0};
 				this->responseSocket->getMacAddress(ourMac);
 		Eth::Header *eth_out = Eth::create(retuChar, ourMac, this->clientMacAddress, Eth::Type::ipv4);
@@ -73,14 +74,17 @@ namespace UDP::server{
 		UDP::Header *udp_out = UDP::create(ip_out, this->serverPort, this->clientPort, buffer, howMany);
 		IP::setPayload(ip_out, (char *)udp_out, UDP::getTotalLength(udp_out));
 		
+		int totalPacketLength = IP::getTotalLength(ip_out)+Eth::HeaderLength;
+		
 		FileIO::writeLogFile(
-						"Connection/responseCheck.txt", 
-						(char*)eth_out, 
-						IP::getTotalLength(ip_out)+Eth::HeaderLength
-				);
-			std::cout<<"sent test packet";
-			std::cout.flush();
-		throw -49;
+				"Connection/responseCheck.txt", 
+				retuChar, 
+				totalPacketLength
+		);
+		
+		
+		//send internet response to the clientIP
+		this->responseSocket->write(retuChar, totalPacketLength, this->clientMacAddress);
 		
 		
 	}

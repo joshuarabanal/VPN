@@ -49,7 +49,7 @@ class RawSocket{
 };
 RawSocket::RawSocket(const char interface[], rawSocket::protocols prot){
 	strcpy(this->interfaceName, interface);
-	this->sock =socket(AF_INET, SOCK_DGRAM,0);//when we call ETH_P_ALL we can get non IP packets
+	this->sock =socket(AF_INET, prot,0);//when we call ETH_P_ALL we can get non IP packets
 	if(this->sock == -1){
 		puts("socket could not be created possibly due to not requesting super user");
 		throw 1;
