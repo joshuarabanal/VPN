@@ -14,7 +14,10 @@ class WifiAdapterServer{
 	RawSocket * ethernet = new RawSocket("eth0");
 	
 	bool dhcpMessage(IP::Header *in, IP::Header *out);
-	bool routerMessage(IP::Header *readData, IP::Header *writeData);
+	bool routerMessage(
+			Eth::Header *eth_in, IP::Header *ip_in,
+			Eth::Header *eth_out,IP::Header *ip_out
+	);
 	void logPackets(char *in, char* out);
 	void logPacket(Eth::Header *out);
 	
@@ -60,7 +63,7 @@ void WifiAdapterServer::start(){
 				int length_out = IP::getLength(ip_out) + sizeof(Eth::Header);
 				this->ethernet->write(write, length_out, eth_out->destinationMac);
 			}	
-			else if(this->routerMessage(ip_in, ip_out)){
+			else if(this->routerMessage(eth_in,ip_in, eth_out, ip_out)){
 				this->logPackets(read,write);
 			}
 			else {
@@ -81,11 +84,11 @@ void WifiAdapterServer::logPacket(Eth::Header * data){
 	Eth::logValues(data);
 	IP::Header * ip = IP::create(Eth::getPayload(data), "wifi adapter:logPacket");
 	IP::logValues(ip);
-	if(ip->protocol == IPHeader_protocolUDP ){
+	if(ip->protocol == IP::protocol::UDP ){
 		UDP::Header *udp = UDP::create(ip, "wifi adapter : log packet");
 		UDP::logValues(udp);
 	}
-	if(ip->protocol == IPHeader_protocolTCP ){
+	if(ip->protocol == IP::protocol::TCP ){
 		TCP::Header *tcp = TCP::create(ip, "wifi adapter : log packet");
 		TCP::logValues(tcp);
 	}
@@ -99,28 +102,36 @@ void WifiAdapterServer::logPackets(char *in, char *out){
 	
 }
 
-bool WifiAdapterServer::routerMessage(IP::Header *in, IP::Header *out){
-	if(in->sourceIP != DHCP::Server::clientIP){
+bool WifiAdapterServer::routerMessage(
+			Eth::Header *eth_in, IP::Header *ip_in,
+			Eth::Header *eth_out,IP::Header *ip_out
+){
+	if(ip_in->sourceIP != DHCP::Server::clientIP){
 		return false;
 	}
 	
-	if(in->protocol == IPHeader_protocolUDP ){
+	if(ip_in->protocol == IP::protocol::UDP ){
+		UDP::Header *udp = UDP::create(ip_in, "WifiAdapterServer::routerMessage1");
+		if(udp->destPort == UDP::CommonPorts::DNS){//handle a dns packet
+			if( IP::isDestIp(ip_in,8,8,8,8) || IP::isDestIp(ip_in, 8,8,4,4) ){
+				
+			}
+		}
 		std::cout<<"currently unable to handle UDP Packets\n";
-		IP::logValues(in);
-		UDP::Header *udp = UDP::create(in, "WifiAdapterServer::routerMessage1");
+		IP::logValues(ip_in);
 		UDP::logValues(udp);
 		FileIO::writeLogFile(
-				"WifiAdapter_error_udp.txt", 
-				(char*)in, 
-				IP::getTotalLength(in)
+				"WifiAdapter/error_udp.txt", 
+				(char*)eth_in, 
+				IP::getTotalLength(ip_in)+Eth::HeaderLength
 		);
 		return false;
 	}
-	else if(in->protocol == IPHeader_protocolTCP ){
-		IP::logValues(in);
-		TCP::Header *tcp_in = TCP::create(in, "WifiAdapterServer::routerMessage1");
-		TCP::Header *tcp_out = TCP::createEmptyHeader(out);
-		(this->tcpConnections)->handlePacket(in, tcp_in, out, tcp_out);
+	else if(ip_in->protocol == IP::protocol::TCP ){
+		IP::logValues(ip_in);
+		TCP::Header *tcp_in = TCP::create(ip_in, "WifiAdapterServer::routerMessage1");
+		TCP::Header *tcp_out = TCP::createEmptyHeader(ip_out);
+		(this->tcpConnections)->handlePacket(ip_in, tcp_in, ip_out, tcp_out);
 		std::cout.flush();
 		 throw -24;
 	}
@@ -129,7 +140,7 @@ bool WifiAdapterServer::routerMessage(IP::Header *in, IP::Header *out){
 
 
 bool WifiAdapterServer::dhcpMessage(IP::Header *ip_in, IP::Header *ip_out){
-	if(ip_in->protocol != IPHeader_protocolUDP ){ return false; }
+	if(ip_in->protocol != IP::protocol::UDP ){ return false; }
 	
 	UDP::Header *udp_in = UDP::create(ip_in, "wifi adapter:dhcp message");
 	
@@ -150,14 +161,14 @@ bool WifiAdapterServer::dhcpMessage(IP::Header *ip_in, IP::Header *ip_out){
 			return false;
 		
 		}
-		else if(sourcePort == UDP_Port_Multicast && destPort == UDP_Port_Multicast){
+		else if(sourcePort == UDP::CommonPorts::Multicast && destPort == UDP::CommonPorts::Multicast){
 			return false;//ignore multicast requests
 		}
-		else if( destPort == 1900){
+		else if( destPort == UDP::CommonPorts::UPnP){
 			std::cout<<"\n\nignoring UPnP requests\n\n\n";
 			return false;//ignore multicast requests
 		}
-		else if(destPort == 5050){
+		else if(destPort == UDP::CommonPorts::MultimediaConferenceControl){
 			std::cout<<"ignoring multimedia conference control tool\n";
 			return false;// ignore multimedia requests
 		}

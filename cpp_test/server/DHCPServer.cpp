@@ -263,7 +263,7 @@ void replyToRequest(IP::Header *ip_in, IP::Header *ip_out){
 	
 	bool handleMessage(IP::Header *ip_in, IP::Header *ip_out){
 		std::cout<<"DHCPServer:104\n";std::cout.flush();
-		if(ip_in->protocol != IPHeader_protocolUDP){
+		if(ip_in->protocol != IP::protocol::UDP){
 			std::cout<<"not a udp request"<<ip_in->protocol;
 			return false;
 		}

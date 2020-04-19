@@ -46,9 +46,10 @@ namespace Eth{
 		
 		destination -> type = source->type;
 	}
+	int HeaderLength = sizeof(Eth::Header);
 	char *getPayload(Eth::Header *src){
 		return (
-			((char*)src) + sizeof(Eth::Header)
+			((char*)src) + HeaderLength
 		);
 	}
 	void logValues(Header *src){

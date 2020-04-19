@@ -6,7 +6,6 @@
 #include <bitset>
 #include "../CrashReporter.cpp"
 
-#define UDP_Port_Multicast 5353
 
 namespace UDP{
 	struct Header{
@@ -18,6 +17,13 @@ namespace UDP{
 }
 
 namespace UDP{
+	
+	namespace CommonPorts{
+		const int DNS = 53; 
+		const int Multicast = 5353;
+		const int UPnP = 1900;
+		const int MultimediaConferenceControl = 5050;
+	}
 	//forward declarations
 	void logValues(UDP::Header *udp);
 	int getLength(UDP::Header *src);
@@ -67,9 +73,10 @@ namespace UDP{
 			int sum = calcChecksum(ip, self);
 			return  (sum == 0) || (sum == 0xffff);
 	}
-	int getLength(UDP::Header *src){
-		return NetworkEndian::formatShort(src->length);
-	}
+	int headerLength = sizeof(UDP::Header);
+	int getTotalLength(UDP::Header *src){	return NetworkEndian::formatShort(src->length); }
+	int getPayloadLength(UDP::Header *src){ return getTotalLength(src) - headerLength; }
+	
 	int getSourcePort(UDP::Header *src){ return NetworkEndian::formatShort(src->sourcePort); }
 	
 	int getDestPort(UDP::Header *src){ return NetworkEndian::formatShort(src->destPort); }
@@ -81,8 +88,10 @@ namespace UDP{
 		);
 	}
 	UDP::Header *create(IP::Header * src, const char *errLog){
-		if(src->protocol != IPHeader_protocolUDP){
-			std::cout<<"UDPHeader:15";
+		if(src->protocol != IP::protocol::UDP){
+			std::cout<<"cant open udp connection on non udp packet:"<<src->protocol<<"\n";
+			std::cout<<"UDPHeader:15\n";
+			IP::logValues(src);
 			throw -1;
 		}
 		UDP::Header * retu =  createEmptyHeader(src);
@@ -120,7 +129,9 @@ namespace UDP{
 	}
 	
 	int payloadIndex = sizeof(UDP::Header);
-	
+	char *getPayload(UDP::Header *self){
+		return ((char *)self) + payloadIndex;
+	}
 	void copyVals( UDP::Header * to, UDP::Header * from){
 		memcpy(to, from, payloadIndex);
 	}
@@ -130,6 +141,7 @@ namespace UDP{
 			response->sourcePort = message->destPort;
 			response->destPort = message->sourcePort;
 	}
+	
 	void setChecksum(IP::Header * ip, UDP::Header *self){
 		self->checksum = 0;
 		self->checksum = calcChecksum(ip,self);
@@ -138,6 +150,7 @@ namespace UDP{
 			throw -4;
 		}
 	}
+	
 	void setPayload(UDP::Header *self, IP::Header * ip, char *body, int length){
 		char *udpChar = (char *)self;
 		memcpy(udpChar+payloadIndex, body, length);
@@ -160,7 +173,7 @@ namespace UDP{
 }
 int UDPHeader_getPayloadIndex(IP::Header *tcp){
 	int tcpIndex = IP::getPayloadIndex(tcp);
-	if(tcp->protocol == IPHeader_protocolUDP){
+	if( tcp->protocol == IP::protocol::UDP ){
 		return tcpIndex+ (16+16+16+16);
 	}
 	std::cout<<"error not a udp packet";

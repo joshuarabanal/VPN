@@ -6,8 +6,8 @@
 #include <string.h> 
 #include <bitset>
 
-#define IPHeader_protocolUDP 17
-#define IPHeader_protocolTCP 6
+//#define IPHeader_protocolUDP 17 replace with IP::protocol::UDP
+//#define IPHeader_protocolTCP 6  replace with IP::protocol::TCP
 
 
 //forward declarations
@@ -30,6 +30,11 @@ namespace IP{
 		
 		char *optionsStart;
 		//int32_t crc;
+	};
+	
+	enum protocol{
+		UDP = 17,
+		TCP = 6
 	};
 	
 };
