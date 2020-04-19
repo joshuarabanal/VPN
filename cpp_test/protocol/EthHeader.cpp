@@ -16,7 +16,7 @@ namespace Eth{
 		int type:16;
 	} __attribute__ ((__packed__));;
 	
-	void setType(Header *src, Type type){ src->type = 0x00; }
+	void setType(Header *src, Type type){ src->type = 0x01; }
 	void setSourceMac(Header *src, unsigned char mac[6]){
 		unsigned char * us = src->sourceMac;
 			us[0] = mac[0];
