@@ -5,6 +5,7 @@
 #include <iostream>
 #include <string.h> 
 #include <bitset>
+#include "./EthHeader.cpp"
 
 //#define IPHeader_protocolUDP 17 replace with IP::protocol::UDP
 //#define IPHeader_protocolTCP 6  replace with IP::protocol::TCP
@@ -31,7 +32,9 @@ namespace IP{
 		char *optionsStart;
 		//int32_t crc;
 	};
-	
+	enum TypeOfService{
+		ipv4 = 0x08
+	};
 	enum protocol{
 		UDP = 17,
 		TCP = 6
@@ -64,6 +67,11 @@ namespace IP{
 	int getTotalLength(IP::Header *self){ return getLength(self); }
 	int getHeaderSize(IP::Header *self){ return ((self->headerLengthIn32bit)*4); }
 	int getPayloadLength(IP::Header *self){ return getLength(self) - getPayloadIndex(self);  }
+	void setSourceIPAddress(IP::Header * self, long val){ self->sourceIP = val; }
+	void setDestinationIPAddress(IP::Header *self, long val){	self->destinationIP = val;	}
+	void setPayload(IP::Header * self, const char * payload, int payloadLength);
+	
+	
 	
 	IP::Header * createEmptyHeader(char *bytes){
 		return (IP::Header *) bytes;
@@ -88,6 +96,21 @@ namespace IP{
 		return retu;
 	}
 	
+	Header * create(Eth::Header *src, long destIp, long srcIp, int packetId){
+		IP::Header *self = createEmptyHeader(Eth::getPayload(src));
+		IP::setDestinationIPAddress(self, destIp);
+		IP::setSourceIPAddress(self, srcIp);
+		self->typeOfService = TypeOfService::ipv4;
+		self->version = 4;
+		self->identification = packetId;
+		self->allFlags = 0;
+		self->timeToLive = 64;
+		self->protocol= protocol::UDP;
+		self->headerLengthIn32bit = 5;
+		
+		IP::setPayload(self, "", 0);
+		return self;
+	}
 	
 	int getPayloadIndex(IP::Header *h){ return getHeaderSize(h); }
 	
@@ -102,9 +125,6 @@ namespace IP{
 			(one&0xff);
 	}
 	
-	void setSourceIPAddress(IP::Header * self, long val){ self->sourceIP = val; }
-	
-	void setDestinationIPAddress(IP::Header *self, long val){	self->destinationIP = val;	}
 	
 	void setDestinationIp(IP::Header *self, unsigned char ip[4]){
 		unsigned long ipv4 = IP::IpAddressToLong(ip);
@@ -155,7 +175,7 @@ namespace IP{
 		
 	}
 	
-	void setPayload(IP::Header * self, char * payload, int payloadLength){
+	void setPayload(IP::Header * self, const char * payload, int payloadLength){
 		char *self_payload = ((char *)self)+ getPayloadIndex(self);
 		memcpy(self_payload, payload, payloadLength);
 		
@@ -191,7 +211,15 @@ namespace IP{
 	
 }
 
-
+namespace IP::Util{
+	void logIpAddress( long ip ){
+		std::cout
+				<<((int)(ip&0xff))
+				<<","<<((int)((ip>>8)&0xff))
+				<<","<<((int) ((ip>>16)&0xff))
+				<<","<<((int)((ip>>24)&0xff));
+	}
+}
 
 int IPHeader_calcChecksum(char * array, int length){
 	uint32_t sum = 0;

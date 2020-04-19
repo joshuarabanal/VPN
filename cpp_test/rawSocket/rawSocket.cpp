@@ -47,13 +47,29 @@ class RawSocket{
 		
 	void getMacAddress(unsigned char return_mac_address[6]);
 };
-RawSocket::RawSocket(const char interface[], rawSocket::protocols protocol){
+RawSocket::RawSocket(const char interface[], rawSocket::protocols prot){
 	strcpy(this->interfaceName, interface);
-	this->sock =socket(AF_PACKET,protocol,0);//when we call ETH_P_ALL we can get non IP packets
+	this->sock =socket(AF_INET, SOCK_DGRAM,0);//when we call ETH_P_ALL we can get non IP packets
 	if(this->sock == -1){
 		puts("socket could not be created possibly due to not requesting super user");
 		throw 1;
 	}
+	
+	
+	struct sockaddr_in myaddr = {0};
+		myaddr.sin_family=AF_INET;
+		myaddr.sin_addr.s_addr=htonl(INADDR_ANY);
+		myaddr.sin_port=htons(0);
+	
+	
+	if( 
+		bind(this->sock,( struct sockaddr *) &myaddr, sizeof(myaddr))<0
+	) {
+      perror("bind failed");
+      std::cout<<"failed to bind socket to any ip and port:"<<strerror(errno)<<"\n";
+      std::cout.flush();
+      exit(EXIT_FAILURE);
+   }
 }
 
 RawSocket::RawSocket(const char interfaceName[]){
@@ -81,25 +97,13 @@ RawSocket::RawSocket(const char interfaceName[]){
 }
 
 int RawSocket::read(char buffer[65536]){
-	//unsigned char *buffer = (unsigned char *) malloc(65536); //to receive data
 	memset(buffer,0,65536);
 	struct sockaddr saddr;
 	int saddr_len = sizeof (saddr);
 	
 	//Receive a network packet and copy in to buffer
 	int howMany = recvfrom(this->sock,buffer,65536,0,&saddr,(socklen_t *)&saddr_len);
-	/*
-	 std::cout<<
-	"sockaddr:\n"<<
-	"addr family:"<<
-	(saddr.sa_family)
-	<<"\n";
-	*/
-     /*  
-	int howMany = recvfrom(
-			this->sock , buffer , 65536 , 0 ,
-			&(this->addr), &(this->addrLen) 
-	);*/
+	
 	
 	if(howMany <0){
 		std::cout<<"unknown error reading socket\n"; std::cout.flush();
@@ -167,16 +171,20 @@ void RawSocket::getMacAddress(unsigned char retu[6]){
 
 
 int RawSocket::sendTo(const char buffer[], int length, int port, long ipAddress){
+	
 	struct sockaddr_in outAddr = {0};
 	outAddr.sin_family = AF_INET;
 	outAddr.sin_port = htons(port);
 	outAddr.sin_addr.s_addr = ipAddress;
 	
 	int retu =  sendto(this->sock, buffer, length, 
-        MSG_CONFIRM, (const struct sockaddr *) &outAddr,  
+        0, ( struct sockaddr *) &outAddr,  
             sizeof(outAddr)); 
 	if(retu <0){
-		std::cout<<"RawSocket::failed to send packet:"<<strerror(errno)<<"\n";
+		std::cout<<"RawSocket::sendto::failed to send packet:"<<strerror(errno)<<"\n";
+		std::cout<<"length:"<<length<<" port:"<<port<<" ip address:";
+		IP::Util::logIpAddress(ipAddress);
+		std::cout<<"\n";
 		std::cout.flush();
 		throw -78;
 	}

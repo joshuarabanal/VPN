@@ -1,4 +1,4 @@
-#ifndef DHCP_SERVR_h
+#ifndef DHCP_SERVER_h
 #define DHCP_SERVER_h
 
 #include "../protocol/IpHeader.cpp"
@@ -19,6 +19,7 @@
 
 namespace DHCP::Server{
 	const unsigned long clientIP = IP::createIpAddress(192, 168, 1,100);
+	const unsigned long serverIP = IP::createIpAddress(192, 168, 1,12);
 	
 	namespace{//private functions
 		void checkReturnVals(IP::Header *ip){

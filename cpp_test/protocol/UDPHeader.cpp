@@ -76,10 +76,11 @@ namespace UDP{
 	int headerLength = sizeof(UDP::Header);
 	int getTotalLength(UDP::Header *src){	return NetworkEndian::formatShort(src->length); }
 	int getPayloadLength(UDP::Header *src){ return getTotalLength(src) - headerLength; }
-	
+	void setPayload(UDP::Header *self, IP::Header * ip, char *body, int length);
 	int getSourcePort(UDP::Header *src){ return NetworkEndian::formatShort(src->sourcePort); }
-	
+	void setSourcePort(Header *src, int port){ src->sourcePort = NetworkEndian::formatShort(port); }
 	int getDestPort(UDP::Header *src){ return NetworkEndian::formatShort(src->destPort); }
+	void setDestPort(Header *src, int port){ src->destPort = NetworkEndian::formatShort(port); }
 	
 	UDP::Header *createEmptyHeader(IP::Header *src){
 		return (UDP::Header *) 
@@ -127,7 +128,13 @@ namespace UDP{
 		}
 		return retu;
 	}
-	
+	UDP::Header *create(IP::Header *src, int srcPort, int destPort, char *payload, int payloadLength){
+		UDP::Header *retu = createEmptyHeader(src);
+		UDP::setDestPort(retu,destPort);
+		UDP::setSourcePort(retu,srcPort);
+		UDP::setPayload(retu, src, payload, payloadLength);
+		return retu;
+	}
 	int payloadIndex = sizeof(UDP::Header);
 	char *getPayload(UDP::Header *self){
 		return ((char *)self) + payloadIndex;

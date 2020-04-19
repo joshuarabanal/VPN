@@ -6,14 +6,17 @@
 #include "../rawSocket/rawSocketMetaData.cpp"
 
 namespace Eth{
+	enum Type{
+		ipv4 = 0x0800
+	};
+	
 	struct Header{
 		unsigned char destinationMac[ETH_ALEN];
 		unsigned char sourceMac[ETH_ALEN];
 		__be16 type;
 	} __attribute__ ((__packed__));;
-	Eth::Header *create(char *src){
-		return (Eth::Header *) (src);
-	}
+	
+	void setType(Header *src, Type type){ src->type = type; }
 	void setSourceMac(Header *src, unsigned char mac[6]){
 		unsigned char * us = src->sourceMac;
 			us[0] = mac[0];
@@ -22,12 +25,6 @@ namespace Eth{
 			us[3] = mac[3];
 			us[4] = mac[4];
 			us[5] = mac[5];
-	}
-	void setDefaultSourceMac(Header *src, int socket, const char *interfaceName){
-		unsigned char mac[6] = {0};
-		Raw::getMacAddress(socket, interfaceName, mac);
-		setSourceMac(src, mac);
-		
 	}
 	void setDestinationMac(Header *src, unsigned char mac[6]){
 		unsigned char * us = src->destinationMac;
@@ -39,6 +36,24 @@ namespace Eth{
 			us[5] = mac[5];
 	}
 	
+	
+	
+	Eth::Header *create(char *src){
+		return (Eth::Header *) (src);
+	}
+	Eth::Header *create(char *src, unsigned char sourceMac[6], unsigned char destMac[6], Type type ){
+		Header *retu = create(src);
+		Eth::setSourceMac(retu, sourceMac);
+		Eth::setDestinationMac(retu, destMac);
+		Eth::setType(retu,type);
+		return retu;
+	}
+	void setDefaultSourceMac(Header *src, int socket, const char *interfaceName){
+		unsigned char mac[6] = {0};
+		Raw::getMacAddress(socket, interfaceName, mac);
+		setSourceMac(src, mac);
+		
+	}
 	void createResponseHeader(Eth::Header *destination, Eth::Header *source){
 		unsigned char *source_source = source->sourceMac;
 		setDestinationMac(destination, source_source);
