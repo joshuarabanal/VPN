@@ -13,10 +13,10 @@ namespace Eth{
 	struct Header{
 		unsigned char destinationMac[ETH_ALEN];
 		unsigned char sourceMac[ETH_ALEN];
-		__be16 type;
+		int type:16;
 	} __attribute__ ((__packed__));;
 	
-	void setType(Header *src, Type type){ src->type = type; }
+	void setType(Header *src, Type type){ src->type = 0x0800; }
 	void setSourceMac(Header *src, unsigned char mac[6]){
 		unsigned char * us = src->sourceMac;
 			us[0] = mac[0];
