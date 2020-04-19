@@ -75,7 +75,6 @@ namespace UDP::server{
 		IP::setPayload(ip_out, (char *)udp_out, UDP::getTotalLength(udp_out));
 		
 		int totalPacketLength = IP::getTotalLength(ip_out)+Eth::HeaderLength;
-		std::cout<<"type:"<<eth_out->type<<"\n";
 		FileIO::writeLogFile(
 				"Connection/responseCheck.txt", 
 				retuChar, 
