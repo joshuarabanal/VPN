@@ -82,6 +82,8 @@ namespace UDP::server{
 				totalPacketLength
 		);
 		
+		Eth::Header * eth_test = Eth::create(retuChar);
+		std::cout<<"type:"<<eth_test->type<<"\n";
 		
 		//send internet response to the clientIP
 		this->responseSocket->write(retuChar, totalPacketLength, this->clientMacAddress);
