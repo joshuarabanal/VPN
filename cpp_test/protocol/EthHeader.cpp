@@ -7,7 +7,7 @@
 
 namespace Eth{
 	enum Type{
-		ipv4 = 0x0080
+		ipv4 = 0x08
 	};
 	
 	struct Header{
