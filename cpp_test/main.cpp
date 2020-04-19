@@ -13,7 +13,7 @@ void runfromFile(){
 
 int main () { 
 	
-	bool fromFile = true;
+	bool fromFile = false;
 	
 	
 	if(fromFile){
