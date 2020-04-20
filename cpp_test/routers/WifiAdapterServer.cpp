@@ -115,11 +115,6 @@ bool WifiAdapterServer::routerMessage(
 		UDP::Header *udp = UDP::create(ip_in, "WifiAdapterServer::routerMessage1");
 		if(UDP::getDestPort(udp) == UDP::CommonPorts::DNS){//handle a dns packet
 			if( IP::isDestIp(ip_in,8,8,8,8) || IP::isDestIp(ip_in, 8,8,4,4) ){
-				FileIO::writeLogFile(
-						"WifiAdapter/dnsLookup.txt", 
-						(char*)eth_in, 
-						IP::getTotalLength(ip_in)+Eth::HeaderLength
-				);
 				UDP::server::Connection * conn = new UDP::server::Connection(eth_in, this->ethernet);
 				conn->start();
 				delete conn;
@@ -136,7 +131,6 @@ bool WifiAdapterServer::routerMessage(
 				std::cout.flush();
 				throw -59;
 			}
-			std::cout<<"dns packet found\n";
 		}
 		std::cout<<"currently unable to handle UDP Packets\n";
 		std::cout<<"not dns port:"<<UDP::CommonPorts::DNS<<"\n";
@@ -152,7 +146,6 @@ bool WifiAdapterServer::routerMessage(
 	else if(ip_in->protocol == IP::protocol::TCP ){
 		IP::logValues(ip_in);
 		TCP::Header *tcp_in = TCP::create(ip_in, "WifiAdapterServer::routerMessage1");
-		TCP::Header *tcp_out = TCP::createEmptyHeader(ip_out);
 		(this->tcpConnections)->handlePacket(ip_in, tcp_in, ip_out, tcp_out);
 		std::cout.flush();
 		 throw -24;

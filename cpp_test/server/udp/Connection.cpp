@@ -26,6 +26,11 @@ namespace UDP::server{
 		public:
 		Connection(Eth::Header *in, RawSocket *responseSocket);
 		void start();
+		void operator delete (void *p){
+			Connection * self = (Connection *)p;
+			delete self->forwardSocket;
+			free(p);
+		}
 		
 	};
 	
@@ -69,7 +74,7 @@ namespace UDP::server{
 				this->responseSocket->getMacAddress(ourMac);
 		Eth::Header *eth_out = Eth::create(retuChar, ourMac, this->clientMacAddress, Eth::Type::ipv4);
 				
-		IP::Header * ip_out = IP::create(eth_out, this->clientIP, DHCP::Server::serverIP, this->packetId);
+		IP::Header * ip_out = IP::create(eth_out, this->clientIP, this->serverIP, this->packetId);
 		
 		UDP::Header *udp_out = UDP::create(ip_out, this->serverPort, this->clientPort, buffer, howMany);
 		IP::setPayload(ip_out, (char *)udp_out, UDP::getTotalLength(udp_out));

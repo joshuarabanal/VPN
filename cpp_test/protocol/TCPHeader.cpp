@@ -29,9 +29,16 @@ namespace TCP{
 	};
 	
 	int getHeaderSize(Header *self){ return self->dataoffset * 4; }
-		
+	char *getPayload(Header *self){ return ((char *)self) + getHeaderSize(self); } 	
 	long getTotalLength(IP::Header *parent, Header *self){	return IP::getPayloadLength(parent);	}
 	int getPayloadLength(IP::Header *parent, Header *self){ return getTotalLength(parent, self) - getHeaderSize(self); }
+	
+	void setSourcePort(Header * self, int port){ self->sourcePort = NetworkEndian::formatShort(port); }
+	int getSourcePort(Header * self){ return NetworkEndian::formatShort(self->sourcePort); }
+	
+	
+	void setDestPort(Header * self, int port){ self->destPort = NetworkEndian::formatShort(port); }
+	int getDestPort(Header * self){ return NetworkEndian::formatShort(self->destPort); }
 	
 	namespace {
 		uint16_t calcChecksum(IP::Header *ip, Header *self){

@@ -20,6 +20,7 @@
 #define RawSocket_type_UDP IPPROTO_UDP
 namespace rawSocket{
 	enum protocols{
+		tcp = SOCK_STREAM,
 		udp = SOCK_DGRAM,
 		raw = SOCK_RAW
 	};
