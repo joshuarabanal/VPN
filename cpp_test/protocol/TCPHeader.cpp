@@ -17,14 +17,14 @@ namespace TCP{
 		bool NS:1;//UNKNOWN
 		int dataoffset:4;//size of the TCP header in 32-bit words, minimum of 5
 		
-		bool SYN:1;//Congestion window reduced
-		bool ECE:1;//UNKNOWN
-		bool URG:1;//UNKNOWN
-		bool ACK:1;//UNKNOWN
-		bool PSH:1;//UNKNOWN
-		bool RST:1;//UNKNOWN
-		bool CWR:1;//UNKNOWN
 		bool FIN:1;//UNKNOWN
+		bool SYN:1;//Congestion window reduced = true
+		bool RST:1;//UNKNOWN
+		bool PSH:1;//UNKNOWN
+		bool ACK:1;//acknowlegement fields significant 
+		bool URG:1;//UNKNOWN
+		bool ECE:1;//UNKNOWN
+		bool CWR:1;//UNKNOWN
 		
 		/**
 		 * 
