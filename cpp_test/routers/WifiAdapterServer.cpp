@@ -19,8 +19,7 @@ class WifiAdapterServer{
 			Eth::Header *eth_in, IP::Header *ip_in,
 			Eth::Header *eth_out,IP::Header *ip_out
 	);
-	void logPackets(char *in, char* out);
-	void logPacket(Eth::Header *out);
+	void logPacket(Eth::Header *out, const char *error);
 	
 	public:
 	void start();
@@ -72,7 +71,15 @@ void WifiAdapterServer::start(){
 			}
 		}
 		catch(int err){
-			this->logPackets(read, write);
+			Eth::Header *eth_in = Eth::create(read);
+			IP::Header * ip_in = IP::create(Eth::getPayload(eth_in), "wifi adapter:catch error");
+			this->logPacket(eth_in, "WifiadapterServer::mainloop");
+			FileIO::writeLogFile(
+				"WifiAdapter/error_unknown.txt", 
+				(char*)eth_in, 
+				IP::getTotalLength(ip_in)+Eth::HeaderLength
+		);
+			std::cout.flush();
 			throw err;
 		}
 	}
@@ -81,27 +88,21 @@ void WifiAdapterServer::start(){
 	
 }
 
-void WifiAdapterServer::logPacket(Eth::Header * data){
+void WifiAdapterServer::logPacket(Eth::Header * data, const char *error){
 	Eth::logValues(data);
-	IP::Header * ip = IP::create(Eth::getPayload(data), "wifi adapter:logPacket");
+	IP::Header * ip = IP::create(Eth::getPayload(data), error);
 	IP::logValues(ip);
 	if(ip->protocol == IP::protocol::UDP ){
-		UDP::Header *udp = UDP::create(ip, "wifi adapter : log packet");
+		UDP::Header *udp = UDP::create(ip, error);
 		UDP::logValues(udp);
 	}
 	if(ip->protocol == IP::protocol::TCP ){
-		TCP::Header *tcp = TCP::create(ip, "wifi adapter : log packet");
+		TCP::Header *tcp = TCP::create(ip, error);
 		TCP::logValues(tcp);
 	}
 }
 
-void WifiAdapterServer::logPackets(char *in, char *out){
-	std::cout<<"loggining in packet:\n";
-	logPacket(Eth::create(in));
-	std::cout<<"loggining out packet:\n";
-	logPacket(Eth::create(out));
-	
-}
+
 
 bool WifiAdapterServer::routerMessage(
 			Eth::Header *eth_in, IP::Header *ip_in,
@@ -146,7 +147,7 @@ bool WifiAdapterServer::routerMessage(
 	else if(ip_in->protocol == IP::protocol::TCP ){
 		IP::logValues(ip_in);
 		TCP::Header *tcp_in = TCP::create(ip_in, "WifiAdapterServer::routerMessage1");
-		(this->tcpConnections)->handlePacket(ip_in, tcp_in, ip_out, tcp_out);
+		(this->tcpConnections)->handlePacket(eth_in, tcp_in);
 		std::cout.flush();
 		 throw -24;
 	}

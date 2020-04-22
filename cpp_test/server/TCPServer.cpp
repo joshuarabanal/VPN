@@ -7,13 +7,13 @@ namespace TCP{
 		LinkedList<TCP::Connection> *TCPConnections = new LinkedList<TCP::Connection>();
 		
 		public:
-		bool handlePacket(IP::Header *ip_in, TCP::Header * in, IP::Header *ip_out, TCP::Header *out);
+		bool handlePacket(Eth::Header *ip_in, TCP::Header * in);
 		
 	};
 	
-	bool Server::handlePacket(IP::Header *ip_in, TCP::Header * in, IP::Header *ip_out, TCP::Header *out){
-			TCP::Connection * newConn = new TCP::Connection();
-			if(TCP::Handshake::isHandshake(ip_in, in, ip_out, out, newConn)){
+	bool Server::handlePacket(Eth::Header *eth_in, TCP::Header * in){
+			TCP::Connection * newConn = new TCP::Connection(eth_in, NULL);
+			if(in->SYN){
 				this->TCPConnections->add(newConn, 0, "TCP::SEerver::handle packet");
 				
 				return true;

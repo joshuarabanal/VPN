@@ -92,9 +92,10 @@ namespace TCP{
 		std::cout << "\n\t reset:"<<src->RST;
 		std::cout << "\n\t SYNC:"<<src->SYN;
 		std::cout << "\n\t Close Connection:"<<src->FIN;
-		std::cout << "windowSize:"<<NetworkEndian::formatShort(src->windowSize);
-		std::cout << "checksum:"<<NetworkEndian::formatShort(src->checksum);
-		std::cout << "urgentPointer:"<<NetworkEndian::formatShort(src->urgentPointer);
+		std::cout << "\nwindowSize:"<<NetworkEndian::formatShort(src->windowSize);
+		std::cout << "\nchecksum:"<<NetworkEndian::formatShort(src->checksum);
+		std::cout << "\nurgentPointer:"<<NetworkEndian::formatShort(src->urgentPointer);
+		std::cout<<"\n";
 	}
 	
 	long getACK(Header *self){ return NetworkEndian::formatLong(self->acknowlegementNumber); }
