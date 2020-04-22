@@ -2,18 +2,19 @@
 #include "util/file.cpp"
 #include "rawSocket/rawSocket.cpp"
 #include "server/udp/Connection.cpp"
+#include "server/tcp/Connection.cpp"
 
 void runfromFile(){
 	char buffer[0xffff];
-	FileIO::readLogFile("WifiAdapter/dnsLookup.txt", buffer, 0xffff);
-	RawSocket *sock = new RawSocket("eth0");
-	UDP::server::Connection *c = new UDP::server::Connection(Eth::create(buffer),sock);
+	FileIO::readLogFile("WifiAdapter/error_unknown.txt", buffer, 0xffff);
+	//RawSocket *sock = new RawSocket("eth0");
+	TCP::Connection *c = new TCP::Connection(Eth::create(buffer),NULL);
 	c->start();
 }
 
 int main () { 
 	
-	bool fromFile = false;
+	bool fromFile = true;
 	
 	
 	if(fromFile){
