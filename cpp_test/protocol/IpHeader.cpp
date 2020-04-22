@@ -17,8 +17,10 @@ namespace IP{
  * wikipedia page of ipv4 explains this well 
  **/
 	struct Header{
+		//swapped due to byte order on raspberry pi
 		unsigned int headerLengthIn32bit : 4; //number of 32bits in the header, if there are no options, then the length is 5
 		unsigned int version :4;//ipv4 = 4
+		
 		unsigned int typeOfService:8;
 		unsigned int totalLength:16;//length of payload and header
 		unsigned int identification:16;

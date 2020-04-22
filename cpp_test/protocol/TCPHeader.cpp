@@ -11,10 +11,12 @@ namespace TCP{
 		int destPort:16;
 		long sequenceNumber:32;
 		long acknowlegementNumber:32;//value of this field is the next sequence number that the sender of the ACK is expecting
-		int dataoffset:4;//size of the TCP header in 32-bit words, minimum of 5
-		int reserved:3;
 		
+		//swapped due to byte order on raspberry pi
+		int reserved:3;
 		bool NS:1;//UNKNOWN
+		int dataoffset:4;//size of the TCP header in 32-bit words, minimum of 5
+		
 		bool SYN:1;//Congestion window reduced
 		bool ECE:1;//UNKNOWN
 		bool URG:1;//UNKNOWN

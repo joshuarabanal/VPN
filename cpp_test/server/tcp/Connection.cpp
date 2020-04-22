@@ -79,7 +79,7 @@ namespace {
 		
 		IP::setPayload(ip_out, (char *)tcp_out, TCP::getHeaderSize(tcp_out) );
 		
-		writeLogFile("syn_ack1.txt", eth_out);
+		writeLogFile("syn_ack.txt", eth_out);
 		
 		std::cout<<"sent syn ack\n";
 		std::cout<<"check log files to verify the valididty\n";
