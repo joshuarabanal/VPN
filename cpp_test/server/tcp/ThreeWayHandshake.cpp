@@ -23,15 +23,15 @@ namespace TCP::Handshake{
 		retu -> dataoffset = 5;
 		retu -> reserved = 0;
 		
-		retu -> NS = false;//ECN-nonce - concealment protection
-		retu -> CWR = false;//Congestion window reduced
-		retu -> ECE = false;//ECN-Ech
-		retu -> URG = false;//Indicates that the Urgent pointer field is significant
-		retu -> ACK = true;//Indicates that the Acknowledgment field is significant
-		retu -> PSH = false;//Push function. Asks to push the buffered data to the receiving application.
-		retu -> RST = false;//Reset the connection
-		retu -> SYN = true;//Synchronize sequence numbers.
-		retu -> FIN = false;//indicates this is the last packet and close connection
+		retu -> A = false;//ECN-nonce - concealment protection
+		retu -> B = false;//Congestion window reduced
+		retu -> C = false;//ECN-Ech
+		retu -> D = false;//Indicates that the Urgent pointer field is significant
+		retu -> SYN = false;//Indicates that the Acknowledgment field is significant
+		retu -> F = false;//Push function. Asks to push the buffered data to the receiving application.
+		retu -> G = false;//Reset the connection
+		retu -> H = 1;//Synchronize sequence numbers.
+		retu -> I = false;//indicates this is the last packet and close connection
 		retu -> windowSize = 0;//specifies the number of window size units[c] that the sender of this segment is currently willing to receive.
 		
 		retu -> urgentPointer = 0;

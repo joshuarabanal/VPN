@@ -14,17 +14,17 @@ namespace TCP{
 		
 		//swapped due to byte order on raspberry pi
 		int reserved:3;
-		bool NS:1;//UNKNOWN
+		bool I:1;//UNKNOWN
 		int dataoffset:4;//size of the TCP header in 32-bit words, minimum of 5
 		
-		bool FIN:1;//UNKNOWN
-		bool SYN:1;//Congestion window reduced = true
-		bool RST:1;//UNKNOWN
-		bool PSH:1;//UNKNOWN
-		bool ACK:1;//acknowlegement fields significant 
-		bool URG:1;//UNKNOWN
-		bool ECE:1;//UNKNOWN
-		bool CWR:1;//UNKNOWN
+		bool A:1;//UNKNOWN
+		bool B:1;//Congestion window reduced = true
+		bool C:1;//UNKNOWN
+		bool D:1;//UNKNOWN
+		bool SYN:1;//acknowlegement fields significant 
+		bool F:1;//UNKNOWN
+		bool G:1;//UNKNOWN
+		bool H:1;//UNKNOWN
 		
 		/**
 		 * 
@@ -100,15 +100,15 @@ namespace TCP{
 		std::cout << "\n\tsequence:"<<NetworkEndian::formatLong(src->sequenceNumber);
 		std::cout << "\n\t acknowlegementNumber:"<<NetworkEndian::formatLong(src->acknowlegementNumber);
 		std::cout << "\n\t header size in bytes:"<<(4*src->dataoffset);
-		std::cout << "\n\t concealment:"<<src->NS;
-		std::cout << "\n\t congestion window reduced:"<<src->CWR;
-		std::cout << "\n\t ECE:"<<src->ECE;
-		std::cout << "\n\t URGent field significant:"<<src->URG;
-		std::cout << "\n\t acknowledgement field significant:"<<src->ACK;
-		std::cout << "\n\t PUSH:"<<src->PSH;
-		std::cout << "\n\t reset:"<<src->RST;
+		std::cout << "\n\t concealment:"<<src->A;
+		std::cout << "\n\t congestion window reduced:"<<src->B;
+		std::cout << "\n\t ECE:"<<src->C;
+		std::cout << "\n\t URGent field significant:"<<src->D;
+		std::cout << "\n\t acknowledgement field significant:"<<src->H;
+		std::cout << "\n\t PUSH:"<<src->F;
+		std::cout << "\n\t reset:"<<src->G;
 		std::cout << "\n\t SYNC:"<<src->SYN;
-		std::cout << "\n\t Close Connection:"<<src->FIN;
+		std::cout << "\n\t Close Connection:"<<src->I;
 		std::cout << "\nwindowSize:"<<NetworkEndian::formatShort(src->windowSize);
 		std::cout << "\nchecksum:"<<NetworkEndian::formatShort(src->checksum);
 		std::cout << "\nurgentPointer:"<<NetworkEndian::formatShort(src->urgentPointer);

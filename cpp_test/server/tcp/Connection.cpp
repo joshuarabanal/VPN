@@ -81,6 +81,7 @@ namespace {
 		
 		writeLogFile("syn_ack.txt", eth_out);
 		
+		
 		std::cout<<"sent syn ack\n";
 		std::cout<<"check log files to verify the valididty\n";
 		std::cout<<"tcp::connection::start\n";
