@@ -73,7 +73,7 @@ namespace {
 		
 		Eth::Header *eth_out = Eth::create(buffer, this->ourMac, this->clientMacAddress, Eth::Type::ipv4);
 				
-		IP::Header * ip_out = IP::create(eth_out, this->clientIP, this->serverIP, this->packetId);
+		IP::Header * ip_out = IP::create(eth_out, this->clientIP, this->serverIP, this->packetId, IP::protocol::TCP);
 		
 		TCP::Header *tcp_out = TCP::Handshake::create_SYN_ACK(ip_out,(TCP::Header *)this->tcpHeader);
 		

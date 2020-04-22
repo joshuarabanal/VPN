@@ -96,7 +96,7 @@ namespace IP{
 		return retu;
 	}
 	
-	Header * create(Eth::Header *src, long destIp, long srcIp, int packetId){
+	Header * create(Eth::Header *src, long destIp, long srcIp, int packetId, protocol prot){
 		IP::Header *self = createEmptyHeader(Eth::getPayload(src));
 		IP::setDestinationIPAddress(self, destIp);
 		IP::setSourceIPAddress(self, srcIp);
@@ -105,7 +105,7 @@ namespace IP{
 		self->identification = packetId;
 		self->allFlags = 0;
 		self->timeToLive = 64;
-		self->protocol= protocol::UDP;
+		self->protocol= prot;
 		self->headerLengthIn32bit = 5;
 		
 		IP::setPayload(self, "", 0);
