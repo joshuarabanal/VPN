@@ -18,10 +18,10 @@ namespace TCP{
 		int dataoffset:4;//size of the TCP header in 32-bit words, minimum of 5
 		
 		bool A:1;//UNKNOWN
-		bool B:1;//Congestion window reduced = true
+		bool SYN:1;//Congestion window reduced = true
 		bool C:1;//UNKNOWN
 		bool D:1;//UNKNOWN
-		bool SYN:1;//acknowlegement fields significant 
+		bool ACK:1;//acknowlegement fields significant 
 		bool F:1;//UNKNOWN
 		bool G:1;//UNKNOWN
 		bool H:1;//UNKNOWN
@@ -101,7 +101,7 @@ namespace TCP{
 		std::cout << "\n\t acknowlegementNumber:"<<NetworkEndian::formatLong(src->acknowlegementNumber);
 		std::cout << "\n\t header size in bytes:"<<(4*src->dataoffset);
 		std::cout << "\n\t concealment:"<<src->A;
-		std::cout << "\n\t congestion window reduced:"<<src->B;
+		std::cout << "\n\t congestion window reduced:"<<src->ACK;
 		std::cout << "\n\t ECE:"<<src->C;
 		std::cout << "\n\t URGent field significant:"<<src->D;
 		std::cout << "\n\t acknowledgement field significant:"<<src->H;

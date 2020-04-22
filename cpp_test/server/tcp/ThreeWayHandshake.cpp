@@ -24,13 +24,13 @@ namespace TCP::Handshake{
 		retu -> reserved = 0;
 		
 		retu -> A = false;//ECN-nonce - concealment protection
-		retu -> B = false;//Congestion window reduced
+		retu -> SYN = 1;//Congestion window reduced
 		retu -> C = false;//ECN-Ech
 		retu -> D = false;//Indicates that the Urgent pointer field is significant
-		retu -> SYN = 1;//Indicates that the Acknowledgment field is significant
+		retu -> ACK = 1;//Indicates that the Acknowledgment field is significant
 		retu -> F = false;//Push function. Asks to push the buffered data to the receiving application.
 		retu -> G = false;//Reset the connection
-		retu -> H = 0;//Synchronize sequence numbers.
+		retu -> H = false;//Synchronize sequence numbers.
 		retu -> I = false;//indicates this is the last packet and close connection
 		retu -> windowSize = 0;//specifies the number of window size units[c] that the sender of this segment is currently willing to receive.
 		
