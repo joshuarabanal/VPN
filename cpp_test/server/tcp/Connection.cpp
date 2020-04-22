@@ -2,6 +2,7 @@
 #define TCP__SERVER__CONNECTION_T
 
 #include "../../protocol/TCPHeader.cpp"
+#include "../../protocol/IpHeader.cpp"
 #include "../../rawSocket/rawSocket.cpp"
 #include "../../util/file.cpp"
 #include "../../server/tcp/ThreeWayHandshake.cpp"
@@ -74,7 +75,9 @@ namespace {
 				
 		IP::Header * ip_out = IP::create(eth_out, this->clientIP, this->serverIP, this->packetId);
 		
-		/*TCP::Header *tcp_out = */TCP::Handshake::create_SYN_ACK(ip_out,(TCP::Header *)this->tcpHeader);
+		TCP::Header *tcp_out = TCP::Handshake::create_SYN_ACK(ip_out,(TCP::Header *)this->tcpHeader);
+		
+		IP::setPayload(ip_out, (char *)tcp_out, TCP::getHeaderSize(tcp_out) );
 		
 		writeLogFile("syn_ack.txt", eth_out);
 		
